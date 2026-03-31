@@ -3085,3 +3085,80 @@ body.content-ready {
   box-shadow: 0 8px 20px rgba(255, 133, 162, 0.2);
 }
 
+/* Cute Visitor Counter (Today/Yesterday/Total) */
+.visitor-counter {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  background: linear-gradient(135deg, #fff 0%, #ffeaf0 100%);
+  padding: 12px 20px;
+  border-radius: 25px;
+  border: 3px solid var(--pink-main);
+  box-shadow: 
+    0 10px 25px rgba(255, 133, 162, 0.3),
+    0 0 0 6px rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  animation: counterFloat 3s ease-in-out infinite;
+  user-select: none;
+}
+
+.visitor-counter:hover {
+  transform: translateY(-5px) scale(1.05);
+}
+
+.counter-grid {
+  display: flex;
+  gap: 15px;
+}
+
+.counter-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 50px;
+}
+
+.counter-label {
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+.counter-number {
+  font-family: var(--font-pop);
+  font-size: 1rem;
+  color: var(--pink-main);
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 1);
+  line-height: 1;
+}
+
+@keyframes counterFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .visitor-counter {
+    bottom: 15px;
+    right: 15px;
+    padding: 10px 15px;
+  }
+  .counter-grid {
+    gap: 10px;
+  }
+  .counter-item {
+    min-width: 40px;
+  }
+  .counter-number {
+    font-size: 0.85rem;
+  }
+}
+

@@ -18,32 +18,17 @@ export async function onRequest(context) {
   }
 
   const action = url.searchParams.get('action');
-  const username = url.searchParams.get('username');
-  const reset = url.searchParams.get('reset');
   const now = new Date().toISOString();
 
-  // Helper for Upstash REST API requests
-  const redisQuery = async (cmdArray) => {
-    const res = await fetch(env.UPSTASH_REDIS_REST_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${env.UPSTASH_REDIS_REST_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(cmdArray)
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    return data.result;
-  };
-
-  if (reset === '1') {
-    await redisQuery(["DEL", 'history:list']);
-    await redisQuery(["DEL", 'history:finalized_ids']);
+  // Cloudflare KV binding check
+  if (!env.KV) {
+    return new Response(JSON.stringify({ 
+      error: 'KV namespace not bound. Please check Cloudflare Pages settings.' 
+    }), { status: 500, headers: corsHeaders });
   }
 
   try {
-    // Action: Cron check (Server-side automatic check)
+    // Action: Cron check (Checks live status and records history)
     if (action === 'cron') {
       const results = [];
       for (const user of MEMBERS) {
@@ -53,9 +38,9 @@ export async function onRequest(context) {
 
           const data = await kickRes.json();
           const livestream = data.livestream;
-          const sessionKey = `history:session:${user}`;
+          const sessionKey = `session:${user}`;
 
-          const lastSessionRaw = await redisQuery(["GET", sessionKey]);
+          const lastSessionRaw = await env.KV.get(sessionKey);
           const lastSession = lastSessionRaw ? JSON.parse(lastSessionRaw) : null;
 
           if (livestream) {
@@ -68,17 +53,15 @@ export async function onRequest(context) {
                 title: livestream.session_title || 'No Title',
                 lastSeen: now
               };
-              await redisQuery(["SET", sessionKey, JSON.stringify(newSession)]);
+              await env.KV.put(sessionKey, JSON.stringify(newSession));
             } else {
               lastSession.lastSeen = now;
-              await redisQuery(["SET", sessionKey, JSON.stringify(lastSession)]);
+              await env.KV.put(sessionKey, JSON.stringify(lastSession));
             }
           } else {
             if (lastSession) {
-              const deleted = await redisQuery(["DEL", sessionKey]);
-              if (deleted) {
-                await finalizeSession(lastSession, lastSession.lastSeen || now, redisQuery);
-              }
+              await env.KV.delete(sessionKey);
+              await finalizeSession(lastSession, lastSession.lastSeen || now, env.KV);
             }
           }
           results.push({ user, status: livestream ? 'live' : 'offline' });
@@ -89,59 +72,14 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'ok', results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
     }
 
-    // Action: Sync VODs
-    if (action === 'sync' && request.method === 'POST') {
-      const { videos } = await request.json();
-      if (!username || !videos || !Array.isArray(videos)) {
-        return new Response(JSON.stringify({ error: 'Username and videos array required' }), { status: 400, headers: corsHeaders });
-      }
-
-      let syncedCount = 0;
-      for (const video of videos) {
-        const alreadyFinalized = await redisQuery(["SISMEMBER", 'history:finalized_ids', String(video.id)]);
-        if (alreadyFinalized) continue;
-
-        const start = new Date(video.created_at);
-        const durationMs = video.duration || 0;
-        const end = new Date(start.getTime() + durationMs);
-
-        if (durationMs < 60000) continue;
-
-        const hours = Math.floor(durationMs / 3600000);
-        const minutes = Math.floor((durationMs % 3600000) / 60000);
-        const durationStr = `${hours}時間${minutes}分`;
-
-        const record = {
-          id: String(video.id),
-          date: start.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' }).replace(/\//g, '.'),
-          username: username,
-          startTime: start.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }),
-          endTime: end.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }),
-          title: video.session_title || 'No Title',
-          duration: durationStr,
-          link: `https://kick.com/${username}/videos/${video.uuid || video.id}`
-        };
-
-        await redisQuery(["SADD", 'history:finalized_ids', String(video.id)]);
-        await redisQuery(["LPUSH", 'history:list', JSON.stringify(record)]);
-        syncedCount++;
-      }
-
-      if (syncedCount > 0) {
-        await redisQuery(["LTRIM", 'history:list', 0, 99]);
-      }
-
-      return new Response(JSON.stringify({ status: 'ok', synced: syncedCount }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
-    }
-
     // Action: Get history list
     if (action === 'list') {
-      const historyRaw = await redisQuery(["LRANGE", 'history:list', 0, 99]);
-      if (!historyRaw || historyRaw.length === 0) return new Response(JSON.stringify([]), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
+      const historyRaw = await env.KV.get('history_list');
+      if (!historyRaw) return new Response(JSON.stringify([]), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
 
-      // Map raw string JSON to JS objects
-      const history = historyRaw.map(v => typeof v === 'string' ? JSON.parse(v) : v);
+      const history = JSON.parse(historyRaw);
 
+      // Sort by date descending, then start time descending
       const sorted = history.sort((a, b) => {
         const dateA = a.date.split('.').map(n => n.padStart(2, '0')).join('');
         const dateB = b.date.split('.').map(n => n.padStart(2, '0')).join('');
@@ -159,17 +97,18 @@ export async function onRequest(context) {
   }
 }
 
-async function finalizeSession(session, endTime, redisQuery) {
+async function finalizeSession(session, endTime, KV) {
   if (!session.id) return;
 
-  const alreadyFinalized = await redisQuery(["SISMEMBER", 'history:finalized_ids', String(session.id)]);
+  const idKey = `finalized_id:${session.id}`;
+  const alreadyFinalized = await KV.get(idKey);
   if (alreadyFinalized) return;
 
   const start = new Date(session.start);
-  const end = new Date(endTime || new Date());
+  const end = new Date(endTime);
   const durationMs = end - start;
   
-  if (durationMs < 60000) return;
+  if (durationMs < 60000) return; // Ignore streams less than 1 min
 
   const hours = Math.floor(durationMs / 3600000);
   const minutes = Math.floor((durationMs % 3600000) / 60000);
@@ -186,7 +125,15 @@ async function finalizeSession(session, endTime, redisQuery) {
     link: `https://kick.com/${session.username}/videos`
   };
 
-  await redisQuery(["SADD", 'history:finalized_ids', String(session.id)]);
-  await redisQuery(["LPUSH", 'history:list', JSON.stringify(record)]);
-  await redisQuery(["LTRIM", 'history:list', 0, 99]); 
+  const historyRaw = await KV.get('history_list');
+  let history = historyRaw ? JSON.parse(historyRaw) : [];
+  
+  // Unshift (add to front) and limit to 100 items
+  history.unshift(record);
+  if (history.length > 100) {
+    history = history.slice(0, 100);
+  }
+  
+  await KV.put('history_list', JSON.stringify(history));
+  await KV.put(idKey, "1");
 }
