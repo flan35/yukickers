@@ -132,15 +132,45 @@ async function finalizeSession(session, endTime, KV) {
   const alreadyFinalized = await KV.get(idKey);
   if (alreadyFinalized) return;
 
-  const start = new Date(session.start);
-  const end = new Date(endTime);
-  const durationMs = end - start;
+  let start = new Date(session.start);
+  let end = new Date(endTime);
+  let durationMs = end - start;
+  let title = session.title;
+
+  // --- HIGH PRECISION VOD CORRECTION ---
+  try {
+    // Fetch the latest videos for the user to find the exact duration
+    const vRes = await fetch(`https://kick.com/api/v2/channels/${session.username}/videos`);
+    if (vRes.ok) {
+      const vData = await vRes.json();
+      if (Array.isArray(vData)) {
+        // Find a video that started around the same time as our recorded session
+        // (within 30 minutes margin to be safe)
+        const match = vData.find(v => {
+          const vStart = new Date(v.created_at);
+          const diff = Math.abs(vStart - start);
+          return diff < 1800000; // 30 minutes
+        });
+
+        if (match && match.duration > 0) {
+          durationMs = match.duration; // match.duration is in ms
+          end = new Date(start.getTime() + durationMs);
+          if (match.session_title) title = match.session_title;
+          console.log(`Matched VOD for ${session.username}: ${match.id}, corrected duration: ${durationMs}ms`);
+        }
+      }
+    }
+  } catch (e) {
+    console.error('VOD correction failed:', e);
+    // Continue with the estimated duration if VOD check fails
+  }
+  // -------------------------------------
   
   if (durationMs < 60000) return; // Ignore streams less than 1 min
 
   const hours = Math.floor(durationMs / 3600000);
   const minutes = Math.floor((durationMs % 3600000) / 60000);
-  const durationStr = `${hours}時間${minutes}分`;
+  const durationStr = hours > 0 ? `${hours}時間${minutes}分` : `${minutes}分`;
 
   const record = {
     id: session.id,
@@ -148,7 +178,7 @@ async function finalizeSession(session, endTime, KV) {
     username: session.username,
     startTime: start.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }),
     endTime: end.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }),
-    title: session.title,
+    title: title,
     duration: durationStr,
     link: `https://kick.com/${session.username}/videos`
   };
