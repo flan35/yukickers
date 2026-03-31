@@ -1,10 +1,11 @@
 const MEMBERS = [
   'yuki_0121', 'nodazourip', 'inosisi0909', 
-  '04miki05', 'kariko2525', 'ponchan_2525'
+  '04miki05', 'kariko2525', 'ponchan_2525',
+  'michaaam'
 ];
 
 export async function onRequest(context) {
-  const { request, env } = context;
+  const { request, env, waitUntil } = context; // context.waitUntil is used to run tasks in the background
   const url = new URL(request.url);
 
   const corsHeaders = {
@@ -29,51 +30,32 @@ export async function onRequest(context) {
 
   try {
     // Action: Cron check (Checks live status and records history)
-    if (action === 'cron') {
-      const results = [];
-      for (const user of MEMBERS) {
-        try {
-          const kickRes = await fetch(`https://kick.com/api/v2/channels/${user}`);
-          if (!kickRes.ok) continue;
-
-          const data = await kickRes.json();
-          const livestream = data.livestream;
-          const sessionKey = `session:${user}`;
-
-          const lastSessionRaw = await env.KV.get(sessionKey);
-          const lastSession = lastSessionRaw ? JSON.parse(lastSessionRaw) : null;
-
-          if (livestream) {
-            const streamId = String(livestream.id || livestream.created_at);
-            if (!lastSession || lastSession.id !== streamId) {
-              const newSession = {
-                id: streamId,
-                username: user,
-                start: livestream.start_time || livestream.created_at || now,
-                title: livestream.session_title || 'No Title',
-                lastSeen: now
-              };
-              await env.KV.put(sessionKey, JSON.stringify(newSession));
-            } else {
-              lastSession.lastSeen = now;
-              await env.KV.put(sessionKey, JSON.stringify(lastSession));
-            }
-          } else {
-            if (lastSession) {
-              await env.KV.delete(sessionKey);
-              await finalizeSession(lastSession, lastSession.lastSeen || now, env.KV);
-            }
-          }
-          results.push({ user, status: livestream ? 'live' : 'offline' });
-        } catch (e) {
-          console.error(`Cron check failed for ${user}:`, e);
-        }
-      }
+    if (action === 'cron' || action === 'force_cron') {
+      const results = await runCronTask(MEMBERS, env, now);
       return new Response(JSON.stringify({ status: 'ok', results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
     }
 
     // Action: Get history list
     if (action === 'list') {
+      // --- LAZY CRON LOGIC ---
+      // Trigger background update if more than 10 minutes (600s) since last run
+      const CRON_TS_KEY = 'last_archive_cron_run';
+      const lastRun = await env.KV.get(CRON_TS_KEY);
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      if (!lastRun || (currentTime - parseInt(lastRun)) > 600) {
+        // Update timestamp immediately to avoid parallel triggers
+        await env.KV.put(CRON_TS_KEY, String(currentTime));
+        // Use waitUntil to run the cron task in the background
+        if (typeof waitUntil === 'function') {
+          waitUntil(runCronTask(MEMBERS, env, now));
+        } else {
+          // Fallback for environments where waitUntil is not available
+          runCronTask(MEMBERS, env, now).catch(err => console.error('Archive background cron failed', err));
+        }
+      }
+      // -----------------------
+
       const historyRaw = await env.KV.get('history_list');
       if (!historyRaw) return new Response(JSON.stringify([]), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
 
@@ -95,6 +77,52 @@ export async function onRequest(context) {
     console.error('Archive API error:', error);
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
   }
+}
+
+/**
+ * Shared logic for checking Kick status and updating sessions/history
+ */
+async function runCronTask(membersList, env, now) {
+  const results = [];
+  for (const user of membersList) {
+    try {
+      const kickRes = await fetch(`https://kick.com/api/v2/channels/${user}`);
+      if (!kickRes.ok) continue;
+
+      const data = await kickRes.json();
+      const livestream = data.livestream;
+      const sessionKey = `session:${user}`;
+
+      const lastSessionRaw = await env.KV.get(sessionKey);
+      const lastSession = lastSessionRaw ? JSON.parse(lastSessionRaw) : null;
+
+      if (livestream) {
+        const streamId = String(livestream.id || livestream.created_at);
+        if (!lastSession || lastSession.id !== streamId) {
+          const newSession = {
+            id: streamId,
+            username: user,
+            start: livestream.start_time || livestream.created_at || now,
+            title: livestream.session_title || 'No Title',
+            lastSeen: now
+          };
+          await env.KV.put(sessionKey, JSON.stringify(newSession));
+        } else {
+          lastSession.lastSeen = now;
+          await env.KV.put(sessionKey, JSON.stringify(lastSession));
+        }
+      } else {
+        if (lastSession) {
+          await env.KV.delete(sessionKey);
+          await finalizeSession(lastSession, lastSession.lastSeen || now, env.KV);
+        }
+      }
+      results.push({ user, status: livestream ? 'live' : 'offline' });
+    } catch (e) {
+      console.error(`Cron check failed for ${user}:`, e);
+    }
+  }
+  return results;
 }
 
 async function finalizeSession(session, endTime, KV) {
@@ -128,6 +156,9 @@ async function finalizeSession(session, endTime, KV) {
   const historyRaw = await KV.get('history_list');
   let history = historyRaw ? JSON.parse(historyRaw) : [];
   
+  // Check if this record already exists in history (safety)
+  if (history.some(h => h.id === record.id)) return;
+
   // Unshift (add to front) and limit to 100 items
   history.unshift(record);
   if (history.length > 100) {
