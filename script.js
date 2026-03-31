@@ -98,35 +98,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const navLinks = document.querySelectorAll('a[data-nav="true"]');
   const pageSections = document.querySelectorAll('.page-section');
 
-  // Function to switch section based on path
-  function navigateTo(path) {
-    let targetId = path === '/' || path === '' ? 'home' : path.substring(1);
-    
-    // Hide all sections
+  // Handle initial URL hash
+  const initialHash = window.location.hash.substring(1);
+  if (initialHash && document.getElementById(initialHash) && initialHash !== 'home') {
     pageSections.forEach(sec => sec.classList.remove('active'));
-    
-    // Show target section
-    const targetSec = document.getElementById(targetId);
-    if (targetSec) {
-      targetSec.classList.add('active');
-    } else {
-      // Fallback for unknown paths
-      document.getElementById('home').classList.add('active');
-    }
-
-    // Reset scroll position
-    window.scrollTo(0, 0);
-    // Trigger animations
-    setTimeout(reveal, 100);
+    document.getElementById(initialHash).classList.add('active');
   }
-
-  // Handle initial URL path
-  navigateTo(window.location.pathname);
 
   navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
-      const path = link.getAttribute('href');
+      const targetId = link.getAttribute('href').substring(1);
       
       // Page Turn Effect
       createParticles(e.clientX, e.clientY);
@@ -140,20 +122,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Delay for the page to 'cover' the screen before switching section
       setTimeout(() => {
-        navigateTo(path);
-        history.pushState(null, null, path);
+        // Hide all sections
+        pageSections.forEach(sec => sec.classList.remove('active'));
+        
+        // Show target section
+        const targetSec = document.getElementById(targetId);
+        if(targetSec) {
+          targetSec.classList.add('active');
+          // Update URL hash
+          if (targetId === 'home') {
+            history.pushState(null, null, window.location.pathname);
+          } else {
+            history.pushState(null, null, '#' + targetId);
+          }
+        }
 
         // Close mobile menu if open
         mobileMenu.classList.remove('active');
         mobileToggle.innerHTML = '<i class="fa-solid fa-bars"></i>';
         menuOpen = false;
+
+        // Reset scroll position
+        window.scrollTo(0, 0);
+
+        // Trigger animations for newly visible section
+        setTimeout(reveal, 100);
       }, 300);
     });
-  });
-
-  // Handle Browser Back/Forward
-  window.addEventListener('popstate', () => {
-    navigateTo(window.location.pathname);
   });
 
   // Particle Creation Function
