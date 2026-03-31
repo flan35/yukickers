@@ -41,6 +41,48 @@ export async function onRequest(context) {
   }
 
   try {
+    // Action: Migrate from Redis to KV
+    if (action === 'migrate') {
+      if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) {
+        return new Response("Upstash credentials missing for migration", { status: 400, headers: corsHeaders });
+      }
+
+      const redisFetch = async (cmd) => {
+        const r = await fetch(env.UPSTASH_REDIS_REST_URL, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${env.UPSTASH_REDIS_REST_TOKEN}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(cmd)
+        });
+        const data = await r.json();
+        if (data.error) throw new Error(data.error);
+        return data.result;
+      };
+
+      // 1. Copy history:list
+      const historyRaw = await redisFetch(["LRANGE", 'history:list', 0, 99]);
+      if (historyRaw && historyRaw.length > 0) {
+        // Ensure they are objects
+        const history = historyRaw.map(v => typeof v === 'string' ? JSON.parse(v) : v);
+        await env.KV.put('history_list', JSON.stringify(history));
+      }
+
+      // 2. Copy history:finalized_ids
+      const finalizedIds = await redisFetch(["SMEMBERS", 'history:finalized_ids']);
+      let idCount = 0;
+      if (finalizedIds && finalizedIds.length > 0) {
+        for (const pid of finalizedIds) {
+          await env.KV.put(`finalized_id:${pid}`, "1");
+          idCount++;
+        }
+      }
+
+      return new Response(JSON.stringify({ 
+        status: 'migration complete', 
+        historyCount: historyRaw ? historyRaw.length : 0,
+        finalizedCount: idCount
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
+    }
+
     // Action: Cron check
     if (action === 'cron') {
       const results = [];
