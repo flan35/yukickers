@@ -35,6 +35,66 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'ok', results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
     }
 
+    // Action: Sync/Bootstrap past stream history
+    if (action === 'sync' || action === 'bootstrap') {
+      const allNewRecords = [];
+      for (const user of MEMBERS) {
+        try {
+          const vRes = await fetch(`https://kick.com/api/v2/channels/${user}/videos`);
+          if (!vRes.ok) continue;
+          const vData = await vRes.json();
+          if (Array.isArray(vData)) {
+            vData.forEach(v => {
+              const start = new Date(v.created_at);
+              const durationMs = v.duration || 0;
+              const end = new Date(start.getTime() + durationMs);
+              const hours = Math.floor(durationMs / 3600000);
+              const minutes = Math.floor((durationMs % 3600000) / 60000);
+              const durationStr = hours > 0 ? `${hours}時間${minutes}分` : `${minutes}分`;
+
+              allNewRecords.push({
+                id: String(v.id),
+                date: start.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' }).replace(/\//g, '.'),
+                username: user,
+                startTime: start.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }),
+                endTime: end.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }),
+                title: v.session_title || 'No Title',
+                duration: durationStr,
+                link: `https://kick.com/${user}/videos`
+              });
+            });
+          }
+        } catch (e) {
+          console.error(`Sync failed for ${user}:`, e);
+        }
+      }
+
+      // Merge with existing
+      const historyRaw = await env.KV.get('history_list');
+      let combined = historyRaw ? JSON.parse(historyRaw) : [];
+      combined = [...allNewRecords, ...combined];
+
+      // De-duplicate by ID
+      const uniqueMap = new Map();
+      combined.forEach(item => {
+        if (!uniqueMap.has(item.id)) uniqueMap.set(item.id, item);
+      });
+
+      // Sort by date/time descending
+      const finalHistory = Array.from(uniqueMap.values()).sort((a, b) => {
+        const dateA = a.date.split('.').map(n => n.padStart(2, '0')).join('');
+        const dateB = b.date.split('.').map(n => n.padStart(2, '0')).join('');
+        if (dateB !== dateA) return dateB.localeCompare(dateA);
+        return b.startTime.localeCompare(a.startTime);
+      });
+
+      // Limit to 30 items
+      const truncated = finalHistory.slice(0, 30);
+      await env.KV.put('history_list', JSON.stringify(truncated));
+
+      return new Response(JSON.stringify({ status: 'synced', count: truncated.length, data: truncated }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
+    }
+
     // Action: Get history list
     if (action === 'list') {
       // --- LAZY CRON LOGIC ---
