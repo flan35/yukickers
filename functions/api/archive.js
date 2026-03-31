@@ -18,8 +18,6 @@ export async function onRequest(context) {
   }
 
   const action = url.searchParams.get('action');
-  const username = url.searchParams.get('username');
-  const reset = url.searchParams.get('reset');
   const now = new Date().toISOString();
 
   // Cloudflare KV binding check
@@ -29,61 +27,8 @@ export async function onRequest(context) {
     }), { status: 500, headers: corsHeaders });
   }
 
-  // Action: Reset
-  if (reset === '1') {
-    await env.KV.delete('history_list');
-    // Clear all finalized ID keys (List keys by prefix)
-    const list = await env.KV.list({ prefix: 'finalized_id:' });
-    for (const key of list.keys) {
-      await env.KV.delete(key.name);
-    }
-    return new Response(JSON.stringify({ status: 'reset ok' }), { headers: corsHeaders });
-  }
-
   try {
-    // Action: Migrate from Redis to KV
-    if (action === 'migrate') {
-      if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) {
-        return new Response("Upstash credentials missing for migration", { status: 400, headers: corsHeaders });
-      }
-
-      const redisFetch = async (cmd) => {
-        const r = await fetch(env.UPSTASH_REDIS_REST_URL, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${env.UPSTASH_REDIS_REST_TOKEN}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(cmd)
-        });
-        const data = await r.json();
-        if (data.error) throw new Error(data.error);
-        return data.result;
-      };
-
-      // 1. Copy history:list
-      const historyRaw = await redisFetch(["LRANGE", 'history:list', 0, 99]);
-      if (historyRaw && historyRaw.length > 0) {
-        // Ensure they are objects
-        const history = historyRaw.map(v => typeof v === 'string' ? JSON.parse(v) : v);
-        await env.KV.put('history_list', JSON.stringify(history));
-      }
-
-      // 2. Copy history:finalized_ids
-      const finalizedIds = await redisFetch(["SMEMBERS", 'history:finalized_ids']);
-      let idCount = 0;
-      if (finalizedIds && finalizedIds.length > 0) {
-        for (const pid of finalizedIds) {
-          await env.KV.put(`finalized_id:${pid}`, "1");
-          idCount++;
-        }
-      }
-
-      return new Response(JSON.stringify({ 
-        status: 'migration complete', 
-        historyCount: historyRaw ? historyRaw.length : 0,
-        finalizedCount: idCount
-      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
-    }
-
-    // Action: Cron check
+    // Action: Cron check (Checks live status and records history)
     if (action === 'cron') {
       const results = [];
       for (const user of MEMBERS) {
@@ -127,50 +72,6 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'ok', results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
     }
 
-    // Action: Sync VODs
-    if (action === 'sync' && request.method === 'POST') {
-      const { videos } = await request.json();
-      if (!username || !videos || !Array.isArray(videos)) {
-        return new Response(JSON.stringify({ error: 'Username and videos array required' }), { status: 400, headers: corsHeaders });
-      }
-
-      let syncedCount = 0;
-      for (const video of videos) {
-        const idKey = `finalized_id:${video.id}`;
-        const alreadyFinalized = await env.KV.get(idKey);
-        if (alreadyFinalized) continue;
-
-        const start = new Date(video.created_at);
-        const durationMs = video.duration || 0;
-        const end = new Date(start.getTime() + durationMs);
-
-        if (durationMs < 60000) continue;
-
-        const hours = Math.floor(durationMs / 3600000);
-        const minutes = Math.floor((durationMs % 3600000) / 60000);
-        const durationStr = `${hours}時間${minutes}分`;
-
-        const record = {
-          id: String(video.id),
-          date: start.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' }).replace(/\//g, '.'),
-          username: username,
-          startTime: start.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }),
-          endTime: end.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }),
-          title: video.session_title || 'No Title',
-          duration: durationStr,
-          link: `https://kick.com/${username}/videos/${video.uuid || video.id}`
-        };
-
-        // Add to history list in KV
-        await addToHistoryList(record, env.KV);
-        // Mark as finalized
-        await env.KV.put(idKey, "1");
-        syncedCount++;
-      }
-
-      return new Response(JSON.stringify({ status: 'ok', synced: syncedCount }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
-    }
-
     // Action: Get history list
     if (action === 'list') {
       const historyRaw = await env.KV.get('history_list');
@@ -207,7 +108,7 @@ async function finalizeSession(session, endTime, KV) {
   const end = new Date(endTime);
   const durationMs = end - start;
   
-  if (durationMs < 60000) return;
+  if (durationMs < 60000) return; // Ignore streams less than 1 min
 
   const hours = Math.floor(durationMs / 3600000);
   const minutes = Math.floor((durationMs % 3600000) / 60000);
@@ -224,11 +125,6 @@ async function finalizeSession(session, endTime, KV) {
     link: `https://kick.com/${session.username}/videos`
   };
 
-  await addToHistoryList(record, KV);
-  await KV.put(idKey, "1");
-}
-
-async function addToHistoryList(record, KV) {
   const historyRaw = await KV.get('history_list');
   let history = historyRaw ? JSON.parse(historyRaw) : [];
   
@@ -239,4 +135,5 @@ async function addToHistoryList(record, KV) {
   }
   
   await KV.put('history_list', JSON.stringify(history));
+  await KV.put(idKey, "1");
 }
