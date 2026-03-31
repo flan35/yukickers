@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ユキッカーズ | Yukickers Official</title>
+  <meta name="description" content="配信者グループ「ユキッカーズ」の公式サイト。リーダーユキちゃんを中心とした個性豊かな配信グループ。">
+  <meta property="og:title" content="ユキッカーズ | Yukickers Official">
+  <meta property="og:description" content="配信者グループ「ユキッカーズ」の公式サイト。リーダーユキちゃんを中心とした個性豊かな配信グループ。">
+  <meta property="og:image" content="https://yukickers.pages.dev/yukick.jpg">
+  <meta property="og:url" content="https://yukickers.pages.dev">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="yukick.jpg">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@400;700;900&family=Montserrat:ital,wght@0,700;0,900;1,900&family=Noto+Sans+JP:wght@400;700;900&family=Potta+One&family=RocknRoll+One&display=swap" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Swiper CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- Three.js (Local Game Engine) -->
+  <script src="./three.min.js"></script>
+</head>
+<body class="is-loading">
+  <!-- Intro Overlay (Pachislot Style) -->
+  <div id="intro-overlay" class="intro-overlay">
+    <div class="intro-hearts"></div>
+    <div class="intro-content">
+      <div class="intro-title">YUKICKERS</div>
+      <div class="intro-subtitle">Official Website</div>
+    </div>
+  </div>
+
+  <!-- Floating Background -->
+  <div class="floating-bg">
+    <span><i class="fa-solid fa-heart"></i></span>
+    <span class="bubble"></span>
+    <span><i class="fa-solid fa-star"></i></span>
+    <span><i class="fa-solid fa-heart"></i></span>
+    <span class="bubble"></span>
+    <span><i class="fa-solid fa-star"></i></span>
+  </div>
+
+  <!-- Special Animations Overlay -->
+  <div class="flashy-overlay"></div>
+  <div class="heart-burst"><i class="fa-solid fa-heart"></i></div>
+  <div id="page-turn-overlay" class="page-turn-overlay">
+    <div class="page-turn-inner"></div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <div class="logo">
+        <a href="#home" class="logo-link" data-nav="true">
+          <img src="rogo.jpg" alt="YUKICKERS" class="logo-img">
+        </a>
+      </div>
+      <ul class="nav-links">
+        <li>
+          <a href="#home" data-nav="true">
+            <i class="fa-solid fa-house"></i>
+            <span>ほーむ</span>
+          </a>
+        </li>
+        <li>
+          <a href="#members" data-nav="true">
+            <i class="fa-solid fa-users"></i>
+            <span>めんばー</span>
+          </a>
+        </li>
+        <li>
+          <a href="#schedule" data-nav="true">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span>すけじゅーる</span>
+          </a>
+        </li>
+        <li>
+          <a href="#history" data-nav="true">
+            <i class="fa-solid fa-video"></i>
+            <span>あーかいぶ</span>
+          </a>
+        </li>
+        <li>
+          <a href="#rules" data-nav="true">
+            <i class="fa-solid fa-scroll"></i>
+            <span>るーる</span>
+          </a>
+        </li>
+      </ul>
+      <!-- Mobile menu button -->
+      <div class="mobile-toggle" id="mobile-toggle">
+        <i class="fa-solid fa-bars"></i>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Dropdown Menu -->
+  <div class="mobile-menu" id="mobile-menu">
+    <ul>
+      <li><a href="#home" data-nav="true">ほーむ</a></li>
+      <li><a href="#members" data-nav="true">めんばー</a></li>
+      <li><a href="#schedule" data-nav="true">すけじゅーる</a></li>
+      <li><a href="#history" data-nav="true">あーかいぶ</a></li>
+      <li><a href="#rules" data-nav="true">るーる</a></li>
+    </ul>
+  </div>
+
+  <!-- Home Section (Includes Hero, About, News Summary) -->
+  <div id="home" class="page-section active">
+    <!-- Hero Section -->
+    <header class="hero" id="hero-sub">
+      <div class="hero-content reveal">
+        <!-- Custom Carousel (Lotteria Style) -->
+        <div class="lotteria-carousel" id="heroCarousel">
+          <div class="carousel-track">
+            <div class="carousel-slide"><img src="koukoku1.jpg" alt="広告1"></div>
+            <div class="carousel-slide"><img src="koukoku2.jpg" alt="広告2"></div>
+            <div class="carousel-slide"><img src="koukoku3.jpg" alt="広告3"></div>
+            <div class="carousel-slide"><img src="koukoku4.jpg" alt="広告4"></div>
+            <div class="carousel-slide"><img src="koukoku5.jpg" alt="広告5"></div>
+          </div>
+        </div>
+        
+        <!-- Carousel Controls -->
+        <div class="carousel-controls">
+          <button class="carousel-btn carousel-prev" id="carouselPrev" aria-label="前へ"><i class="fa-solid fa-heart"></i></button>
+          <div class="carousel-dots" id="carouselDots"></div>
+          <button class="carousel-btn carousel-next" id="carouselNext" aria-label="次へ"><i class="fa-solid fa-heart"></i></button>
+        </div>
+      </div>
+      <div class="hero-bg"></div>
+      </header>
+
+    <!-- About Content (Moved to Home) -->
+    <section class="section about">
+      <div class="container">
+        <div class="section-title reveal">
+          <h2>We are <span class="text-neon">Yukickers</span></h2>
+        </div>
+        <div class="about-content reveal">
+          <p>「ユキッカーズ」は、リーダーであるユキちゃんを中心に活動する個性豊かな配信者グループです。<br>
+          視聴者と共に最高のエンターテインメントを作り上げます。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- News Summary (Latest 5) -->
+    <section class="section news-summary">
+      <div class="container">
+        <div class="section-title reveal">
+          <h2>Latest <span class="text-neon">News</span></h2>
+        </div>
+        <div class="news-container reveal">
+          <ul class="news-list" id="news-summary-list">
+            <!-- Latest 5 items will be injected here by script.js -->
+            <li class="loading-news">読み込み中...</li>
+          </ul>
+          <div class="news-more">
+            <a href="#news" data-nav="true" class="link-more">おしらせ一覧へ <i class="fa-solid fa-circle-chevron-right"></i></a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- News Full List Section (Hidden from direct nav) -->
+  <section id="news" class="section news page-section">
+    <div class="container">
+      <div class="section-title reveal">
+        <h2>News & <span class="text-neon">Schedule</span></h2>
+      </div>
+      <div class="news-container reveal">
+        <ul class="news-list" id="full-news-list">
+          <!-- All news items will be handled here -->
+          <li class="news-item">
+            <div class="news-date">2026.03.22</div>
+            <div class="news-badge info">Info</div>
+            <div class="news-title">ユキッカーズ公式サイトを正式公開しました</div>
+          </li>
+        </ul>
+      </div>
+      <div class="back-to-home" style="text-align: center; margin-top: 40px;">
+        <a href="#home" data-nav="true" class="btn-primary">ホームに戻る</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Members Section -->
+  <section id="members" class="section members page-section">
+    <div class="container">
+      <div class="section-title reveal">
+        <h2>Yukickers <span class="text-neon">Members</span></h2>
+      </div>
+      <div class="members-grid">
+        
+        <!-- Yuki -->
+        <div class="profile-card reveal" data-kick="yuki_0121" style="transition-delay: 0.1s;">
+          <a href="https://kick.com/yuki_0121" target="_blank" rel="noopener noreferrer" class="card-link">
+            <img src="yuki.jpg" alt="ユキちゃん" class="card-image">
+            <div class="card-overlay">
+              <h3>ユキちゃん</h3>
+              <p class="role">きゃぷてん</p>
+            </div>
+          </a>
+          <a href="https://x.com/nyan56see" target="_blank" rel="noopener noreferrer" class="x-link">
+            <i class="fa-brands fa-x-twitter"></i>
+          </a>
+        </div>
+
+        <!-- Nodazouri -->
+        <div class="profile-card reveal" data-kick="nodazourip" style="transition-delay: 0.2s;">
+          <a href="https://kick.com/nodazourip" target="_blank" rel="noopener noreferrer" class="card-link">
+            <img src="nodazouri.jpg" alt="野田草履" class="card-image">
+            <div class="card-overlay">
+              <h3>野田草履</h3>
+              <p class="role">めんばー</p>
+            </div>
+          </a>
+          <a href="https://x.com/nodasori2525" target="_blank" rel="noopener noreferrer" class="x-link">
+            <i class="fa-brands fa-x-twitter"></i>
+          </a>
+        </div>
+
+        <!-- Inoshishi -->
+        <div class="profile-card reveal" data-kick="inosisi0909" style="transition-delay: 0.3s;">
+          <a href="https://kick.com/inosisi0909" target="_blank" rel="noopener noreferrer" class="card-link">
+            <img src="inoshishi.jpg" alt="イノシシ" class="card-image">
+            <div class="card-overlay">
+              <h3>イノシシ</h3>
+              <p class="role">めんばー</p>
+            </div>
+          </a>
+          <a href="https://x.com/inosisi2525" target="_blank" rel="noopener noreferrer" class="x-link">
+            <i class="fa-brands fa-x-twitter"></i>
+          </a>
+        </div>
+
+        <!-- Miki -->
+        <div class="profile-card reveal" data-kick="04miki05" style="transition-delay: 0.4s;">
+          <a href="https://kick.com/04miki05" target="_blank" rel="noopener noreferrer" class="card-link">
+            <img src="miki.jpg" alt="ミキ" class="card-image">
+            <div class="card-overlay">
+              <h3>ミキ</h3>
+              <p class="role">めんばー</p>
+            </div>
+          </a>
+          <a href="https://x.com/__miki__0090" target="_blank" rel="noopener noreferrer" class="x-link">
+            <i class="fa-brands fa-x-twitter"></i>
+          </a>
+        </div>
+
+        <!-- Kariko -->
+        <div class="profile-card reveal" data-kick="kariko2525" style="transition-delay: 0.5s;">
+          <a href="https://kick.com/kariko2525" target="_blank" rel="noopener noreferrer" class="card-link">
+            <img src="kariko.jpg" alt="カリフラワー狩子" class="card-image">
+            <div class="card-overlay">
+              <h3>カリフラワー狩子</h3>
+              <p class="role">めんばー</p>
+            </div>
+          </a>
+          <a href="https://x.com/alcohol_pokemon" target="_blank" rel="noopener noreferrer" class="x-link">
+            <i class="fa-brands fa-x-twitter"></i>
+          </a>
+        </div>
+
+        <!-- Ponchan -->
+        <div class="profile-card reveal" data-kick="ponchan_2525" style="transition-delay: 0.6s;">
+          <a href="https://kick.com/ponchan_2525" target="_blank" rel="noopener noreferrer" class="card-link">
+            <img src="ponchan.jpg" alt="ぽんちゃん" class="card-image">
+            <div class="card-overlay">
+              <h3>ぽんちゃん</h3>
+              <p class="role">副きゃぷてん</p>
+            </div>
+          </a>
+          <a href="https://x.com/ponchan257ma" target="_blank" rel="noopener noreferrer" class="x-link">
+            <i class="fa-brands fa-x-twitter"></i>
+          </a>
+        </div>
+
+        <!-- michaaam -->
+        <div class="profile-card reveal" data-kick="michaaam" style="transition-delay: 0.7s;">
+          <a href="https://kick.com/michaaam" target="_blank" rel="noopener noreferrer" class="card-link">
+            <img src="mi.jpg" alt="michaaam" class="card-image">
+            <div class="card-overlay">
+              <h3>michaaam</h3>
+              <p class="role">めんばー</p>
+            </div>
+          </a>
+          <a href="https://x.com/_michaaam" target="_blank" rel="noopener noreferrer" class="x-link">
+            <i class="fa-brands fa-x-twitter"></i>
+          </a>
+        </div>
+
+      </div>
+
+      <!-- Raid Lottery Trigger -->
+      <div class="raid-lottery-trigger-container reveal">
+        <div class="lottery-card" id="open-lottery">
+          <div class="card-icon">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <div class="card-info">
+            <h3>レイドスロット</h3>
+            <p>配信中のメンバーからレイド先を抽選します</p>
+          </div>
+          <div class="card-action">
+            <span class="btn-mini">スロットを回す <i class="fa-solid fa-chevron-right"></i></span>
+          </div>
+        </div>
+
+        <div class="lottery-card pachinko-card" id="open-pachinko">
+          <div class="card-icon">
+            <i class="fa-solid fa-gem"></i>
+          </div>
+          <div class="card-info">
+            <h3>CRユキッカーズ</h3>
+            <p>玉（メンバー）を打ち出してレイドを狙え！</p>
+          </div>
+          <div class="card-action">
+            <span class="btn-mini">パチンコを開始 <i class="fa-solid fa-chevron-right"></i></span>
+          </div>
+        </div>
+      </div>
+
+      </section>
+
+  <!-- Schedule Section -->
+  <section id="schedule" class="section schedule page-section">
+    <div class="container" style="max-width: 1200px; padding: 0 10px;">
+      <div class="section-title reveal">
+        <h2>Event <span class="text-neon">Schedule</span></h2>
+      </div>
+      
+      <div class="schedule-layout reveal">
+        <!-- Left Sidebar (PREV) -->
+        <div class="schedule-sidebar schedule-sidebar-left" id="prev-month-btn">
+          <div class="sidebar-month" id="prev-month-display">03</div>
+          <div class="sidebar-label">PREV</div>
+          <div class="sidebar-arrow"><i class="fa-solid fa-caret-left"></i></div>
+        </div>
+        
+        <!-- Main Center Content -->
+        <div class="schedule-center">
+          <div class="schedule-inner" id="schedule-inner">
+            <div class="schedule-top-header" id="current-month-display">
+              2026.04
+            </div>
+            <div class="schedule-list-container" id="schedule-list">
+              <!-- JS generates horizontal list rows here -->
+            </div>
+          </div>
+        </div>
+        
+        <!-- Right Sidebar (NEXT) -->
+        <div class="schedule-sidebar schedule-sidebar-right" id="next-month-btn">
+          <div class="sidebar-month" id="next-month-display">05</div>
+          <div class="sidebar-label">NEXT</div>
+          <div class="sidebar-arrow"><i class="fa-solid fa-caret-right"></i></div>
+        </div>
+      </div>
+
+      <!-- TBD Schedule Section -->
+      <div class="tbd-schedule-container reveal">
+        <h3 class="tbd-title"><span>Future Plans</span> 日程未定のイベント</h3>
+        <div id="tbd-list" class="tbd-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- History Section -->
+  <section id="history" class="section history page-section">
+    <div class="container">
+      <div class="section-title reveal">
+        <h2>Stream <span class="text-neon">Archives</span></h2>
+        <p class="archive-note">※システムの都合上、記録される時間に多少の誤差が生じる場合があります。</p>
+      </div>
+      <div id="archive-filters" class="archive-filters reveal">
+        <!-- Buttons added by script.js -->
+      </div>
+      <div id="history-container" class="history-container reveal">
+        <div class="loading-spinner">
+          <i class="fa-solid fa-spinner fa-spin"></i> 配信履歴を読み込み中...
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Rules Section -->
+  <section id="rules" class="section rules page-section">
+    <div class="container">
+      <div class="section-title reveal">
+        <h2>Group <span class="text-neon">Rules</span></h2>
+      </div>
+      <div class="rules-grid">
+        <div class="rule-card reveal" style="transition-delay: 0.1s;">
+          <div class="rule-number">01</div>
+          <div class="rule-icon"><i class="fa-solid fa-star"></i></div>
+          <h3>レイドをする</h3>
+          <p>配信終了時は他の仲間やおすすめの配信者へ積極的にレイドを行い、コミュニティを広げます。</p>
+        </div>
+        <div class="rule-card reveal" style="transition-delay: 0.2s;">
+          <div class="rule-number">02</div>
+          <div class="rule-icon"><i class="fa-solid fa-heart"></i></div>
+          <h3>恋愛禁止</h3>
+          <p>グループ内での恋愛は禁止。<br>純粋なエンターテイメントを提供することに集中します。</p>
+        </div>
+        <div class="rule-card reveal" style="transition-delay: 0.3s;">
+          <div class="rule-number">03</div>
+          <div class="rule-icon"><i class="fa-solid fa-crown"></i></div>
+          <h3>ユキの悪口を言わない</h3>
+          <p>リーダーへのリスペクトを忘れず、悪口や誹謗中傷を決して言わないこと。</p>
+        </div>
+        <div class="rule-card reveal" style="transition-delay: 0.4s;">
+          <div class="rule-number">04</div>
+          <div class="rule-icon"><i class="fa-solid fa-handshake-angle"></i></div>
+          <h3>喧嘩をしない</h3>
+          <p>メンバー間やリスナーとの間で喧嘩をせず、仲良く平和な配信を心がけます。</p>
+        </div>
+        <div class="rule-card reveal" style="transition-delay: 0.5s;">
+          <div class="rule-number">05</div>
+          <div class="rule-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+          <h3>お金の貸し借り禁止</h3>
+          <p>メンバー間、リスナーとの間での金銭の貸し借りは一切禁止です。トラブルを未然に防ぎましょう。</p>
+        </div>
+        <div class="rule-card reveal" style="transition-delay: 0.6s;">
+          <div class="rule-number">06</div>
+          <div class="rule-icon"><i class="fa-solid fa-user-lock"></i></div>
+          <h3>暴露をしない</h3>
+          <p>グループ内の機密情報やメンバーのプライベートな情報を許可なく外部に漏らしません。</p>
+        </div>
+        <div class="rule-card reveal" style="transition-delay: 0.7s;">
+          <div class="rule-number">07</div>
+          <div class="rule-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <h3>BANになるようなことはしない</h3>
+          <p>プラットフォームの規約を遵守し、配信活動が停止（BAN）されるような行為は絶対に行いません。</p>
+        </div>
+        <div class="rule-card reveal" style="transition-delay: 0.8s;">
+          <div class="rule-number">08</div>
+          <div class="rule-icon"><i class="fa-solid fa-user-shield"></i></div>
+          <h3>瓜田さんをいじりすぎない</h3>
+          <p>瓜田さんへの敬意を忘れず、度を越したいじりや失礼な言動は慎み、適切な距離感を保ちます。</p>
+        </div>
+        <div class="rule-card reveal" style="transition-delay: 0.9s;">
+          <div class="rule-number">09</div>
+          <div class="rule-icon"><i class="fa-solid fa-handshake-slash"></i></div>
+          <h3>パパ活禁止</h3>
+          <p>グループ内外を問わず、パパ活やそれに類する行為は一切禁止です。健全な活動を徹底します。</p>
+        </div>
+      </div>
+      
+      <!-- Rules Video -->
+      <div class="rules-video-container reveal" style="transition-delay: 0.5s;">
+        <video class="rules-video" src="yukirule.mp4" controls playsinline></video>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-logo">
+        <span class="text-neon">YUKICKERS</span>
+      </div>
+      <p>&copy; 2026 Yukickers. Streaming on Kick.</p>
+    </div>
+  </footer>
+
+
+  <!-- Raid Lottery Modal (Moved to body root for fixed positioning) -->
+  <div id="lottery-modal" class="modal-overlay">
+    <div class="modal-content">
+      <button id="close-modal" class="modal-close">&times;</button>
+      
+      <div class="modal-header">
+        <h2 class="text-neon">RAID <span class="text-white">SLOT</span></h2>
+      </div>
+
+      <div class="modal-body">
+        <!-- Settings View -->
+        <div id="lottery-view-settings" class="lottery-view active">
+          <p class="view-desc">抽選対象のメンバーを選択してください</p>
+          <div class="member-selection-grid" id="member-selection-list">
+            <!-- Checkboxes will be injected here by JS -->
+          </div>
+          <div class="view-actions">
+            <button id="start-shuffle-btn" class="btn-primary-neon">抽選スタート！</button>
+          </div>
+        </div>
+
+        <!-- Shuffle View (Pachislot Style) -->
+        <div id="lottery-view-shuffle" class="lottery-view">
+          <div class="slot-machine-container">
+            <div class="fever-overlay"></div>
+            <div class="slot-header">
+              <div class="win-lamp left">WIN</div>
+              <div class="chance-panel">CHANCE</div>
+              <div class="win-lamp right">WIN</div>
+            </div>
+            
+            <div class="slot-reels">
+              <div class="reel-window">
+                <div class="reel-track" id="reel-1"></div>
+              </div>
+              <div class="reel-window">
+                <div class="reel-track" id="reel-2"></div>
+              </div>
+              <div class="reel-window">
+                <div class="reel-track" id="reel-3"></div>
+              </div>
+              <div class="reel-glass-shine"></div>
+            </div>
+
+            <div class="slot-controls">
+              <button class="stop-btn" id="stop-reel-1" disabled>1</button>
+              <button class="stop-btn" id="stop-reel-2" disabled>2</button>
+              <button class="stop-btn" id="stop-reel-3" disabled>3</button>
+            </div>
+          </div>
+          <div class="slot-footer">
+            <p class="slot-hint">リールを止めてください！</p>
+          </div>
+        </div>
+
+        <!-- Result View (Big Win) -->
+        <div id="lottery-view-result" class="lottery-view">
+          <div class="result-box-fever">
+            <div class="fever-text">BIG WIN!!</div>
+            <div class="winner-glow-rainbow"></div>
+            <div class="winner-card" id="winner-card">
+              <img id="winner-img" src="" alt="Winner">
+              <h3 id="winner-name">名前</h3>
+            </div>
+            <div class="result-actions">
+              <a id="winner-link" href="#" target="_blank" class="btn-kick-neon">配信を見に行く <i class="fa-solid fa-external-link"></i></a>
+              <button id="retry-lottery-btn" class="btn-primary">もう一度</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pachinko Modal -->
+  <div id="pachinko-modal" class="modal-overlay">
+    <div class="modal-content pachinko-modal-content">
+      <button id="close-pachinko-modal" class="modal-close">&times;</button>
+      
+      <div class="modal-header">
+        <h2 class="modal-title">CR<span class="text-neon">ユキッカーズ</span></h2>
+      </div>
+
+      <div class="modal-body">
+        <!-- Pachinko Settings View -->
+        <div id="pachinko-view-settings" class="lottery-view active">
+          <p class="view-desc">玉（メンバー）を6人以上選択してください</p>
+          <div class="member-selection-grid" id="pachinko-member-selection-list">
+            <!-- Injected by script.js -->
+          </div>
+          <div class="view-actions">
+            <button id="pachinko-to-board-btn" class="btn-primary-neon">盤面へ！</button>
+          </div>
+        </div>
+
+        <!-- Pachinko Play View -->
+        <div id="pachinko-view-play" class="lottery-view">
+          <div class="pachinko-outer-container">
+            <!-- Status Bar -->
+            <div class="pachinko-status-bar">
+              <span>持ち玉: <strong id="pachinko-balls">500</strong></span>
+              <span>回転数: <strong id="pachinko-spin-count">0</strong></span>
+            </div>
+
+            <!-- Board + LCD Composite -->
+            <div class="pachinko-board-wrapper">
+              <canvas id="pachinko-board-canvas"></canvas>
+
+              <!-- LCD Overlay (centered on board) -->
+              <div class="pachinko-lcd-overlay">
+                <div class="pachinko-lcd-screen" id="pachinko-lcd-area">
+                  <div id="pachinko-production-text" class="production-text">
+                    <div class="production-line">CR ユキッカーズ</div>
+                    <div class="production-line sub">〜伝説の始まり〜</div>
+                  </div>
+                </div>
+
+                <!-- 3-Reel Display -->
+                <div class="pachinko-reels-container">
+                  <div class="pachinko-reel" id="pachinko-reel-1">
+                    <div class="reel-window"><div class="reel-strip" id="reel-strip-1"></div></div>
+                  </div>
+                  <div class="pachinko-reel" id="pachinko-reel-2">
+                    <div class="reel-window"><div class="reel-strip" id="reel-strip-2"></div></div>
+                  </div>
+                  <div class="pachinko-reel" id="pachinko-reel-3">
+                    <div class="reel-window"><div class="reel-strip" id="reel-strip-3"></div></div>
+                  </div>
+                </div>
+
+                <!-- Hold Lamps -->
+                <div class="pachinko-hold-bar">
+                  <div class="hold-lamp" id="pachinko-hold-1"></div>
+                  <div class="hold-lamp" id="pachinko-hold-2"></div>
+                  <div class="hold-lamp" id="pachinko-hold-3"></div>
+                  <div class="hold-lamp" id="pachinko-hold-4"></div>
+                </div>
+              </div>
+
+              <!-- Cut-In Overlay -->
+              <div id="pachinko-cutin" class="pachinko-cutin-overlay">
+                <div class="cutin-inner">
+                  <div class="cutin-character" id="cutin-character-box">
+                    <img id="cutin-img" src="yuki.jpg" alt="Member">
+                  </div>
+                  <div class="cutin-text" id="cutin-text">ボタンを押せ！</div>
+                  <button id="cutin-btn" class="cutin-button">PUSH!</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Launch Button -->
+            <div class="pachinko-controls">
+              <button id="pachinko-launch-btn" class="pachinko-btn-launch">
+                <span class="btn-shine"></span>
+                <i class="fa-solid fa-circle-up"></i> 玉を打つ（長押し）
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pachinko Result View -->
+        <div id="pachinko-view-result" class="lottery-view">
+          <div id="pachinko-result" class="pachinko-result-area">
+            <div id="pachinko-fever-text" class="fever-text">FEVER!!</div>
+            <h3 id="pachinko-winner-name"></h3>
+            <div class="result-actions">
+              <a id="pachinko-raid-link" href="#" target="_blank" class="btn-kick-neon">
+                レイド確定！ <i class="fa-solid fa-bolt"></i>
+              </a>
+              <button id="retry-pachinko-btn" class="btn-primary">もう一回！</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

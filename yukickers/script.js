@@ -47,37 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Visitor Counter Logic
-  async function initVisitorCounter() {
-    const todayEl = document.getElementById('visitor-count-today');
-    const yesterdayEl = document.getElementById('visitor-count-yesterday');
-    const totalEl = document.getElementById('visitor-count-total');
-    
-    if (!todayEl || !yesterdayEl || !totalEl) return;
-
-    const hasCounted = sessionStorage.getItem('yukickers_counted');
-    const action = hasCounted ? 'get' : 'increment';
-
-    try {
-      const response = await fetch(`/api/counter?action=${action}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.total !== undefined) {
-          todayEl.textContent = data.today.toLocaleString();
-          yesterdayEl.textContent = data.yesterday.toLocaleString();
-          totalEl.textContent = data.total.toLocaleString();
-          if (action === 'increment') {
-            sessionStorage.setItem('yukickers_counted', 'true');
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('Counter fetch failed', err);
-    }
-  }
-
-  initVisitorCounter();
-
   // Mobile Menu Toggle
   const mobileToggle = document.getElementById('mobile-toggle');
   const mobileMenu = document.getElementById('mobile-menu');

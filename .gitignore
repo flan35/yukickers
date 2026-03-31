@@ -1,2 +1,11 @@
+<<<<<<< HEAD
 .vercel
 node_modules
+=======
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
+>>>>>>> f70d4a666f53ed9f09cdc0a75420bff45816935d
