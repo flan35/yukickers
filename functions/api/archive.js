@@ -38,10 +38,18 @@ export async function onRequest(context) {
     // Action: Sync/Bootstrap past stream history
     if (action === 'sync' || action === 'bootstrap') {
       const allNewRecords = [];
+      const headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Referer': 'https://kick.com/'
+      };
+
       for (const user of MEMBERS) {
         try {
-          const vRes = await fetch(`https://kick.com/api/v2/channels/${user}/videos`);
-          if (!vRes.ok) continue;
+          const vRes = await fetch(`https://kick.com/api/v2/channels/${user}/videos`, { headers });
+          if (!vRes.ok) {
+            console.warn(`Kick Video API returned ${vRes.status} for ${user}`);
+            continue;
+          }
           const vData = await vRes.json();
           if (Array.isArray(vData)) {
             vData.forEach(v => {
@@ -144,10 +152,18 @@ export async function onRequest(context) {
  */
 async function runCronTask(membersList, env, now) {
   const results = [];
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Referer': 'https://kick.com/'
+  };
+
   for (const user of membersList) {
     try {
-      const kickRes = await fetch(`https://kick.com/api/v2/channels/${user}`);
-      if (!kickRes.ok) continue;
+      const kickRes = await fetch(`https://kick.com/api/v2/channels/${user}`, { headers });
+      if (!kickRes.ok) {
+        console.warn(`Kick API returned ${kickRes.status} for ${user}`);
+        continue;
+      }
 
       const data = await kickRes.json();
       const livestream = data.livestream;
