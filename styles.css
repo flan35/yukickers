@@ -121,7 +121,11 @@ a {
 }
 .page-section.active {
   display: block !important;
-  animation: sectionAppear 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  animation: sectionAppear 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+.page-section.fade-out {
+  display: block !important;
+  animation: sectionDisappear 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 @keyframes sectionAppear {
@@ -134,7 +138,20 @@ a {
     transform: translateY(0) scale(1);
   }
 }
-#home.page-section.active {
+
+@keyframes sectionDisappear {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+
+#home.page-section.active,
+#home.page-section.fade-out {
   display: block !important; /* Home is a container for multiple sub-sections */
 }
 
@@ -2808,7 +2825,7 @@ a {
 
 /* Bubbles/Hearts floating effect */
 .intro-hearts::before, .intro-hearts::after {
-  content: '笙･';
+  content: '\2764';
   position: absolute;
   color: var(--sanrio-pink);
   opacity: 0.2;
@@ -2929,7 +2946,7 @@ body.content-ready {
 
 /* Add a heart pattern to the turning page */
 .page-turn-inner::after {
-  content: '笙･';
+  content: '\2764';
   font-size: 20rem;
   color: rgba(255, 255, 255, 0.3);
   font-family: var(--font-pop);

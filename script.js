@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // SPA Navigation & Mobile Menu Close
+  // Handle Unified SPA Navigation
   const navLinks = document.querySelectorAll('a[data-nav="true"]');
   const pageSections = document.querySelectorAll('.page-section');
 
@@ -111,30 +111,35 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetId = link.getAttribute('href').substring(1);
       
       // Page Turn Effect
+      // Page Fade Effect
       createParticles(e.clientX, e.clientY);
-      const pageTurn = document.getElementById('page-turn-overlay');
       
-      if (pageTurn) {
-        pageTurn.classList.remove('active');
-        void pageTurn.offsetWidth; // Trigger reflow
-        pageTurn.classList.add('active');
+      const targetSec = document.getElementById(targetId);
+      const currentActive = document.querySelector('.page-section.active');
+      
+      if (!targetSec || currentActive === targetSec) return;
+
+      if (currentActive) {
+        currentActive.classList.remove('active');
+        currentActive.classList.add('fade-out');
       }
 
-      // Delay for the page to 'cover' the screen before switching section
+      // Delay for the old section to fade out before switching
       setTimeout(() => {
-        // Hide all sections
-        pageSections.forEach(sec => sec.classList.remove('active'));
+        // Hide all sections and remove fade-out
+        pageSections.forEach(sec => {
+          sec.classList.remove('active');
+          sec.classList.remove('fade-out');
+        });
         
         // Show target section
-        const targetSec = document.getElementById(targetId);
-        if(targetSec) {
-          targetSec.classList.add('active');
-          // Update URL hash
-          if (targetId === 'home') {
-            history.pushState(null, null, window.location.pathname);
-          } else {
-            history.pushState(null, null, '#' + targetId);
-          }
+        targetSec.classList.add('active');
+        
+        // Update URL hash
+        if (targetId === 'home') {
+          history.pushState(null, null, window.location.pathname);
+        } else {
+          history.pushState(null, null, '#' + targetId);
         }
 
         // Close mobile menu if open
@@ -146,10 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo(0, 0);
 
         // Trigger animations for newly visible section
-        setTimeout(reveal, 100);
-      }, 300);
+        setTimeout(reveal, 50);
+      }, 400);
     });
   });
+
 
   // Particle Creation Function
   function createParticles(x, y) {
