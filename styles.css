@@ -100,6 +100,75 @@ h1, h2, h3, .text-neon, .logo-text, .glitch-title {
   text-shadow: 0 0 10px var(--pink-glow);
 }
 
+/* Home Section Video Background */
+#home.page-section {
+  position: relative;
+  /* overflow: hidden; */ /* Removed to allow position: sticky to work */
+}
+
+.video-background {
+  position: sticky; /* Sticky to stay in viewport as you scroll thru Home */
+  top: 67px; /* Fine-tuned adjustment (-3px) as requested */
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 67px);
+  z-index: -1;
+  overflow: hidden;
+  margin-bottom: calc(-100vh + 67px); /* Pull content back up over the sticky bg */
+  
+  /* Centering Logic */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Start from the top but keep horizontal center */
+}
+
+#bg-video {
+  width: 100%;
+  height: auto; /* Natural ratio, no zoom */
+  min-width: 1400px; /* Increased min-width based on user screenshot */
+  flex-shrink: 0; /* Prevent flexbox from shrinking it below min-width */
+  display: block;
+  pointer-events: none;
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 183, 197, 0.3); /* Soft pink tint */
+  backdrop-filter: blur(8px); /* Pink blur effect */
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1;
+}
+
+/* Ensure all elements in #home are transparent to show the video background */
+#home.page-section,
+#home .hero,
+#home .section.about,
+#home .section.news-home,
+#home .news-container,
+#home .news-item {
+  background: transparent !important;
+}
+
+#home .news-item {
+  border-bottom: 1px solid rgba(255, 133, 162, 0.2);
+}
+
+.hero-bg {
+  background: transparent !important;
+}
+
+/* Ensure other home content is above video */
+#home .hero, 
+#home .section.about, 
+#home .section.news-home {
+  position: relative;
+  z-index: 2;
+}
+
 a {
   text-decoration: none;
   color: inherit;
