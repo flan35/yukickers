@@ -1780,7 +1780,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- 3D Chibi Characters Logic (Three.js) ---
-  const chibiContainer = document.getElementById('chibi-container');
+  const chibiContainer = document.getElementById('chibi-home-section');
   if (chibiContainer && typeof THREE !== 'undefined') {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, chibiContainer.clientWidth / chibiContainer.clientHeight, 0.1, 1000);
@@ -1788,13 +1788,13 @@ document.addEventListener('DOMContentLoaded', () => {
     renderer.setSize(chibiContainer.clientWidth, chibiContainer.clientHeight);
     chibiContainer.appendChild(renderer.domElement);
 
-    camera.position.z = 5;
+    camera.position.z = 8; // Adjust distance to see more characters in row
 
     const loader = new THREE.TextureLoader();
     const memberChibis = [
       { id: 'yuki_0121', file: 'chibi_yuki.png' },
       { id: 'nodazourip', file: 'chibi_nodazouri.png' },
-      { id: 'inosisi0909', file: 'chibi_inoshishi.png' }, // Corrected ID
+      { id: 'inosisi0909', file: 'chibi_inoshishi.png' }, 
       { id: '04miki05', file: 'chibi_miki.png' },
       { id: 'kariko2525', file: 'chibi_kariko.png' },
       { id: 'ponchan_2525', file: 'chibi_ponchan.png' },
@@ -1802,7 +1802,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     const characters = [];
-    const spacing = 0.8;
+    const spacing = 1.6; // More spacing for horizontal layout
     const startX = -((memberChibis.length - 1) * spacing) / 2;
 
     memberChibis.forEach((m, i) => {
@@ -1814,7 +1814,7 @@ document.addEventListener('DOMContentLoaded', () => {
       );
       const material = new THREE.SpriteMaterial({ map: texture });
       const sprite = new THREE.Sprite(material);
-      sprite.scale.set(1, 1, 1);
+      sprite.scale.set(1.5, 1.5, 1); // Slightly larger
       sprite.position.x = startX + i * spacing;
       sprite.position.y = -0.5;
       
@@ -1831,12 +1831,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function updateChibiStatus() {
+      // Local check: skip fetch if using file:// protocol to avoid constant logs
+      if (window.location.protocol === 'file:') return;
+
       try {
         const response = await fetch('/api/archive?action=status');
         if (response.ok) {
           const statuses = await response.json();
           characters.forEach(char => {
-            const found = statuses.find(s => s.user === char.userData.id || (char.userData.id === 'nosisi0909' && s.user === 'inosisi0909'));
+            const found = statuses.find(s => s.user === char.userData.id);
             if (found) {
               char.userData.status = found.status;
             }
