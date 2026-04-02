@@ -103,6 +103,16 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'synced', count: truncated.length, data: truncated }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
     }
 
+    // Action: Get live status of all members
+    if (action === 'status') {
+      const statusResults = [];
+      for (const user of MEMBERS) {
+        const session = await env.KV.get(`session:${user}`);
+        statusResults.push({ user, status: session ? 'live' : 'offline' });
+      }
+      return new Response(JSON.stringify(statusResults), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
+    }
+
     // Action: Get history list
     if (action === 'list') {
       // --- LAZY CRON LOGIC ---
