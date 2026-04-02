@@ -420,9 +420,27 @@ a {
     justify-content: center;
   }
   .hero {
-    padding-top: 100px;
-    min-height: auto;
-    padding-bottom: 60px;
+    padding-top: 60px; /* Tighter padding for mobile */
+    min-height: auto !important; /* Stop taking up full screen if not needed */
+    padding-bottom: 40px;
+  }
+  .section {
+    padding: 60px 0 40px !important; /* Drastically reduce section gaps */
+  }
+  .section-title {
+    margin-bottom: 30px !important;
+  }
+  .japanese-title {
+    margin-bottom: 25px !important;
+  }
+}
+
+/* Specific Mobile Fix for Video Background Position */
+@media (max-width: 768px) {
+  .video-background {
+    top: 70px !important; /* Adjusted for mobile navbar height */
+    height: calc(100vh - 70px) !important;
+    margin-bottom: calc(-100vh + 70px) !important;
   }
 }
 
@@ -587,7 +605,10 @@ a {
 
 @media (max-width: 768px) {
   .lotteria-carousel {
-    width: 95%;
+    width: 100%; /* Use full width on mobile to fill gaps */
+  }
+  .carousel-controls {
+    margin-bottom: 20px !important; /* Tighten carousel area */
   }
   .carousel-btn {
     width: 36px;
