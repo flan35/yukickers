@@ -1470,13 +1470,13 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(renderMemberArchives, 60000);
 
 
-  // News Data
+  // News Data (Normalized for filtering)
   const newsData = [
-    { date: '2026.03.30', badge: 'メンバー加入', badgeClass: 'live', title: '新メンバー「michaaam」が加入しました！' },
+    { date: '2026.03.30', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「michaaam」が加入しました！' },
     { date: '2026.03.28', badge: 'Info', badgeClass: 'info', title: 'グループルールに「BAN行為禁止」「瓜田さんへの配慮」「パパ活禁止」を追加しました' },
     { date: '2026.03.25', badge: 'Info', badgeClass: 'info', title: 'グループルールに「暴露をしない」を追加しました' },
     { date: '2026.03.23', badge: 'イベント', badgeClass: 'event', title: '３月２８日１９時～ユキッカーズ決起集会決定！' },
-    { date: '2026.03.22', badge: 'メンバー加入', badgeClass: 'live', title: '野田草履、ぽんちゃんが参加' },
+    { date: '2026.03.22', badge: 'メンバー', badgeClass: 'member', title: '野田草履、ぽんちゃんが参加' },
     { date: '2026.03.22', badge: 'Info', badgeClass: 'info', title: 'ユキッカーズ公式サイトを正式公開しました' },
     { date: '2026.03.19', badge: 'Info', badgeClass: 'info', title: 'ユキッカーズ結成' }
   ];
@@ -1511,101 +1511,56 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial render for TBD
   renderTbdSchedule();
 
-  function renderNews(data, containerId, limit = null) {
+  function renderNews(data, containerId, limit = null, category = 'all') {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    let displayData = limit ? data.slice(0, limit) : data;
+    // Filter by category
+    let filteredData = (category === 'all') 
+      ? data 
+      : data.filter(item => item.badgeClass === category);
+
+    let displayData = limit ? filteredData.slice(0, limit) : filteredData;
     
-    container.innerHTML = displayData.map(item => `
-      <li class="news-item">
-        <div class="news-date">${item.date}</div>
-        <div class="news-badge ${item.badgeClass}">${item.badge}</div>
-        <div class="news-title">${item.title}</div>
-      </li>
-    `).join('');
+    if (displayData.length === 0) {
+      container.innerHTML = '<li class="news-empty">このカテゴリーのニュースはありません。</li>';
+      return;
+    }
+
+    container.innerHTML = displayData.map(item => {
+      return `
+        <li class="news-item">
+          <div class="news-meta">
+            <span class="news-date">${item.date}</span>
+            <span class="news-badge ${item.badgeClass}">${item.badge}</span>
+          </div>
+          <div class="news-title-wrap">
+            <span class="news-title">${item.title}</span>
+          </div>
+        </li>
+      `;
+    }).join('');
   }
+
+  // News Tab Click Handling
+  const newsTabs = document.querySelectorAll('.news-tab');
+  newsTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const category = tab.getAttribute('data-category');
+      
+      // Update active state
+      newsTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      
+      // Re-render
+      renderNews(newsData, 'news-summary-list', 5, category);
+    });
+  });
 
   // Initial render for news
-  renderNews(newsData, 'news-summary-list', 5);
-  renderNews(newsData, 'full-news-list');
+  renderNews(newsData, 'news-summary-list', 5, 'all');
+  renderNews(newsData, 'full-news-list', null, 'all');
 
-  // Custom Carousel (Lotteria Style - No Swiper)
-  var carouselEl = document.getElementById('heroCarousel');
-  if (carouselEl) {
-    var trackEl = carouselEl.querySelector('.carousel-track');
-    var slideEls = carouselEl.querySelectorAll('.carousel-slide');
-    var prevBtnEl = document.getElementById('carouselPrev');
-    var nextBtnEl = document.getElementById('carouselNext');
-    var dotsContainerEl = document.getElementById('carouselDots');
-    var totalSlides = slideEls.length;
-    var currentIdx = 0;
-
-    // Create dots
-    for (var i = 0; i < totalSlides; i++) {
-      var dotEl = document.createElement('button');
-      dotEl.classList.add('carousel-dot');
-      dotEl.setAttribute('data-index', i);
-      dotsContainerEl.appendChild(dotEl);
-    }
-    var dotEls = dotsContainerEl.querySelectorAll('.carousel-dot');
-
-    // Add dot click listeners
-    dotsContainerEl.addEventListener('click', function(e) {
-      var dot = e.target.closest('.carousel-dot');
-      if (dot) {
-        var idx = parseInt(dot.getAttribute('data-index'));
-        showSlide(idx);
-      }
-    });
-
-    function showSlide(idx) {
-      if (idx < 0) idx = totalSlides - 1;
-      if (idx >= totalSlides) idx = 0;
-      currentIdx = idx;
-      console.log('showSlide:', currentIdx);
-      trackEl.style.transform = 'translateX(-' + (currentIdx * 100) + '%)';
-      for (var j = 0; j < totalSlides; j++) {
-        slideEls[j].classList.toggle('active', j === currentIdx);
-        dotEls[j].classList.toggle('active', j === currentIdx);
-      }
-    }
-
-    nextBtnEl.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('NEXT clicked, current:', currentIdx);
-      showSlide(currentIdx + 1);
-    });
-
-    prevBtnEl.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('PREV clicked, current:', currentIdx);
-      showSlide(currentIdx - 1);
-    });
-
-    // Touch/swipe support
-    var startX = 0;
-    carouselEl.addEventListener('touchstart', function(e) {
-      startX = e.touches[0].clientX;
-    }, { passive: true });
-    carouselEl.addEventListener('touchend', function(e) {
-      var diffX = startX - e.changedTouches[0].clientX;
-      if (Math.abs(diffX) > 50) {
-        if (diffX > 0) showSlide(currentIdx + 1);
-        else showSlide(currentIdx - 1);
-      }
-    });
-
-    // Initialize to first slide
-    showSlide(0);
-
-    // Autoplay - delayed start, generous interval
-    setTimeout(function() {
-      setInterval(function() { showSlide(currentIdx + 1); }, 6000);
-    }, 3000);
-  }
 
   // ==========================================================================
   // Schedule Logic

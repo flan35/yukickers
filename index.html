@@ -118,54 +118,41 @@
     <!-- Hero Section -->
     <header class="hero" id="hero-sub">
       <div class="hero-content reveal">
-        <!-- Custom Carousel (Lotteria Style) -->
-        <div class="lotteria-carousel" id="heroCarousel">
-          <div class="carousel-track">
-            <div class="carousel-slide"><img src="koukoku1.jpg" alt="広告1"></div>
-            <div class="carousel-slide"><img src="koukoku2.jpg" alt="広告2"></div>
-            <div class="carousel-slide"><img src="koukoku3.jpg" alt="広告3"></div>
-            <div class="carousel-slide"><img src="koukoku4.jpg" alt="広告4"></div>
-            <div class="carousel-slide"><img src="koukoku5.jpg" alt="広告5"></div>
-          </div>
-        </div>
-        
-        <!-- Carousel Controls -->
-        <div class="carousel-controls">
-          <button class="carousel-btn carousel-prev" id="carouselPrev" aria-label="前へ"><i class="fa-solid fa-heart"></i></button>
-          <div class="carousel-dots" id="carouselDots"></div>
-          <button class="carousel-btn carousel-next" id="carouselNext" aria-label="次へ"><i class="fa-solid fa-heart"></i></button>
+        <!-- Static Hero Image (Replaced Carousel) -->
+        <div class="hero-image-wrap">
+          <picture>
+            <source media="(max-width: 768px)" srcset="yukickers2.png">
+            <img src="yukickers1.png" alt="Yukickers Hero" class="hero-img-static">
+          </picture>
         </div>
       </div>
       <div class="hero-bg"></div>
       </header>
 
-    <!-- About Content (Moved to Home) -->
-    <section class="section about">
-      <div class="container">
-        <div class="section-title reveal">
-          <h2>We are <span class="text-neon">Yukickers</span></h2>
-        </div>
-        <div class="about-content reveal">
-          <p>「ユキッカーズ」は、リーダーであるユキちゃんを中心に活動する個性豊かな配信者グループです。<br>
-          視聴者と共に最高のエンターテインメントを作り上げます。</p>
-        </div>
-      </div>
-    </section>
 
     <!-- News Summary (Latest 5) -->
     <section class="section news-summary">
-      <div class="container">
-        <div class="section-title reveal">
-          <h2>Latest <span class="text-neon">News</span></h2>
-        </div>
-        <div class="news-container reveal">
-          <ul class="news-list" id="news-summary-list">
-            <!-- Latest 5 items will be injected here by script.js -->
-            <li class="loading-news">読み込み中...</li>
-          </ul>
-          <div class="news-more">
-            <a href="#news" data-nav="true" class="link-more">おしらせ一覧へ <i class="fa-solid fa-circle-chevron-right"></i></a>
+      <div class="container scroll-reveal">
+        <div class="news-filter reveal">
+          <div class="news-tab-container" id="news-tabs">
+            <button class="news-tab active" data-category="all">ALL</button>
+            <button class="news-tab" data-category="info">INFO</button>
+            <button class="news-tab" data-category="member">MEMBER</button>
+            <button class="news-tab" data-category="event">EVENT</button>
           </div>
+        </div>
+        
+        <div class="news-list-wrap reveal">
+          <ul class="news-list" id="news-summary-list">
+            <!-- News items rendered by script.js -->
+            <li class="loading-news">LOADING...</li>
+          </ul>
+        </div>
+
+        <div class="news-more">
+          <a href="#news" data-nav="true" class="link-more">おしらせ一覧へ <i class="fa-solid fa-circle-chevron-right"></i></a>
+        </div>
+      </div>
     </section>
   </div>
 

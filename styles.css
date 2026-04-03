@@ -153,8 +153,214 @@ h1, h2, h3, .text-neon, .logo-text, .glitch-title {
   background: transparent !important;
 }
 
-#home .news-item {
-  border-bottom: 1px solid rgba(255, 133, 162, 0.2);
+/* Official Minimalist News Section (Floating with Date Capsule) */
+.news-summary {
+  padding: 80px 0 !important;
+  /* Subtle vertical scrim to enhance readability without 'boxing' items */
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.25) 15%,
+    rgba(0, 0, 0, 0.25) 85%,
+    transparent 100%
+  );
+  position: relative;
+  z-index: 10;
+}
+
+.news-filter {
+  margin-bottom: 50px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.news-tab-container {
+  display: flex;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-bottom: 15px;
+}
+
+.news-tab {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+  position: relative;
+  padding: 0;
+  /* Multi-layer shadow for floating text readability */
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 15px rgba(0,0,0,0.3);
+}
+
+.news-tab:hover, .news-tab.active {
+  opacity: 1;
+}
+
+.news-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -16px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--pink-main);
+  box-shadow: 0 0 10px var(--pink-glow);
+}
+
+.news-list-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.news-item {
+  display: flex;
+  align-items: center;
+  padding: 30px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  gap: 40px;
+}
+
+.news-item:first-child {
+  border-top: none;
+}
+
+.news-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.news-meta {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  min-width: 280px; /* Adjusted for capsules */
+  flex-shrink: 0;
+}
+
+.news-date {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--pink-main); /* Changed to Yukickers Pink */
+  letter-spacing: 1.2px;
+  text-shadow: 
+    0 1px 2px rgba(0,0,0,1), 
+    0 0 10px rgba(0,0,0,0.3); /* Stronger shadow for pink text visibility */
+  min-width: 120px;
+  text-align: left;
+}
+
+.news-badge {
+  font-size: 0.7rem;
+  font-weight: 900;
+  padding: 5px 12px;
+  border-radius: 2px;
+  letter-spacing: 1px;
+  color: #fff;
+  text-transform: uppercase;
+  min-width: 90px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Official Badge Colors - Clean & High Contrast on dark-ish background */
+.news-badge.info { background: #333; border: 1px solid rgba(255,255,255,0.2); }
+.news-badge.member { background: linear-gradient(135deg, #e50012, #ff3333); }
+.news-badge.event { background: var(--pink-main); color: #fff; }
+
+.news-title-wrap {
+  flex: 1;
+}
+
+.news-title {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #fff;
+  line-height: 1.6;
+  position: relative;
+  display: inline;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.8), 0 0 15px rgba(0,0,0,0.3);
+}
+
+.news-item:hover .news-title {
+  color: var(--pink-main);
+}
+
+.news-item:hover .news-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: var(--pink-main);
+}
+
+.news-empty {
+  padding: 60px 0;
+  color: rgba(255,255,255,0.4);
+  font-family: var(--font-primary);
+  text-align: center;
+}
+
+.news-more {
+  margin-top: 50px;
+  text-align: center;
+}
+
+.link-more {
+  color: #fff;
+  font-weight: 700;
+  transition: color 0.3s ease;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.link-more:hover {
+  color: var(--pink-main);
+}
+
+/* Mobile Responsive */
+@media (max-width: 992px) {
+  .news-meta {
+    min-width: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .news-summary {
+    padding: 60px 0 !important;
+  }
+  .news-tab-container {
+    gap: 30px;
+    padding-left: 20px;
+    padding-right: 20px;
+    overflow-x: auto;
+  }
+  .news-list-wrap {
+    padding: 0 20px;
+  }
+  .news-item {
+    flex-direction: column;
+    gap: 15px;
+    padding: 25px 0;
+    align-items: flex-start;
+  }
+  .news-meta {
+    min-width: unset;
+    flex-direction: row;
+    gap: 15px;
+  }
+  .news-title {
+    font-size: 1.05rem;
+  }
 }
 
 .hero-bg {
@@ -505,119 +711,37 @@ a {
   /* clip-path: inset(20% 0 80% 0); */
   animation: glitch-anim 2s infinite linear alternate-reverse;
 }
-/* Custom Carousel (Lotteria Clone) */
-.lotteria-carousel {
-  width: 90%;
+/* Static Hero Image Styles */
+.hero-image-wrap {
+  width: 95%;
   max-width: 1200px;
-  margin: 0 auto 20px;
-  overflow: visible;
+  margin: 0 auto;
   position: relative;
-}
-
-.carousel-track {
-  display: flex;
-  align-items: center;
-  transition: transform 0.5s ease;
-}
-
-.carousel-slide {
-  min-width: 100%;
-  transition: transform 0.5s ease, opacity 0.5s ease;
-  opacity: 0.4;
-  transform: scale(0.85);
-  padding: 0 12px;
-  box-sizing: border-box;
-}
-
-.carousel-slide.active {
-  opacity: 1;
-  transform: scale(1);
   z-index: 2;
 }
 
-.carousel-slide img {
+.hero-img-static {
   width: 100%;
+  height: auto;
   display: block;
-  object-fit: cover;
-  aspect-ratio: 16 / 9;
+  border-radius: 24px;
+  box-shadow: 0 15px 45px rgba(255, 133, 162, 0.25);
+  border: 4px solid rgba(255, 255, 255, 0.8);
+  transition: transform 0.3s ease;
 }
 
-/* Carousel Controls (Lotteria Style) */
-.carousel-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 25px;
-  margin-bottom: 40px;
-}
-
-.carousel-btn {
-  width: 50px;
-  height: 50px;
-  background: transparent;
-  color: var(--pink-main); /* Pink color */
-  border: none;
-  font-size: 2.2rem;
-  cursor: pointer;
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  padding: 0;
-}
-
-.carousel-prev i {
-  transform: rotate(-90deg); /* Sideways heart as arrow */
-}
-
-.carousel-next i {
-  transform: rotate(90deg); /* Sideways heart as arrow */
-}
-
-.carousel-btn:hover {
-  transform: scale(1.2);
-  filter: drop-shadow(0 0 8px rgba(255, 133, 162, 0.6));
-}
-
-.carousel-dots {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.carousel-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: rgba(255, 133, 162, 0.3); /* Soft pink */
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 0;
-}
-
-.carousel-dot.active {
-  background: var(--pink-main); /* Active pink */
-  transform: scale(1.3);
-  box-shadow: 0 0 10px rgba(255, 133, 162, 0.5);
+.hero-img-static:hover {
+  transform: scale(1.01);
 }
 
 @media (max-width: 768px) {
-  .lotteria-carousel {
-    width: 100%; /* Use full width on mobile to fill gaps */
+  .hero-image-wrap {
+    width: 100%;
+    padding: 0 10px;
   }
-  .carousel-controls {
-    margin-bottom: 20px !important; /* Tighten carousel area */
-  }
-  .carousel-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 1rem;
-  }
-  .carousel-controls {
-    gap: 15px;
-    margin-bottom: 30px;
+  .hero-img-static {
+    border-radius: 16px;
+    border-width: 2px;
   }
 }
 
