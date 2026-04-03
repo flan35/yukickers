@@ -1472,19 +1472,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // News Data (Normalized for filtering)
   const newsData = [
+    { date: '2026.04.03', badge: 'イベント', badgeClass: 'event', title: '4月26日、ニコニコ超会議「超演劇」への出演が決定！' },
     { date: '2026.03.30', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「michaaam」が加入しました！' },
     { date: '2026.03.28', badge: 'Info', badgeClass: 'info', title: 'グループルールに「BAN行為禁止」「瓜田さんへの配慮」「パパ活禁止」を追加しました' },
     { date: '2026.03.25', badge: 'Info', badgeClass: 'info', title: 'グループルールに「暴露をしない」を追加しました' },
     { date: '2026.03.23', badge: 'イベント', badgeClass: 'event', title: '３月２８日１９時～ユキッカーズ決起集会決定！' },
     { date: '2026.03.22', badge: 'メンバー', badgeClass: 'member', title: '野田草履、ぽんちゃんが参加' },
-    { date: '2026.03.22', badge: 'Info', badgeClass: 'info', title: 'ユキッカーズ公式サイトを正式公開しました' },
-    { date: '2026.03.19', badge: 'Info', badgeClass: 'info', title: 'ユキッカーズ結成' }
+    { date: '2026.03.22', badge: 'Info', badgeClass: 'info', title: 'ユキッカーズ公式サイトを正式公開しました' }
   ];
 
   // Schedule Data
   const scheduleData = [
     { date: '2026.03.30', time: '21:00', type: 'INTERVIEW', title: 'ユキッカーズ面接（みーちゃん）', venue: 'KICK', image: 'mi.jpg', link: 'https://kick.com/yuki_0121' },
-    { date: '2026.05.00', time: '', type: 'GW CAMP', title: '(GW) 1泊2日キャンプ＆バーベキュー', venue: '屋外', image: 'dummy.jpg' },
+    { date: '2026.04.26', time: '11:00', type: 'EVENT', title: '超演劇～ニコ生の女神が消えた空白の1年～', venue: 'ニコニコ超会議', image: 'nicotyo.jpg', link: 'https://chokaigi.jp/' },
+    { date: '2026.05.00', time: '', type: 'GW CAMP', title: '(GW) 1泊2日キャンプ＆バーベキュー', venue: '屋外', image: 'BBQ.jpg' },
     { date: '2026.05.00', time: '', type: 'SPECIAL', title: 'ユキッカーズオーディション', venue: 'KICK', image: 'dummy.jpg' },
     { date: '2026.08.00', time: '', type: 'EVENT', title: '富士山', venue: '現地', image: 'dummy.jpg' }
   ];
