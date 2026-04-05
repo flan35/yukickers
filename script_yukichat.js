@@ -24,7 +24,8 @@
     { file: 'chibi_miki.png', name: 'ミキ' },
     { file: 'chibi_kariko.png', name: 'カリフラワー狩子' },
     { file: 'chibi_ponchan.png', name: 'ぽんちゃん' },
-    { file: 'chibi_michaaam.png', name: 'michaaam' }
+    { file: 'chibi_michaaam.png', name: 'michaaam' },
+    { file: 'chibi_toromi.png', name: 'とろみ' }
   ];
 
   const stage = document.getElementById('yukichat-stage');
@@ -83,6 +84,7 @@
 
     yukichat.isActive = false;
     yukichat.initialLogsShown = false;
+    yukichat.lastLogTs = null; // Clear log cache to ensure refresh upon re-entry
     
     Object.keys(yukichat.avatars).forEach(uid => {
       if (yukichat.avatars[uid]) yukichat.avatars[uid].remove();
