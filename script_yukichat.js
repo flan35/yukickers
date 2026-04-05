@@ -25,7 +25,7 @@
     { file: 'chibi_kariko.png', name: 'カリフラワー狩子' },
     { file: 'chibi_ponchan.png', name: 'ぽんちゃん' },
     { file: 'chibi_michaaam.png', name: 'michaaam' },
-    { file: 'chibi_toromi.png', name: 'とろみ' }
+    // { file: 'chibi_toromi.png', name: 'とろみ' } // Joined status voided
   ];
 
   const stage = document.getElementById('yukichat-stage');

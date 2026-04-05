@@ -1478,7 +1478,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // News Data (Normalized for filtering)
   const newsData = [
-    { date: '2026.04.05', badge: 'メンバー', badgeClass: 'member', title: 'メンバー「とろみ」が脱退しました' },
+    { date: '2026.04.05', badge: 'メンバー', badgeClass: 'member', title: 'メンバー「とろみ」の加入が白紙になりました' },
     { date: '2026.04.05', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「とろみ」が加入しました！' },
     { date: '2026.04.03', badge: 'イベント', badgeClass: 'event', title: '4月26日、ニコニコ超会議「超演劇」への出演が決定！' },
     { date: '2026.03.30', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「michaaam」が加入しました！' },
