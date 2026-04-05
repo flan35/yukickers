@@ -29,6 +29,8 @@
 
   const stage = document.getElementById('yukichat-stage');
   const setupOverlay = document.getElementById('yukichat-setup');
+  const historyOverlay = document.getElementById('yukichat-history');
+  const historyList = document.getElementById('yukichat-history-list');
   const activeCountEl = document.getElementById('yukichat-active-count');
   const avatarList = document.getElementById('yukichat-avatar-list');
   const nameInput = document.getElementById('yukichat-user-name');
@@ -36,6 +38,9 @@
   const exitBtn = document.getElementById('yukichat-exit-btn');
   const chatInput = document.getElementById('yukichat-input');
   const sendBtn = document.getElementById('yukichat-send-btn');
+
+  // Initialize UI Visibility
+  if (historyOverlay) historyOverlay.style.display = 'none';
 
   // Initialize Active Count Display
   if (!activeCountEl && setupOverlay) {
@@ -75,6 +80,7 @@
       yukichat.targetY = yukichat.y;
 
       setupOverlay.classList.remove('active');
+      if (historyOverlay) historyOverlay.style.display = 'flex';
       yukichat.isActive = true;
       
       renderAvatar(yukichat.id, {
@@ -93,7 +99,6 @@
   if (exitBtn) {
     exitBtn.onclick = () => {
       yukichat.isActive = false;
-      yukichat.initialLogsShown = false;
       
       // Clear all avatars from stage
       Object.keys(yukichat.avatars).forEach(uid => {
@@ -102,8 +107,10 @@
       });
       yukichat.users = {};
 
-      // Show setup again
+      // Show setup again, hide history
       setupOverlay.classList.add('active');
+      if (historyOverlay) historyOverlay.style.display = 'none';
+      if (historyList) historyList.innerHTML = '';
     };
   }
 
@@ -122,43 +129,44 @@
     };
   }
 
-  // Maximum Strict Profanity Filter (Regex-based Phrases)
-  function sanitizeMsg(text) {
-    if (!text) return '';
-    const ngWords = [
-      /[死殺][し抜き]?[に]?[行いくくるきた]/g, /[死殺]す[ぞぜやろっ]/g, /[死殺][ねろ]/g, /ぶっ殺/g, /ぶち殺/g, /ブチ殺/g,
-      /首[つ釣]る/g, /自殺[し]?[ろたよ]/g, /クタバレ/g, /くたばれ/g, /地獄/g, /呪い/g, /遺影/g,
-      /殴[るりっ][てたぞぜ]/g, /蹴[るりっ][てたぞぜ]/g, /叩[くきい][てたぞぜ]/g, /[刺指][さし]?[すした]/g, /[埋う]め[るてた]/g,
-      /[壊こわ]す/g, /ぶっ[壊こわ]す/g, /火[ををあつけ]/g, /爆破/g, /包丁/g, /ナイフ/g, /刺す/g,
-      /ガイジ/g, /池沼/g, /片輪/g, /基地外/g, /きちがい/g, /気違い/g, /土人/g, /土方/g, /部落/g,
-      /アホ/g, /あほ/g, /バカ/g, /ばか/g, /馬鹿/g, /カス/g, /かす/g, /クズ/g, /くず/g, /ゴミ/g, /ごみ/g, /クソ/g, /くそ/g, /糞/g,
-      /キモい/g, /きもい/g, /しつけー/g, /ウザい/g, /うざい/g, /キショい/g, /きしょい/g, /ブス/g, /ぶす/g, /ハゲ/g, /デブ/g,
-      /マンコ/g, /まんこ/g, /チンコ/g, /ちんこ/g, /クリトラ/g, /フェラ/g, /オナニー/g, /中出し/g, /なかがだし/g, /セックス/g, /淫乱/g, /ヤリマン/g, /レイプ/g, /強姦/g, /犯す/g,
-      /消えろ/g, /きえろ/g, /いなくなれ/g, /邪魔/g, /不快/g, /しねよ/g
-    ];
-    const positiveWords = ['だいすき', 'らぶ', 'にこにこ', 'きらきら', 'はぴはぴ', '天才！', '最高に可愛い', 'しあわせ', 'ゆめかわいい', 'なかよし', '最高！', '世界一！', '尊い'];
-    let sanitized = text;
-    ngWords.forEach(pattern => {
-      sanitized = sanitized.replace(pattern, () => {
-         return positiveWords[Math.floor(Math.random() * positiveWords.length)];
-      });
-    });
-    return sanitized;
-  }
-
   // Chat Submission
-  const submitMsg = () => {
+  const submitMsg = async () => {
     if (!yukichat.isActive) return;
     const rawText = chatInput.value.trim();
     if (!rawText) return;
     
-    const text = sanitizeMsg(rawText);
-    yukichat.msg = text;
-    yukichat.msgTime = Date.now();
+    // Clear input instantly
     chatInput.value = '';
     
-    showBubble(yukichat.id, text);
-    syncWithServer(true);
+    // Send RAW text to server and get censored version back
+    try {
+      const res = await fetch('/api/yukichat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: yukichat.id,
+          name: yukichat.name,
+          avatar: yukichat.avatar,
+          x: yukichat.x,
+          y: yukichat.y,
+          msg: rawText // Send original
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const finalMsg = data.msg || rawText;
+        
+        // Show the moderated version on sender's own screen
+        showBubble(yukichat.id, finalMsg);
+        
+        // Update state but exclude it from next sync to avoid repeats
+        yukichat.msg = '';
+        yukichat.msgTime = Date.now();
+      }
+    } catch (e) {
+      console.error('Chat Send Failed:', e);
+    }
   };
 
   if (chatInput) chatInput.onkeypress = (e) => { if (e.key === 'Enter') submitMsg(); };
@@ -223,24 +231,24 @@
   async function syncWithServer(isImmediate = false) {
     try {
       if (yukichat.isActive) {
-        await fetch('/api/yukichat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: yukichat.id,
-            name: yukichat.name,
-            avatar: yukichat.avatar,
-            x: yukichat.x,
-            y: yukichat.y,
-            msg: yukichat.msg
-          })
-        });
-
-        if (Date.now() - yukichat.msgTime > 3000) {
-          yukichat.msg = '';
+        // Send position only if not just sent by submitMsg
+        if (Date.now() - yukichat.msgTime > 2000) {
+          await fetch('/api/yukichat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: yukichat.id,
+              name: yukichat.name,
+              avatar: yukichat.avatar,
+              x: yukichat.x,
+              y: yukichat.y,
+              msg: '' // No message for routine sync
+            })
+          });
         }
       }
 
+      // GET current world state
       const res = await fetch('/api/yukichat');
       if (res.ok) {
         const data = await res.json();
@@ -250,16 +258,7 @@
 
         if (yukichat.isActive) {
           updateRemoteUsers(data.users);
-          
-          if (yukichat.isActive && !yukichat.initialLogsShown && data.logs && data.logs.length > 0) {
-            yukichat.initialLogsShown = true;
-            data.logs.reverse().forEach((log, i) => {
-              const uid = Object.keys(data.users).find(key => data.users[key].name === log.name);
-              if (uid && uid !== yukichat.id) {
-                setTimeout(() => showBubble(uid, log.msg), i * 300);
-              }
-            });
-          }
+          renderHistory(data.logs);
         }
       }
     } catch (e) { console.error('Yukichat Sync Failed', e); }
@@ -286,6 +285,29 @@
       }
       yukichat.users[uid] = state;
     });
+  }
+
+  function renderHistory(logs) {
+    if (!historyList || !logs) return;
+    
+    // Check if logs changed by looking at the last message timestamp
+    const lastMsg = logs[0];
+    if (yukichat.lastLogTs === lastMsg?.ts) return;
+    yukichat.lastLogTs = lastMsg?.ts;
+
+    const isAtBottom = historyList.scrollHeight - historyList.clientHeight <= historyList.scrollTop + 20;
+
+    historyList.innerHTML = logs.reverse().map(log => `
+      <div class="history-item">
+        <span class="log-name">${log.name}:</span>
+        <span class="log-msg">${log.msg}</span>
+      </div>
+    `).join('');
+
+    // Auto scroll if user was near bottom
+    if (isAtBottom) {
+      historyList.scrollTop = historyList.scrollHeight;
+    }
   }
 
   function startSync() {

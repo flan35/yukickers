@@ -85,7 +85,7 @@ export async function onRequest(context) {
         await env.DB.prepare('DELETE FROM yukichat_logs WHERE id NOT IN (SELECT id FROM yukichat_logs ORDER BY id DESC LIMIT 10)').run();
       }
       
-      return new Response(JSON.stringify({ status: 'ok' }), { 
+      return new Response(JSON.stringify({ status: 'ok', msg: finalMsg }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
     }
