@@ -130,7 +130,43 @@
         isLocal: true
       });
 
-      await syncWithServer(true);
+      // Initial entry sync
+      try {
+        const res = await fetch('/api/yukichat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: yukichat.id,
+            name: yukichat.name,
+            avatar: yukichat.avatar,
+            x: yukichat.x,
+            y: yukichat.y,
+            msg: ''
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          if (errData.reason === 'room_full') {
+            alert('現在、入室人数が上限（10人）に達しています。時間をおいて再度お試しください。');
+          } else if (errData.reason === 'name_ng') {
+            alert('そのなまえは使用できません。別の名前を入力してください。');
+          } else {
+            alert('入室に失敗しました。');
+          }
+          yukichat.isActive = false;
+          setupOverlay.classList.add('active');
+          if (historyOverlay) historyOverlay.style.display = 'none';
+          return;
+        }
+        
+        await syncWithServer(true);
+      } catch (e) {
+        console.error('Enter failed', e);
+        alert('接続エラーが発生しました。');
+        yukichat.isActive = false;
+        setupOverlay.classList.add('active');
+      }
     };
   }
 

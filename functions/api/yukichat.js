@@ -32,7 +32,7 @@ export async function onRequest(context) {
 
       // 1. Reusable Moderation Function (Regex & AI)
       const moderateText = async (text, isName = false) => {
-        if (!text) return isName ? '名無し' : '';
+        if (!text) return { text: isName ? '名無し' : '', isNG: false };
         
         const ngWords = [
           /[死殺][し抜き]?[に]?[行いくくるきた]|死[ねるんねなよ]|殺[すせさせすな]|ぶっ殺[すしたよ]|ぶち殺|ブチ殺|ブッ殺/g,
@@ -46,14 +46,18 @@ export async function onRequest(context) {
         const positiveWords = ['だいすき', 'らぶ', 'にこにこ', 'きらきら', 'はぴはぴ', '天才！', '最高に可愛い', 'しあわせ', 'ゆめかわいい', 'なかよし', '最高！', '世界一！', '尊い', 'みんななかよし！'];
         
         let moderated = text;
+        let isNG = false;
         ngWords.forEach(pattern => {
-          moderated = moderated.replace(pattern, () => {
-             return positiveWords[Math.floor(Math.random() * positiveWords.length)];
-          });
+          if (pattern.test(text)) {
+            isNG = true;
+            moderated = moderated.replace(pattern, () => {
+               return positiveWords[Math.floor(Math.random() * positiveWords.length)];
+            });
+          }
         });
 
         // AI Moderation for longer strings to detect subtle abuse or PII
-        if (moderated === text && text.length > 3 && env.AI) {
+        if (!isNG && text.length > 3 && env.AI) {
           try {
             const aiResponse = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
               messages: [
@@ -67,34 +71,53 @@ export async function onRequest(context) {
             });
             const responseText = (aiResponse.response || aiResponse.result || '').toUpperCase();
             if (responseText.includes('TOXIC') && !responseText.includes('SAFE')) {
+              isNG = true;
               moderated = positiveWords[Math.floor(Math.random() * positiveWords.length)];
             }
           } catch (e) {
             console.error('AI Moderation Failed:', e);
           }
         }
-        return moderated;
+        return { text: moderated, isNG };
       };
 
-      // Moderate both Name and Message in parallel
-      const [finalName, finalMsg] = await Promise.all([
-        moderateText(name, true),
-        moderateText(msg, false)
-      ]);
+      // Check room and name for first-time entry (msg is blank or first post)
+      // We check if the ID already exists in the active list
+      const existingUser = await env.DB.prepare('SELECT id FROM yukichat_users WHERE id = ? AND ts > ?').bind(id, now - 120).first();
+      
+      const modName = await moderateText(name, true);
+      if (modName.isNG) {
+        return new Response(JSON.stringify({ status: 'error', reason: 'name_ng' }), { 
+          status: 403, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        });
+      }
+
+      if (!existingUser) {
+        const activeCountData = await env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ?').bind(now - 120).first();
+        if ((activeCountData.count || 0) >= 10) {
+          return new Response(JSON.stringify({ status: 'error', reason: 'room_full' }), { 
+            status: 429, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          });
+        }
+      }
+
+      const modMsg = await moderateText(msg, false);
 
       // 2. Update User Position using D1
       await env.DB.prepare(
         'INSERT OR REPLACE INTO yukichat_users (id, name, avatar, x, y, msg, ts) VALUES (?, ?, ?, ?, ?, ?, ?)'
-      ).bind(id, finalName, avatar || 'chibi_yuki.png', x || 50, y || 50, finalMsg, now).run();
+      ).bind(id, modName.text, avatar || 'chibi_yuki.png', x || 50, y || 50, modMsg.text, now).run();
 
       // 3. Log Chat Message
-      if (finalMsg) {
-        await env.DB.prepare('INSERT INTO yukichat_logs (name, msg, ts) VALUES (?, ?, ?)').bind(finalName, finalMsg, now).run();
+      if (modMsg.text) {
+        await env.DB.prepare('INSERT INTO yukichat_logs (name, msg, ts) VALUES (?, ?, ?)').bind(modName.text, modMsg.text, now).run();
         // Keep only top 10 logs
         await env.DB.prepare('DELETE FROM yukichat_logs WHERE id NOT IN (SELECT id FROM yukichat_logs ORDER BY id DESC LIMIT 10)').run();
       }
       
-      return new Response(JSON.stringify({ status: 'ok', msg: finalMsg }), { 
+      return new Response(JSON.stringify({ status: 'ok', msg: modMsg.text }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
     }
