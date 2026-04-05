@@ -55,8 +55,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (!todayEl || !yesterdayEl || !totalEl) return;
 
-    const hasCounted = sessionStorage.getItem('yukickers_counted');
-    const action = hasCounted ? 'get' : 'increment';
+    const lastCountTs = localStorage.getItem('yukickers_last_count_ts');
+    const now = Date.now();
+    const FIVE_MINUTES = 5 * 60 * 1000;
+    
+    // Only increment if never counted or more than 5 mins passed
+    const shouldIncrement = !lastCountTs || (now - parseInt(lastCountTs)) > FIVE_MINUTES;
+    const action = shouldIncrement ? 'increment' : 'get';
 
     try {
       const response = await fetch(`/api/counter?action=${action}`);
@@ -67,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
           yesterdayEl.textContent = data.yesterday.toLocaleString();
           totalEl.textContent = data.total.toLocaleString();
           if (action === 'increment') {
-            sessionStorage.setItem('yukickers_counted', 'true');
+            localStorage.setItem('yukickers_last_count_ts', String(Date.now()));
           }
         }
       }

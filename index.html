@@ -87,6 +87,12 @@
             <span>るーる</span>
           </a>
         </li>
+        <li>
+          <a href="#yukichat" data-nav="true">
+            <i class="fa-solid fa-comments"></i>
+            <span>ゆきちゃと</span>
+          </a>
+        </li>
       </ul>
       <!-- Mobile menu button -->
       <div class="mobile-toggle" id="mobile-toggle">
@@ -103,6 +109,7 @@
       <li><a href="#schedule" data-nav="true">すけじゅーる</a></li>
       <li><a href="#history" data-nav="true">あーかいぶ</a></li>
       <li><a href="#rules" data-nav="true">るーる</a></li>
+      <li><a href="#yukichat" data-nav="true">ゆきちゃと</a></li>
     </ul>
   </div>
 
@@ -373,6 +380,53 @@
       <div id="history-container" class="history-container reveal">
         <div class="loading-spinner">
           <i class="fa-solid fa-spinner fa-spin"></i> 配信履歴を読み込み中...
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Yukichat Section -->
+  <section id="yukichat" class="section yukichat page-section">
+    <div class="container">
+      <div class="section-title reveal">
+        <h2>Yukickers <span class="text-neon">Yukichat</span></h2>
+        <p>ちびキャラを動かして皆とお話しよう！</p>
+      </div>
+
+      <div class="yukichat-container reveal">
+        <!-- Character Selector Overlay -->
+        <div id="yukichat-setup" class="yukichat-overlay active">
+          <div class="setup-content">
+            <h3>アバターを選んでね</h3>
+            <div class="avatar-grid" id="yukichat-avatar-list">
+              <!-- Injected by script_yukichat.js -->
+            </div>
+            <div class="setup-name-input">
+              <input type="text" id="yukichat-user-name" placeholder="なまえ（空欄でもOK）" maxlength="10">
+            </div>
+            <button id="yukichat-enter-btn" class="btn-primary-neon">入室する！</button>
+          </div>
+        </div>
+
+        <!-- Chat Stage -->
+        <div class="yukichat-stage-wrapper">
+          <div id="yukichat-stage" class="yukichat-stage">
+            <!-- Avatars and Bubbles will be here -->
+            <div class="stage-bg-decorations">
+              <div class="decor-heart"><i class="fa-solid fa-heart"></i></div>
+              <div class="decor-star"><i class="fa-solid fa-star"></i></div>
+              <div class="decor-cloud"><i class="fa-solid fa-cloud"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Controls -->
+        <div class="yukichat-controls">
+          <div class="chat-input-wrap">
+            <button id="yukichat-exit-btn" class="btn-mini-gray" title="退出する"><i class="fa-solid fa-right-from-bracket"></i> 退出</button>
+            <input type="text" id="yukichat-input" placeholder="メッセージを入力...（Enterで送信）" maxlength="50">
+            <button id="yukichat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
         </div>
       </div>
     </div>
@@ -657,5 +711,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <script src="script.js"></script>
+  <script src="script_yukichat.js"></script>
 </body>
 </html>
