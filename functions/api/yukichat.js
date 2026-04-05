@@ -54,17 +54,20 @@ export async function onRequest(context) {
       };
 
       let finalMsg = sanitizeRegex(msg);
-
-      if (finalMsg === msg && msg.length > 0 && env.AI) {
+      
+      // Only run AI moderation for messages longer than 3 characters to avoid false positives on short inputs
+      if (finalMsg === msg && msg.length > 3 && env.AI) {
         try {
           const aiResponse = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
             messages: [
-              { role: 'system', content: 'You are a chat moderator for a cute community site. Respond ONLY with "SAFE" or "TOXIC".' },
+              { role: 'system', content: 'You are a chat moderator for a cute community site. Respond ONLY with "SAFE" or "TOXIC". Consider short or ambiguous messages SAFE.' },
               { role: 'user', content: `Message: "${msg}"` }
             ],
             max_tokens: 5
           });
-          if ((aiResponse.response || '').toUpperCase().includes('TOXIC')) {
+          
+          const responseText = (aiResponse.response || aiResponse.result || '').toUpperCase();
+          if (responseText.includes('TOXIC') && !responseText.includes('SAFE')) {
             const positiveWords = ['だいすき', 'らぶ', 'にこにこ', 'きらきら', 'はぴはぴ', '天才！', '最高に可愛い', 'しあわせ', 'ゆめかわいい', '尊い'];
             finalMsg = positiveWords[Math.floor(Math.random() * positiveWords.length)];
           }
