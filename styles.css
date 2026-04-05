@@ -3404,7 +3404,7 @@ body.content-ready {
   position: relative;
   width: 100%;
   max-width: 1200px;
-  height: 500px;
+  height: 650px;
   margin: 0 auto;
   background: var(--yukichat-bg);
   border-radius: 30px;
@@ -3766,10 +3766,20 @@ body.content-ready {
   }
 }
 
+.yukichat-disclaimer {
+  margin-top: 15px;
+  font-size: 0.75rem;
+  color: #999;
+  line-height: 1.4;
+  text-align: left;
+  border-top: 1px dashed #eee;
+  padding-top: 10px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .yukichat-container {
-    height: 400px;
+    height: 550px;
     border-radius: 20px;
   }
   .avatar-grid {

@@ -95,7 +95,7 @@
     if (historyList) historyList.innerHTML = '';
     
     if (isAuto) {
-      alert('2分間チャット送信がなかったため、自動的に退室しました。');
+      alert('10分間チャット送信がなかったため、自動的に退室しました。');
     }
   };
 
@@ -288,8 +288,8 @@
   async function syncWithServer(isImmediate = false) {
     try {
       if (yukichat.isActive) {
-        // Idle Check: Time out if no chat for 2 minutes
-        if (Date.now() - yukichat.lastChatTs > 120000) {
+        // Idle Check: Time out if no chat for 10 minutes
+        if (Date.now() - yukichat.lastChatTs > 600000) {
           exitRoom(true); 
           return;
         }
