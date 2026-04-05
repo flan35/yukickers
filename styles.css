@@ -3685,43 +3685,51 @@ body.content-ready {
 
 /* Yukichat History (Log) Styles */
 .yukichat-history {
-  background: white;
-  margin: 0 25px;
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 300px;
+  height: 150px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-radius: 15px;
-  border: 4px solid var(--yukichat-bg);
+  border: 2px solid var(--yukichat-accent);
   display: flex;
   flex-direction: column;
-  max-height: 120px;
   overflow: hidden;
-  box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  z-index: 50;
+  pointer-events: auto; /* Ensure it stays interactive */
 }
 
 .history-title {
-  padding: 8px 15px;
+  padding: 6px 12px;
   background: var(--yukichat-bg);
   font-family: var(--font-pop);
-  font-size: 0.8rem;
-  color: var(--yukichat-accent);
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: var(--text-main);
   border-bottom: 2px solid rgba(255, 133, 162, 0.1);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .history-list {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 15px;
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
 }
 
 .history-item {
   display: flex;
-  gap: 10px;
-  font-size: 0.85rem;
-  line-height: 1.4;
+  gap: 8px;
+  font-size: 0.8rem;
+  line-height: 1.3;
   animation: logFadeIn 0.3s ease-out forwards;
 }
 
@@ -3747,7 +3755,7 @@ body.content-ready {
 }
 
 .history-list::-webkit-scrollbar-track {
-  background: #fdfdfd;
+  background: transparent;
 }
 
 .history-list::-webkit-scrollbar-thumb {
@@ -3761,8 +3769,15 @@ body.content-ready {
 
 @media (max-width: 768px) {
   .yukichat-history {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin: 0 15px 15px 15px;
+    width: auto;
+    height: 100px;
     max-height: 100px;
-    margin: 0 15px;
+    background: white;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
   }
 }
 
