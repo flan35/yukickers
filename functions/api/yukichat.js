@@ -30,65 +30,81 @@ export async function onRequest(context) {
 
       if (!id) return new Response('Missing ID', { status: 400 });
 
-      // 1. Moderation (Regex & AI)
-      const sanitizeRegex = (text) => {
-        if (!text) return '';
+      // 1. Reusable Moderation Function (Regex & AI)
+      const moderateText = async (text, isName = false) => {
+        if (!text) return isName ? '名無し' : '';
+        
         const ngWords = [
-          /[死殺][し抜き]?[に]?[行いくくるきた]/g, /[死殺]す[ぞぜやろっ]/g, /[死殺][ねろ]/g, /ぶっ殺/g, /ぶち殺/g, /ブチ殺/g,
-          /首[つ釣]る/g, /自殺[し]?[ろたよ]/g, /クタバレ/g, /くたばれ/g, /地獄/g, /呪い/g,
-          /殴[るりっ][てたぞぜ]/g, /蹴[るりっ][てたぞぜ]/g, /叩[くきい][てたぞぜ]/g, /[刺指][さし]?[すした]/g, /[埋う]め[るてた]/g,
-          /[壊こわ]す/g, /ぶっ[壊こわ]す/g, /爆破/g, /刺す/g,
-          /ガイジ/g, /池沼/g, /片輪/g, /基地外/g, /きちがい/g, /気違い/g,
-          /アホ/g, /あほ/g, /バカ/g, /ばか/g, /馬鹿/g, /カス/g, /かす/g, /クズ/g, /くず/g, /ゴミ/g, /ごみ/g, /クソ/g, /くそ/g, /糞/g,
-          /マンコ/g, /まんこ/g, /チンコ/g, /ちんこ/g, /セックス/g, /レイプ/g, /強姦/g, /犯す/g,
-          /消えろ/g, /きえろ/g, /いなくなれ/g
+          /[死殺][し抜き]?[に]?[行いくくるきた]|死[ねるんねなよ]|殺[すせさせすな]|ぶっ殺[すしたよ]|ぶち殺|ブチ殺|ブッ殺/g,
+          /首[つ釣]る|自殺[しろたよ]|クタバレ|くたばれ|地獄|呪い/g,
+          /殴[るりっ][てたぞぜ]|蹴[るりっ][てたぞぜ]|叩[くきい][てたぞぜ]|[刺指][さし]?[すした]|[埋う]め[るてた]/g,
+          /ガイジ|池沼|片輪|基地外|きちがい|気違い|土人|土方|部落/g,
+          /アホ|あほ|バカ|ばか|馬鹿|カス|かす|クズ|くず|ゴミ|ごみ|クソ|くそ|糞/g,
+          /マンコ|まんこ|チンコ|ちんこ|フェラ|オナニー|中出し|なかがだし|セックス|淫乱|ヤリマン|レイプ|強姦|犯す/g,
+          /[消き][ええ]?[るろてなのと]|いなくな[れっるな]/g
         ];
-        const positiveWords = ['だいすき', 'らぶ', 'にこにこ', 'きらきら', 'はぴはぴ', '天才！', '最高に可愛い', 'しあわせ', 'ゆめかわいい', 'なかよし', '最高！', '世界一！', '尊い'];
-        let sanitized = text;
+        const positiveWords = ['だいすき', 'らぶ', 'にこにこ', 'きらきら', 'はぴはぴ', '天才！', '最高に可愛い', 'しあわせ', 'ゆめかわいい', 'なかよし', '最高！', '世界一！', '尊い', 'みんななかよし！'];
+        
+        let moderated = text;
         ngWords.forEach(pattern => {
-          sanitized = sanitized.replace(pattern, () => {
+          moderated = moderated.replace(pattern, () => {
              return positiveWords[Math.floor(Math.random() * positiveWords.length)];
           });
         });
-        return sanitized;
+
+        // AI Moderation for longer strings to detect subtle abuse or PII
+        if (moderated === text && text.length > 3 && env.AI) {
+          try {
+            const aiResponse = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+              messages: [
+                { 
+                  role: 'system', 
+                  content: 'You are a chat moderator for a cute community site. Respond ONLY with "SAFE" or "TOXIC". Flag messages containing physical addresses, phone numbers, or severe insults as "TOXIC". Short or ambiguous messages are SAFE.' 
+                },
+                { role: 'user', content: `Input: "${text}"` }
+              ],
+              max_tokens: 5
+            });
+            const responseText = (aiResponse.response || aiResponse.result || '').toUpperCase();
+            if (responseText.includes('TOXIC') && !responseText.includes('SAFE')) {
+              moderated = positiveWords[Math.floor(Math.random() * positiveWords.length)];
+            }
+          } catch (e) {
+            console.error('AI Moderation Failed:', e);
+          }
+        }
+        return moderated;
       };
 
-      let finalMsg = sanitizeRegex(msg);
-      
-      // Only run AI moderation for messages longer than 3 characters to avoid false positives on short inputs
-      if (finalMsg === msg && msg.length > 3 && env.AI) {
-        try {
-          const aiResponse = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
-            messages: [
-              { role: 'system', content: 'You are a chat moderator for a cute community site. Respond ONLY with "SAFE" or "TOXIC". Consider short or ambiguous messages SAFE.' },
-              { role: 'user', content: `Message: "${msg}"` }
-            ],
-            max_tokens: 5
-          });
-          
-          const responseText = (aiResponse.response || aiResponse.result || '').toUpperCase();
-          if (responseText.includes('TOXIC') && !responseText.includes('SAFE')) {
-            const positiveWords = ['だいすき', 'らぶ', 'にこにこ', 'きらきら', 'はぴはぴ', '天才！', '最高に可愛い', 'しあわせ', 'ゆめかわいい', '尊い'];
-            finalMsg = positiveWords[Math.floor(Math.random() * positiveWords.length)];
-          }
-        } catch (e) {
-          console.error('AI Moderation Failed:', e);
-        }
-      }
+      // Moderate both Name and Message in parallel
+      const [finalName, finalMsg] = await Promise.all([
+        moderateText(name, true),
+        moderateText(msg, false)
+      ]);
 
       // 2. Update User Position using D1
       await env.DB.prepare(
         'INSERT OR REPLACE INTO yukichat_users (id, name, avatar, x, y, msg, ts) VALUES (?, ?, ?, ?, ?, ?, ?)'
-      ).bind(id, name || '名無し', avatar || 'chibi_yuki.png', x || 50, y || 50, finalMsg, now).run();
+      ).bind(id, finalName, avatar || 'chibi_yuki.png', x || 50, y || 50, finalMsg, now).run();
 
       // 3. Log Chat Message
       if (finalMsg) {
-        await env.DB.prepare('INSERT INTO yukichat_logs (name, msg, ts) VALUES (?, ?, ?)').bind(name || '名無し', finalMsg, now).run();
+        await env.DB.prepare('INSERT INTO yukichat_logs (name, msg, ts) VALUES (?, ?, ?)').bind(finalName, finalMsg, now).run();
         // Keep only top 10 logs
         await env.DB.prepare('DELETE FROM yukichat_logs WHERE id NOT IN (SELECT id FROM yukichat_logs ORDER BY id DESC LIMIT 10)').run();
       }
       
       return new Response(JSON.stringify({ status: 'ok', msg: finalMsg }), { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+
+    if (method === 'DELETE') {
+      const { id } = await request.json();
+      if (id) {
+        await env.DB.prepare('DELETE FROM yukichat_users WHERE id = ?').bind(id).run();
+      }
+      return new Response(JSON.stringify({ status: 'ok' }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
     }

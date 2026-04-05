@@ -68,6 +68,44 @@
 
   if (nameInput) nameInput.value = yukichat.name;
 
+  const exitRoom = async (isAuto = false) => {
+    if (!yukichat.isActive) return;
+    
+    // Notify server to remove instantly
+    try {
+      await fetch('/api/yukichat', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: yukichat.id }),
+        keepalive: true
+      });
+    } catch (e) { console.error('Exit notify failed', e); }
+
+    yukichat.isActive = false;
+    yukichat.initialLogsShown = false;
+    
+    Object.keys(yukichat.avatars).forEach(uid => {
+      if (yukichat.avatars[uid]) yukichat.avatars[uid].remove();
+      delete yukichat.avatars[uid];
+    });
+    yukichat.users = {};
+
+    setupOverlay.classList.add('active');
+    if (historyOverlay) historyOverlay.style.display = 'none';
+    if (historyList) historyList.innerHTML = '';
+    
+    if (isAuto) {
+      alert('2分間チャット送信がなかったため、自動的に退室しました。');
+    }
+  };
+
+  if (exitBtn) {
+    exitBtn.onclick = () => exitRoom();
+  }
+
+  window.addEventListener('pagehide', () => exitRoom());
+  window.addEventListener('beforeunload', () => exitRoom());
+
   // Enter Room
   if (enterBtn) {
     enterBtn.onclick = async () => {
@@ -82,6 +120,7 @@
       setupOverlay.classList.remove('active');
       if (historyOverlay) historyOverlay.style.display = 'flex';
       yukichat.isActive = true;
+      yukichat.lastChatTs = Date.now(); // Reset idle timer
       
       renderAvatar(yukichat.id, {
         name: yukichat.name,
@@ -92,25 +131,6 @@
       });
 
       await syncWithServer(true);
-    };
-  }
-
-  // Exit Room
-  if (exitBtn) {
-    exitBtn.onclick = () => {
-      yukichat.isActive = false;
-      
-      // Clear all avatars from stage
-      Object.keys(yukichat.avatars).forEach(uid => {
-        if (yukichat.avatars[uid]) yukichat.avatars[uid].remove();
-        delete yukichat.avatars[uid];
-      });
-      yukichat.users = {};
-
-      // Show setup again, hide history
-      setupOverlay.classList.add('active');
-      if (historyOverlay) historyOverlay.style.display = 'none';
-      if (historyList) historyList.innerHTML = '';
     };
   }
 
@@ -137,6 +157,7 @@
     
     // Clear input instantly
     chatInput.value = '';
+    yukichat.lastChatTs = Date.now(); // Reset idle timer on chat
     
     // Send RAW text to server and get censored version back
     try {
@@ -231,6 +252,12 @@
   async function syncWithServer(isImmediate = false) {
     try {
       if (yukichat.isActive) {
+        // Idle Check: Time out if no chat for 2 minutes
+        if (Date.now() - yukichat.lastChatTs > 120000) {
+          exitRoom(true); 
+          return;
+        }
+
         // Send position only if not just sent by submitMsg
         if (Date.now() - yukichat.msgTime > 2000) {
           await fetch('/api/yukichat', {
