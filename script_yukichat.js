@@ -368,6 +368,13 @@
         if (numSpan) numSpan.innerText = data.activeCount || 0;
 
         if (yukichat.isActive) {
+          // Detect if I was kicked (not in the user list)
+          if (!data.users[yukichat.id]) {
+            exitRoom(false);
+            alert('管理者によってキックされました。');
+            return;
+          }
+          
           updateRemoteUsers(data.users);
           renderHistory(data.logs);
         }
@@ -401,10 +408,10 @@
   function renderHistory(logs) {
     if (!historyList || !logs) return;
     
-    // Check if logs changed by looking at the last message timestamp
-    const lastMsg = logs[0];
-    if (yukichat.lastLogTs === lastMsg?.ts) return;
-    yukichat.lastLogTs = lastMsg?.ts;
+    // Check if logs changed by generating a simple fingerprint
+    const fingerprint = logs.map(l => l.id + l.msg).join('|');
+    if (yukichat.lastLogFingerprint === fingerprint) return;
+    yukichat.lastLogFingerprint = fingerprint;
 
     const isAtBottom = historyList.scrollHeight - historyList.clientHeight <= historyList.scrollTop + 20;
 

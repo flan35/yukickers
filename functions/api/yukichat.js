@@ -130,8 +130,8 @@ export async function onRequest(context) {
       // 3. Log Chat Message
       if (modMsg.text) {
         await env.DB.prepare('INSERT INTO yukichat_logs (name, msg, ts, is_admin) VALUES (?, ?, ?, ?)').bind(modName.text, modMsg.text, now, isAdmin).run();
-        // Keep only top 10 logs
-        await env.DB.prepare('DELETE FROM yukichat_logs WHERE id NOT IN (SELECT id FROM yukichat_logs ORDER BY id DESC LIMIT 10)').run();
+        // Keep only top 20 logs
+        await env.DB.prepare('DELETE FROM yukichat_logs WHERE id NOT IN (SELECT id FROM yukichat_logs ORDER BY id DESC LIMIT 20)').run();
       }
       
       return new Response(JSON.stringify({ status: 'ok', msg: modMsg.text }), { 
@@ -157,7 +157,7 @@ export async function onRequest(context) {
       const [usersData, activeCountData, logsData] = await Promise.all([
         env.DB.prepare('SELECT * FROM yukichat_users').all(),
         env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ?').bind(now - 120).first(),
-        env.DB.prepare('SELECT * FROM yukichat_logs ORDER BY id DESC LIMIT 10').all()
+        env.DB.prepare('SELECT * FROM yukichat_logs ORDER BY id DESC LIMIT 20').all()
       ]);
 
       const activeUsers = {};
