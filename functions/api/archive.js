@@ -1,7 +1,7 @@
 const MEMBERS = [
   'yuki_0121', 'nodazourip', 'inosisi0909', 
   '04miki05', 'kariko2525', 'ponchan_2525',
-  'michaaam'
+  'michaaam', 'toromi2525'
 ];
 
 export async function onRequest(context) {
