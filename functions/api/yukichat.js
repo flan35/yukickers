@@ -107,7 +107,12 @@ export async function onRequest(context) {
           /ガイジ|池沼|片輪|基地外|きちがい|気違い|土人|土方|部落/g,
           /アホ|あほ|バカ|ばか|馬鹿|カス|かす|クズ|くず|ゴミ|ごみ|クソ|くそ|糞/g,
           /マンコ|まんこ|チンコ|ちんこ|フェラ|オナニー|中出し|なかがだし|セックス|淫乱|ヤリマン|レイプ|強姦|犯す/g,
-          /[消き][ええ]?[るろてなのと]|いなくな[れっるな]/g
+          /[消き][ええ]?[るろてなのと]|いなくな[れっるな]/g,
+          /老害|ろうがい|ジジイ|じじい|ジジィ|ババア|ばばあ|ババァ|BBA|bba/gi,
+          /ハゲ|はげ|禿げ|禿|デブ|でぶ|ブス|ぶす|ブサイク|ぶさいく|不細工/g,
+          /キモ[いっ]|きも[いっ]|気持ち悪[いっ]|きしょ[いっ]|キショ[いっ]|うざ[いっ]|ウザ[いっ]|邪魔|じゃま/g,
+          /障[害碍がい]者?|知[遅恥]|低脳|低能|無能|ニート|引きこもり|陰キャ|チー牛/g,
+          /しね|シネ|タヒ[ねな]|たひ[ねな]|氏ね|市ね/g
         ];
         const positiveWords = ['だいすき', 'らぶ', 'にこにこ', 'きらきら', 'はぴはぴ', '天才！', '最高に可愛い', 'しあわせ', 'ゆめかわいい', 'なかよし', '最高！', '世界一！', '尊い', 'みんななかよし！'];
         
@@ -129,9 +134,22 @@ export async function onRequest(context) {
               messages: [
                 { 
                   role: 'system', 
-                  content: 'You are a chat moderator for a cute community site. Respond ONLY with "SAFE" or "TOXIC". Flag messages containing physical addresses, phone numbers, or severe insults as "TOXIC". Short or ambiguous messages are SAFE.' 
+                  content: `You are a strict Japanese chat moderator for a cute, friendly community. Respond ONLY with "SAFE" or "TOXIC".
+
+Flag as TOXIC if the message contains ANY of the following in Japanese or English:
+- Insults about appearance (ugly, fat, bald, old hag, etc.)
+- Age-based insults (老害, BBA, ジジイ, ババア, etc.)
+- Discriminatory slurs or hate speech
+- Threats, violence, or telling someone to die
+- Sexual content or harassment
+- Personal info like phone numbers or addresses
+- Mocking someone's disability or mental state
+- Passive-aggressive insults disguised as jokes
+
+Short greetings, questions, game talk, and casual chat are SAFE.
+When in doubt about Japanese slang insults, flag as TOXIC.`
                 },
-                { role: 'user', content: `Input: "${text}"` }
+                { role: 'user', content: `Is this message safe for a cute community chat? Input: "${text}"` }
               ],
               max_tokens: 5
             });
