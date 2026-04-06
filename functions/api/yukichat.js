@@ -27,7 +27,12 @@ export async function onRequest(context) {
   // Check for bans (Blacklist/Permanent) - skip check for OPTIONS
   if (method !== 'OPTIONS') {
     const userId = url.searchParams.get('id') || '';
-    if (userId || (ip && ip !== 'unknown')) {
+    
+    // Admin Exemption: Check if the current userId is an admin in yukichat_users
+    const adminCheck = userId ? await env.DB.prepare('SELECT is_admin FROM yukichat_users WHERE id = ?').bind(userId).first() : null;
+    const isActuallyAdmin = adminCheck && adminCheck.is_admin === 1;
+
+    if (!isActuallyAdmin && (userId || (ip && ip !== 'unknown'))) {
       // Blacklist
       const isBanned = await env.DB.prepare('SELECT id FROM yukichat_blacklist WHERE (id != "" AND id = ?) OR (ip != "unknown" AND ip = ?)').bind(userId, ip).first();
       if (isBanned) {

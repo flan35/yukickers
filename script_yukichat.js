@@ -15,6 +15,7 @@
     syncInterval: null,
     isAdmin: false,
     password: '',
+    isKicked: false,
   };
 
   localStorage.setItem('yukichat_id', yukichat.id);
@@ -506,7 +507,15 @@
   };
 
   async function handleKickBanResponse(res) {
+    if (yukichat.isKicked) return;
+    yukichat.isKicked = true;
+    
     const data = await res.json();
+    if (yukichat.syncInterval) {
+      clearInterval(yukichat.syncInterval);
+      yukichat.syncInterval = null;
+    }
+    
     exitRoom(false);
     alert(data.error || 'アクセスが拒否されました。');
   }
