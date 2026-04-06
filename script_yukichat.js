@@ -320,7 +320,7 @@
         <div class="avatar-name-tag">${state.is_admin ? '<i class="fa-solid fa-crown"></i> ' : ''}${state.name}</div>
         ${yukichat.isAdmin && !state.isLocal ? `
           <div class="avatar-admin-actions">
-            <button class="avatar-kick-btn" title="キック（5分）" onclick="yukichatKickUser('${uid}', '${state.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-square-xmark"></i></button>
+            <button class="avatar-kick-btn" title="キック（1分）" onclick="yukichatKickUser('${uid}', '${state.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-square-xmark"></i></button>
             <button class="avatar-ban-btn" title="永久追放" onclick="yukichatBanUser('${uid}', '${state.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-ban"></i></button>
           </div>
         ` : ''}
@@ -497,9 +497,9 @@
 
   // Admin Actions
   window.yukichatKickUser = async (targetId, name) => {
-    if (!confirm(`${name} をキック（5分間参加禁止）しますか？`)) return;
+    if (!confirm(`${name} をキック（1分間参加禁止）しますか？`)) return;
     try {
-      await fetch('/api/yukichat', {
+      await fetch(`/api/yukichat?id=${yukichat.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'kick', targetId, password: yukichat.password })

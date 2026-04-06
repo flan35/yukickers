@@ -42,10 +42,10 @@ export async function onRequest(context) {
         });
       }
 
-      // Kicks (Temporary - 5 mins)
-      const isKicked = await env.DB.prepare('SELECT id FROM yukichat_kicked WHERE ((id != "" AND id = ?) OR (ip != "unknown" AND ip = ?)) AND ts > ?').bind(userId, ip, now - 300).first();
+      // Kicks (Temporary - 1 min)
+      const isKicked = await env.DB.prepare('SELECT id FROM yukichat_kicked WHERE ((id != "" AND id = ?) OR (ip != "unknown" AND ip = ?)) AND ts > ?').bind(userId, ip, now - 60).first();
       if (isKicked) {
-        return new Response(JSON.stringify({ error: 'キックされました。5分後には入れます。', reason: 'kicked' }), { 
+        return new Response(JSON.stringify({ error: 'キックされました。1分後には入れます。', reason: 'kicked' }), { 
           status: 401, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         });
