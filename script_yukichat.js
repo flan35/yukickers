@@ -13,6 +13,8 @@
     avatars: {}, 
     isActive: false,
     syncInterval: null,
+    isAdmin: false,
+    password: '',
   };
 
   localStorage.setItem('yukichat_id', yukichat.id);
@@ -27,6 +29,8 @@
     { file: 'chibi_michaaam.png', name: 'michaaam' },
     { file: 'chibi_toromi.png', name: 'とろみ' }
   ];
+
+  const adminChibi = { file: 'chibi_manager.png', name: '管理人' };
 
   const stage = document.getElementById('yukichat-stage');
   const setupOverlay = document.getElementById('yukichat-setup');
@@ -54,20 +58,52 @@
   }
 
   // Initialize Avatar List
-  memberChibis.forEach(m => {
-    const div = document.createElement('div');
-    div.className = `avatar-item ${yukichat.avatar === m.file ? 'selected' : ''}`;
-    div.innerHTML = `<img src="${m.file}" alt="${m.name}"><p>${m.name}</p>`;
-    div.onclick = () => {
-      document.querySelectorAll('.avatar-item').forEach(el => el.classList.remove('selected'));
-      div.classList.add('selected');
-      yukichat.avatar = m.file;
-      localStorage.setItem('yukichat_avatar', m.file);
-    };
-    avatarList.appendChild(div);
-  });
+  function renderAvatarSelector() {
+    if (!avatarList) return;
+    avatarList.innerHTML = '';
+    const list = [...memberChibis];
+    if (yukichat.isAdmin) list.unshift(adminChibi);
+
+    list.forEach(m => {
+      const div = document.createElement('div');
+      div.className = `avatar-item ${yukichat.avatar === m.file ? 'selected' : ''}`;
+      div.innerHTML = `<img src="${m.file}" alt="${m.name}"><p>${m.name}</p>`;
+      div.onclick = () => {
+        document.querySelectorAll('.avatar-item').forEach(el => el.classList.remove('selected'));
+        div.classList.add('selected');
+        yukichat.avatar = m.file;
+        localStorage.setItem('yukichat_avatar', m.file);
+      };
+      avatarList.appendChild(div);
+    });
+  }
+  renderAvatarSelector();
 
   if (nameInput) nameInput.value = yukichat.name;
+
+  // Admin Toggle Trigger (Secret)
+  if (setupOverlay) {
+    const setupTitle = setupOverlay.querySelector('h3');
+    let clickCount = 0;
+    if (setupTitle) {
+      setupTitle.style.cursor = 'pointer';
+      setupTitle.onclick = () => {
+        clickCount++;
+        if (clickCount >= 5) {
+          const pw = prompt('パスワードを入力してください');
+          if (pw === '1234') {
+            yukichat.isAdmin = true;
+            yukichat.password = pw;
+            alert('管理者モードが有効になりました');
+            setupTitle.innerText = 'アバターを選んでね（管理者）';
+            setupTitle.style.color = '#ff0055';
+            renderAvatarSelector(); // Refresh list to show Manager chibi
+          }
+          clickCount = 0;
+        }
+      };
+    }
+  }
 
   const exitRoom = async (isAuto = false) => {
     if (!yukichat.isActive) return;
@@ -143,7 +179,8 @@
             avatar: yukichat.avatar,
             x: yukichat.x,
             y: yukichat.y,
-            msg: ''
+            msg: '',
+            password: yukichat.password
           })
         });
 
@@ -208,7 +245,8 @@
           avatar: yukichat.avatar,
           x: yukichat.x,
           y: yukichat.y,
-          msg: rawText // Send original
+          msg: rawText, // Send original
+          password: yukichat.password
         })
       });
 
@@ -250,10 +288,16 @@
       el.className = `yukichat-avatar ${state.isLocal ? 'is-local' : ''}`;
       el.innerHTML = `
         <img src="${state.avatar}" alt="Avatar">
-        <div class="avatar-name-tag">${state.name}</div>
+        <div class="avatar-name-tag">${state.is_admin ? '<i class="fa-solid fa-crown"></i> ' : ''}${state.name}</div>
       `;
       stage.appendChild(el);
       yukichat.avatars[uid] = el;
+    }
+
+    if (state.is_admin) {
+      el.classList.add('is-admin');
+    } else {
+      el.classList.remove('is-admin');
     }
 
     const img = el.querySelector('img');
@@ -290,8 +334,8 @@
   async function syncWithServer(isImmediate = false) {
     try {
       if (yukichat.isActive) {
-        // Idle Check: Time out if no chat for 10 minutes
-        if (Date.now() - yukichat.lastChatTs > 600000) {
+        // Idle Check: Time out if no chat for 10 minutes (Admins are exempt)
+        if (!yukichat.isAdmin && Date.now() - yukichat.lastChatTs > 600000) {
           exitRoom(true); 
           return;
         }
@@ -307,7 +351,8 @@
               avatar: yukichat.avatar,
               x: yukichat.x,
               y: yukichat.y,
-              msg: '' // No message for routine sync
+              msg: '', // No message for routine sync
+              password: yukichat.password
             })
           });
         }
@@ -363,16 +408,55 @@
     const isAtBottom = historyList.scrollHeight - historyList.clientHeight <= historyList.scrollTop + 20;
 
     historyList.innerHTML = logs.reverse().map(log => `
-      <div class="history-item">
-        <span class="log-name">${log.name}:</span>
+      <div class="history-item ${log.is_admin ? 'is-admin' : ''}">
+        <span class="log-name">
+          ${yukichat.isAdmin ? `<button class="admin-kick-btn" onclick="yukichatKickUser('${log.id}', '${log.name}')"><i class="fa-solid fa-square-xmark"></i></button>` : ''}
+          ${log.is_admin ? '<i class="fa-solid fa-crown"></i> ' : ''}${log.name}:
+        </span>
         <span class="log-msg">${log.msg}</span>
       </div>
     `).join('');
+
+    // Add Clear Logs button if admin
+    if (yukichat.isAdmin && !document.getElementById('admin-clear-logs')) {
+      const title = document.querySelector('.history-title');
+      const btn = document.createElement('button');
+      btn.id = 'admin-clear-logs';
+      btn.className = 'admin-clear-btn';
+      btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> 全削除';
+      btn.onclick = () => clearAllLogs();
+      title.appendChild(btn);
+    }
 
     // Auto scroll if user was near bottom
     if (isAtBottom) {
       historyList.scrollTop = historyList.scrollHeight;
     }
+  }
+
+  // Admin Actions
+  window.yukichatKickUser = async (targetId, name) => {
+    if (!confirm(`${name} をキックしますか？`)) return;
+    try {
+      await fetch('/api/yukichat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'kick', targetId, password: yukichat.password })
+      });
+      syncWithServer();
+    } catch (e) { console.error('Kick failed', e); }
+  };
+
+  async function clearAllLogs() {
+    if (!confirm('チャットログをすべて削除しますか？')) return;
+    try {
+      await fetch('/api/yukichat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clearLogs', password: yukichat.password })
+      });
+      syncWithServer();
+    } catch (e) { console.error('Clear logs failed', e); }
   }
 
   function startSync() {

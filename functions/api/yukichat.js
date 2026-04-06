@@ -26,9 +26,21 @@ export async function onRequest(context) {
   try {
     if (method === 'POST') {
       const data = await request.json();
-      const { id, name, avatar, x, y, msg } = data;
+      const { id, name, avatar, x, y, msg, password, action, targetId } = data;
+
+      if (action === 'kick' && password === '1234' && targetId) {
+        await env.DB.prepare('DELETE FROM yukichat_users WHERE id = ?').bind(targetId).run();
+        return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
+      }
+
+      if (action === 'clearLogs' && password === '1234') {
+        await env.DB.prepare('DELETE FROM yukichat_logs').run();
+        return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
+      }
 
       if (!id) return new Response('Missing ID', { status: 400 });
+
+      const isAdmin = password === '1234' ? 1 : 0;
 
       // 1. Reusable Moderation Function (Regex & AI)
       const moderateText = async (text, isName = false) => {
@@ -93,7 +105,7 @@ export async function onRequest(context) {
         });
       }
 
-      if (!existingUser) {
+      if (!existingUser && isAdmin !== 1) {
         const activeCountData = await env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ?').bind(now - 120).first();
         if ((activeCountData.count || 0) >= 10) {
           return new Response(JSON.stringify({ status: 'error', reason: 'room_full' }), { 
@@ -107,12 +119,12 @@ export async function onRequest(context) {
 
       // 2. Update User Position using D1
       await env.DB.prepare(
-        'INSERT OR REPLACE INTO yukichat_users (id, name, avatar, x, y, msg, ts) VALUES (?, ?, ?, ?, ?, ?, ?)'
-      ).bind(id, modName.text, avatar || 'chibi_yuki.png', x || 50, y || 50, modMsg.text, now).run();
+        'INSERT OR REPLACE INTO yukichat_users (id, name, avatar, x, y, msg, ts, is_admin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(id, modName.text, avatar || 'chibi_yuki.png', x || 50, y || 50, modMsg.text, now, isAdmin).run();
 
       // 3. Log Chat Message
       if (modMsg.text) {
-        await env.DB.prepare('INSERT INTO yukichat_logs (name, msg, ts) VALUES (?, ?, ?)').bind(modName.text, modMsg.text, now).run();
+        await env.DB.prepare('INSERT INTO yukichat_logs (name, msg, ts, is_admin) VALUES (?, ?, ?, ?)').bind(modName.text, modMsg.text, now, isAdmin).run();
         // Keep only top 10 logs
         await env.DB.prepare('DELETE FROM yukichat_logs WHERE id NOT IN (SELECT id FROM yukichat_logs ORDER BY id DESC LIMIT 10)').run();
       }
@@ -133,8 +145,8 @@ export async function onRequest(context) {
     }
 
     if (method === 'GET') {
-      // Cleanup inactive users (older than 120s)
-      await env.DB.prepare('DELETE FROM yukichat_users WHERE ts < ?').bind(now - 120).run();
+      // Cleanup inactive users (older than 120s, but keep admins)
+      await env.DB.prepare('DELETE FROM yukichat_users WHERE ts < ? AND is_admin = 0').bind(now - 120).run();
 
       // Fetch active users, count, and logs in parallel
       const [usersData, activeCountData, logsData] = await Promise.all([
@@ -151,7 +163,8 @@ export async function onRequest(context) {
           x: row.x,
           y: row.y,
           msg: row.msg,
-          ts: row.ts
+          ts: row.ts,
+          is_admin: row.is_admin
         };
       });
 
