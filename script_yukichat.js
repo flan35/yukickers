@@ -415,7 +415,8 @@
       if (shouldSyncGet || isImmediate) {
         if (!yukichat.isActive) yukichat.lastGetSync = nowTs;
 
-        const res = await fetch(`/api/yukichat?id=${yukichat.id}`);
+        const getUrl = yukichat.password ? `/api/yukichat?id=${yukichat.id}&pw=${yukichat.password}` : `/api/yukichat?id=${yukichat.id}`;
+        const res = await fetch(getUrl);
         if (res.status === 401 || res.status === 403) {
           handleKickBanResponse(res);
           return;
@@ -522,16 +523,23 @@
 
   async function handleKickBanResponse(res) {
     if (yukichat.isKicked) return;
-    yukichat.isKicked = true;
     
-    const data = await res.json();
-    if (yukichat.syncInterval) {
-      clearInterval(yukichat.syncInterval);
-      yukichat.syncInterval = null;
+    try {
+      const data = await res.json();
+      // Only treat as a real kick/ban if the server explicitly says so
+      if (data.reason !== 'kicked' && data.reason !== 'banned') return;
+      
+      yukichat.isKicked = true;
+      if (yukichat.syncInterval) {
+        clearInterval(yukichat.syncInterval);
+        yukichat.syncInterval = null;
+      }
+      exitRoom(false);
+      alert(data.error || 'アクセスが拒否されました。');
+    } catch (e) {
+      // JSON parse failed - not a real kick/ban response, ignore
+      console.warn('Non-kick 401/403 response, ignoring', e);
     }
-    
-    exitRoom(false);
-    alert(data.error || 'アクセスが拒否されました。');
   }
 
   window.yukichatDeleteLog = async (logId) => {

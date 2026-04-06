@@ -27,10 +27,14 @@ export async function onRequest(context) {
   // Check for bans (Blacklist/Permanent) - skip check for OPTIONS
   if (method !== 'OPTIONS') {
     const userId = url.searchParams.get('id') || '';
+    const queryPw = url.searchParams.get('pw') || '';
     
-    // Admin Exemption: Check if the current userId is an admin in yukichat_users
-    const adminCheck = userId ? await env.DB.prepare('SELECT is_admin FROM yukichat_users WHERE id = ?').bind(userId).first() : null;
-    const isActuallyAdmin = adminCheck && adminCheck.is_admin === 1;
+    // Admin Exemption: Check DB record OR password in query
+    let isActuallyAdmin = queryPw === '1234';
+    if (!isActuallyAdmin && userId) {
+      const adminCheck = await env.DB.prepare('SELECT is_admin FROM yukichat_users WHERE id = ?').bind(userId).first();
+      isActuallyAdmin = adminCheck && adminCheck.is_admin === 1;
+    }
 
     if (!isActuallyAdmin && (userId || (ip && ip !== 'unknown'))) {
       // Blacklist
