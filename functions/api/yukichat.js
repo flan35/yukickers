@@ -27,21 +27,24 @@ export async function onRequest(context) {
   // Check for bans (Blacklist/Permanent) - skip check for OPTIONS
   if (method !== 'OPTIONS') {
     const userId = url.searchParams.get('id') || '';
-    const isBanned = await env.DB.prepare('SELECT id FROM yukichat_blacklist WHERE id = ? OR ip = ?').bind(userId, ip).first();
-    if (isBanned) {
-      return new Response(JSON.stringify({ error: '永久追放されています。', reason: 'banned' }), { 
-        status: 403, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      });
-    }
+    if (userId || (ip && ip !== 'unknown')) {
+      // Blacklist
+      const isBanned = await env.DB.prepare('SELECT id FROM yukichat_blacklist WHERE (id != "" AND id = ?) OR (ip != "unknown" AND ip = ?)').bind(userId, ip).first();
+      if (isBanned) {
+        return new Response(JSON.stringify({ error: '永久追放されています。', reason: 'banned' }), { 
+          status: 403, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        });
+      }
 
-    // Check for kicks (Temporary - 5 mins)
-    const isKicked = await env.DB.prepare('SELECT id FROM yukichat_kicked WHERE (id = ? OR ip = ?) AND ts > ?').bind(userId, ip, now - 300).first();
-    if (isKicked) {
-      return new Response(JSON.stringify({ error: 'キックされました。5分後には入れます。', reason: 'kicked' }), { 
-        status: 401, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      });
+      // Kicks (Temporary - 5 mins)
+      const isKicked = await env.DB.prepare('SELECT id FROM yukichat_kicked WHERE ((id != "" AND id = ?) OR (ip != "unknown" AND ip = ?)) AND ts > ?').bind(userId, ip, now - 300).first();
+      if (isKicked) {
+        return new Response(JSON.stringify({ error: 'キックされました。5分後には入れます。', reason: 'kicked' }), { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        });
+      }
     }
   }
 

@@ -47,13 +47,16 @@
   // Initialize UI Visibility
   if (historyOverlay) historyOverlay.style.display = 'none';
 
-  // Initialize Active Counts Display (Top Left)
+  // Initialize Active Counts Display (Top Left of Chat Container)
   function initStatsUI() {
+    const container = document.querySelector('.yukichat-container');
+    if (!container) return;
+    
     let statsEl = document.getElementById('yukichat-stats-floating');
     if (!statsEl) {
       statsEl = document.createElement('div');
       statsEl.id = 'yukichat-stats-floating';
-      document.body.appendChild(statsEl);
+      container.appendChild(statsEl);
     }
   }
   initStatsUI();
@@ -121,7 +124,7 @@
     
     // Notify server to remove instantly
     try {
-      await fetch('/api/yukichat', {
+      await fetch(`/api/yukichat?id=${yukichat.id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: yukichat.id }),
@@ -181,7 +184,7 @@
 
       // Initial entry sync
       try {
-        const res = await fetch('/api/yukichat', {
+        const res = await fetch(`/api/yukichat?id=${yukichat.id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -247,7 +250,7 @@
     
     // Send RAW text to server and get censored version back
     try {
-      const res = await fetch('/api/yukichat', {
+      const res = await fetch(`/api/yukichat?id=${yukichat.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
