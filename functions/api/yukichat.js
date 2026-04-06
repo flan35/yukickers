@@ -22,13 +22,52 @@ export async function onRequest(context) {
   }
 
   const now = Math.floor(Date.now() / 1000);
+  const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+
+  // Check for bans (Blacklist/Permanent) - skip check for OPTIONS
+  if (method !== 'OPTIONS') {
+    const userId = url.searchParams.get('id') || '';
+    const isBanned = await env.DB.prepare('SELECT id FROM yukichat_blacklist WHERE id = ? OR ip = ?').bind(userId, ip).first();
+    if (isBanned) {
+      return new Response(JSON.stringify({ error: '永久追放されています。', reason: 'banned' }), { 
+        status: 403, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+
+    // Check for kicks (Temporary - 5 mins)
+    const isKicked = await env.DB.prepare('SELECT id FROM yukichat_kicked WHERE (id = ? OR ip = ?) AND ts > ?').bind(userId, ip, now - 300).first();
+    if (isKicked) {
+      return new Response(JSON.stringify({ error: 'キックされました。5分後には入れます。', reason: 'kicked' }), { 
+        status: 401, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+  }
 
   try {
     if (method === 'POST') {
       const data = await request.json();
-      const { id, name, avatar, x, y, msg, password, action, targetId } = data;
+      const { id, name, avatar, x, y, msg, password, action, targetId, is_waiting } = data;
+      const isAdmin = password === '1234' ? 1 : 0;
+      const isWaiting = is_waiting === 0 ? 0 : 1; // Default to 1 (waiting) unless explicitly 0
 
       if (action === 'kick' && password === '1234' && targetId) {
+        // Get target's IP from current users before deleting
+        const target = await env.DB.prepare('SELECT ip FROM yukichat_users WHERE id = ?').bind(targetId).first();
+        const targetIp = target ? target.ip : 'unknown';
+        
+        await env.DB.prepare('INSERT OR REPLACE INTO yukichat_kicked (id, ip, ts) VALUES (?, ?, ?)').bind(targetId, targetIp, now).run();
+        await env.DB.prepare('DELETE FROM yukichat_users WHERE id = ?').bind(targetId).run();
+        return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
+      }
+
+      if (action === 'ban' && password === '1234' && targetId) {
+        // Get target's IP from current users before deleting
+        const target = await env.DB.prepare('SELECT ip FROM yukichat_users WHERE id = ?').bind(targetId).first();
+        const targetIp = target ? target.ip : 'unknown';
+        
+        await env.DB.prepare('INSERT OR REPLACE INTO yukichat_blacklist (id, ip, ts) VALUES (?, ?, ?)').bind(targetId, targetIp, now).run();
         await env.DB.prepare('DELETE FROM yukichat_users WHERE id = ?').bind(targetId).run();
         return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
       }
@@ -44,8 +83,6 @@ export async function onRequest(context) {
       }
 
       if (!id) return new Response('Missing ID', { status: 400 });
-
-      const isAdmin = password === '1234' ? 1 : 0;
 
       // 1. Reusable Moderation Function (Regex & AI)
       const moderateText = async (text, isName = false) => {
@@ -124,8 +161,8 @@ export async function onRequest(context) {
 
       // 2. Update User Position using D1
       await env.DB.prepare(
-        'INSERT OR REPLACE INTO yukichat_users (id, name, avatar, x, y, msg, ts, is_admin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(id, modName.text, avatar || 'chibi_yuki.png', x || 50, y || 50, modMsg.text, now, isAdmin).run();
+        'INSERT OR REPLACE INTO yukichat_users (id, name, avatar, x, y, msg, ts, is_admin, ip, is_waiting) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(id, modName.text, avatar || 'chibi_yuki.png', x || 50, y || 50, modMsg.text, now, isAdmin, ip, isWaiting).run();
 
       // 3. Log Chat Message
       if (modMsg.text) {
@@ -153,10 +190,11 @@ export async function onRequest(context) {
       // Cleanup inactive users (older than 120s, but keep admins)
       await env.DB.prepare('DELETE FROM yukichat_users WHERE ts < ? AND is_admin = 0').bind(now - 120).run();
 
-      // Fetch active users, count, and logs in parallel
-      const [usersData, activeCountData, logsData] = await Promise.all([
-        env.DB.prepare('SELECT * FROM yukichat_users').all(),
-        env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ?').bind(now - 120).first(),
+      // Fetch active users, counts, and logs in parallel
+      const [usersData, activeCountData, waitingCountData, logsData] = await Promise.all([
+        env.DB.prepare('SELECT * FROM yukichat_users WHERE is_waiting = 0').all(),
+        env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ? AND is_waiting = 0').bind(now - 120).first(),
+        env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ? AND is_waiting = 1').bind(now - 120).first(),
         env.DB.prepare('SELECT * FROM yukichat_logs ORDER BY id DESC LIMIT 20').all()
       ]);
 
@@ -176,6 +214,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({
         users: activeUsers,
         activeCount: activeCountData.count || 0,
+        waitingCount: waitingCountData.count || 0,
         logs: logsData.results || []
       }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

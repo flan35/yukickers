@@ -7,7 +7,9 @@ CREATE TABLE IF NOT EXISTS yukichat_users (
   y REAL,
   msg TEXT,
   ts INTEGER,
-  is_admin INTEGER DEFAULT 0
+  is_admin INTEGER DEFAULT 0,
+  ip TEXT,
+  is_waiting INTEGER DEFAULT 1
 );
 
 -- チャットログテーブル
@@ -17,4 +19,18 @@ CREATE TABLE IF NOT EXISTS yukichat_logs (
   msg TEXT,
   ts INTEGER,
   is_admin INTEGER DEFAULT 0
+);
+
+-- 一時キック用（5分間有効）
+CREATE TABLE IF NOT EXISTS yukichat_kicked (
+  id TEXT PRIMARY KEY,
+  ip TEXT,
+  ts INTEGER
+);
+
+-- 永久追放用
+CREATE TABLE IF NOT EXISTS yukichat_blacklist (
+  id TEXT PRIMARY KEY,
+  ip TEXT,
+  ts INTEGER
 );

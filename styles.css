@@ -3827,14 +3827,19 @@ body.content-ready {
   }
 }
 
-/* Avatar Kick Button */
-.avatar-kick-btn {
+/* Avatar Admin Actions */
+.avatar-admin-actions {
   position: absolute;
   top: -10px;
   right: -10px;
+  display: flex;
+  gap: 4px;
+  z-index: 100;
+}
+
+.avatar-kick-btn, .avatar-ban-btn {
   width: 24px;
   height: 24px;
-  background: #ff4d4d;
   color: white;
   border: 2px solid white;
   border-radius: 50%;
@@ -3842,15 +3847,25 @@ body.content-ready {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  z-index: 100;
   transition: transform 0.2s;
 }
 
-.avatar-kick-btn:hover {
+.avatar-kick-btn {
+  background: #ff4d4d;
+}
+
+.avatar-ban-btn {
+  background: #333;
+}
+
+.avatar-kick-btn:hover, .avatar-ban-btn:hover {
   transform: scale(1.2);
-  background: #ff0000;
+}
+
+.avatar-ban-btn:hover {
+  background: #000;
 }
 
 .admin-delete-log-btn {
@@ -3907,4 +3922,69 @@ body.content-ready {
 .history-item.is-admin .log-name {
   color: #c5a028; /* Deep Gold */
   font-weight: 900;
+}
+
+/* Yukichat Stats Floating (Top Left) */
+#yukichat-stats-floating {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.stat-item {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  animation: statFadeIn 0.5s ease-out forwards;
+}
+
+@keyframes statFadeIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.stat-item i {
+  font-size: 1rem;
+}
+
+.stat-item span {
+  color: var(--yukichat-accent);
+  font-size: 1.1rem;
+  font-family: var(--font-pop);
+}
+
+.stat-item.is-active {
+  border-left: 4px solid var(--yukichat-accent);
+}
+
+.stat-item.is-waiting {
+  border-left: 4px solid #aaa;
+  background: rgba(240, 240, 240, 0.6);
+}
+
+@media (max-width: 768px) {
+  #yukichat-stats-floating {
+    top: 10px;
+    left: 10px;
+    gap: 5px;
+  }
+  .stat-item {
+    padding: 6px 12px;
+    font-size: 0.7rem;
+  }
 }

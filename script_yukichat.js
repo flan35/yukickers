@@ -47,14 +47,25 @@
   // Initialize UI Visibility
   if (historyOverlay) historyOverlay.style.display = 'none';
 
-  // Initialize Active Count Display
-  if (!activeCountEl && setupOverlay) {
-    const countP = document.createElement('p');
-    countP.id = 'yukichat-active-count';
-    countP.style.cssText = 'color: #ff85a2; font-weight: bold; margin-bottom: 15px; font-size: 0.9rem;';
-    countP.innerHTML = '現在の入室人数: <span id="active-count-num">--</span>人';
-    const setupContent = setupOverlay.querySelector('.setup-content');
-    if (setupContent) setupContent.insertBefore(countP, avatarList);
+  // Initialize Active Counts Display (Top Left)
+  function initStatsUI() {
+    let statsEl = document.getElementById('yukichat-stats-floating');
+    if (!statsEl) {
+      statsEl = document.createElement('div');
+      statsEl.id = 'yukichat-stats-floating';
+      document.body.appendChild(statsEl);
+    }
+  }
+  initStatsUI();
+
+  function updateStatsUI(active, waiting) {
+    const statsEl = document.getElementById('yukichat-stats-floating');
+    if (statsEl) {
+      statsEl.innerHTML = `
+        <div class="stat-item is-active"><i class="fa-solid fa-comments"></i> チャット中: <span>${active}</span>人</div>
+        <div class="stat-item is-waiting"><i class="fa-solid fa-hourglass-half"></i> 待機中: <span>${waiting}</span>人</div>
+      `;
+    }
   }
 
   // Initialize Avatar List
@@ -289,7 +300,12 @@
       el.innerHTML = `
         <img src="${state.avatar}" alt="Avatar">
         <div class="avatar-name-tag">${state.is_admin ? '<i class="fa-solid fa-crown"></i> ' : ''}${state.name}</div>
-        ${yukichat.isAdmin && !state.isLocal ? `<button class="avatar-kick-btn" title="キックする" onclick="yukichatKickUser('${uid}', '${state.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-square-xmark"></i></button>` : ''}
+        ${yukichat.isAdmin && !state.isLocal ? `
+          <div class="avatar-admin-actions">
+            <button class="avatar-kick-btn" title="キック（5分）" onclick="yukichatKickUser('${uid}', '${state.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-square-xmark"></i></button>
+            <button class="avatar-ban-btn" title="永久追放" onclick="yukichatBanUser('${uid}', '${state.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-ban"></i></button>
+          </div>
+        ` : ''}
       `;
       stage.appendChild(el);
       yukichat.avatars[uid] = el;
@@ -334,51 +350,73 @@
 
   async function syncWithServer(isImmediate = false) {
     try {
-      if (yukichat.isActive) {
-        // Idle Check: Time out if no chat for 10 minutes (Admins are exempt)
-        if (!yukichat.isAdmin && Date.now() - yukichat.lastChatTs > 600000) {
-          exitRoom(true); 
+      // Sync presence (even if waiting)
+      // If active, sync position. If waiting, sync presence status.
+      // Ad-hoc: send POST every 10s if waiting, every 2s if active.
+      const nowTs = Date.now();
+      const shouldSyncPost = yukichat.isActive ? (nowTs - yukichat.msgTime > 2000) : (nowTs - (yukichat.lastWaitingSync || 0) > 10000);
+
+      if (shouldSyncPost || isImmediate) {
+        if (!yukichat.isActive) yukichat.lastWaitingSync = nowTs;
+        
+        const resPost = await fetch(`/api/yukichat?id=${yukichat.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: yukichat.id,
+            name: yukichat.name || 'ゲスト',
+            avatar: yukichat.avatar,
+            x: yukichat.isActive ? yukichat.x : 50,
+            y: yukichat.isActive ? yukichat.y : 50,
+            msg: '',
+            password: yukichat.password,
+            is_waiting: yukichat.isActive ? 0 : 1
+          })
+        });
+        if (resPost.status === 401 || resPost.status === 403) {
+          handleKickBanResponse(resPost);
           return;
         }
+      }
 
-        // Send position only if not just sent by submitMsg
-        if (Date.now() - yukichat.msgTime > 2000) {
-          await fetch('/api/yukichat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: yukichat.id,
-              name: yukichat.name,
-              avatar: yukichat.avatar,
-              x: yukichat.x,
-              y: yukichat.y,
-              msg: '', // No message for routine sync
-              password: yukichat.password
-            })
-          });
+      if (yukichat.isActive) {
+        // Idle Check: Time out if no chat for 10 minutes (Admins are exempt)
+        if (!yukichat.isAdmin && nowTs - yukichat.lastChatTs > 600000) {
+          exitRoom(true); 
+          return;
         }
       }
 
       // GET current world state
-      const res = await fetch('/api/yukichat');
-      if (res.ok) {
-        const data = await res.json();
-        
-        const numSpan = document.getElementById('active-count-num');
-        if (numSpan) numSpan.innerText = data.activeCount || 0;
+      // Optimization: If waiting, only GET every 10s. If active, every 2s.
+      const shouldSyncGet = yukichat.isActive ? true : (nowTs - (yukichat.lastGetSync || 0) > 10000);
 
-        if (yukichat.isActive) {
-          // Detect if I was kicked (not in the user list)
-          if (!data.users[yukichat.id]) {
-            exitRoom(false);
-            alert('管理者によってキックされました。');
-            return;
+      if (shouldSyncGet || isImmediate) {
+        if (!yukichat.isActive) yukichat.lastGetSync = nowTs;
+
+        const res = await fetch(`/api/yukichat?id=${yukichat.id}`);
+        if (res.status === 401 || res.status === 403) {
+          handleKickBanResponse(res);
+          return;
+        }
+        
+        if (res.ok) {
+          const data = await res.json();
+          updateStatsUI(data.activeCount || 0, data.waitingCount || 0);
+
+          if (yukichat.isActive) {
+            // Detect if I was kicked (not in the user list)
+            if (!data.users[yukichat.id]) {
+              exitRoom(false);
+              alert('管理者によってキックされました。');
+              return;
+            }
+            updateRemoteUsers(data.users);
+            renderHistory(data.logs);
           }
-          
-          updateRemoteUsers(data.users);
-          renderHistory(data.logs);
         }
       }
+
     } catch (e) { console.error('Yukichat Sync Failed', e); }
   }
 
@@ -444,7 +482,7 @@
 
   // Admin Actions
   window.yukichatKickUser = async (targetId, name) => {
-    if (!confirm(`${name} をキックしますか？`)) return;
+    if (!confirm(`${name} をキック（5分間参加禁止）しますか？`)) return;
     try {
       await fetch('/api/yukichat', {
         method: 'POST',
@@ -454,6 +492,24 @@
       syncWithServer();
     } catch (e) { console.error('Kick failed', e); }
   };
+
+  window.yukichatBanUser = async (targetId, name) => {
+    if (!confirm(`${name} を永久追放しますか？\n同じインターネット環境からは二度と入室できなくなります。`)) return;
+    try {
+      await fetch('/api/yukichat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'ban', targetId, password: yukichat.password })
+      });
+      syncWithServer();
+    } catch (e) { console.error('Ban failed', e); }
+  };
+
+  async function handleKickBanResponse(res) {
+    const data = await res.json();
+    exitRoom(false);
+    alert(data.error || 'アクセスが拒否されました。');
+  }
 
   window.yukichatDeleteLog = async (logId) => {
     if (!confirm('このチャットを削除しますか？')) return;
