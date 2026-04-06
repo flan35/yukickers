@@ -42,14 +42,19 @@ export async function onRequest(context) {
     let yesterdayCount = yesterdayRaw ? parseInt(yesterdayRaw) : 0;
 
     if (action === 'increment') {
-      totalCount++;
-      todayCount++;
-      
-      // 2. Save incremented values
-      await Promise.all([
-        env.KV.put(TOTAL_KEY, String(totalCount)),
-        env.KV.put(TODAY_KEY, String(todayCount))
-      ]);
+      // KV Write 削減対策: 全アクセスの 1/5（20%）の確率で +5 加算して更新するサンプリング方式を採用
+      // これにより統計的な正確さを保ちつつ、KV 書き込み回数を 80% 削減します
+      const samplingRate = 5;
+      if (Math.random() < (1 / samplingRate)) {
+        totalCount += samplingRate;
+        todayCount += samplingRate;
+        
+        // 2. Save incremented values
+        await Promise.all([
+          env.KV.put(TOTAL_KEY, String(totalCount)),
+          env.KV.put(TODAY_KEY, String(todayCount))
+        ]);
+      }
     }
 
     return new Response(JSON.stringify({

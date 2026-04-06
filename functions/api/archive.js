@@ -174,23 +174,24 @@ async function runCronTask(membersList, env, now) {
 
       if (livestream) {
         const streamId = String(livestream.id || livestream.created_at);
-        if (!lastSession || lastSession.id !== streamId) {
+        const streamTitle = livestream.session_title || 'No Title';
+        // Only write if it's a NEW session or the title changed
+        if (!lastSession || lastSession.id !== streamId || lastSession.title !== streamTitle) {
           const newSession = {
             id: streamId,
             username: user,
             start: livestream.start_time || livestream.created_at || now,
-            title: livestream.session_title || 'No Title',
-            lastSeen: now
+            title: streamTitle,
+            lastSeen: now // This record will only be updated in KV when start/title change
           };
           await env.KV.put(sessionKey, JSON.stringify(newSession));
-        } else {
-          lastSession.lastSeen = now;
-          await env.KV.put(sessionKey, JSON.stringify(lastSession));
         }
       } else {
         if (lastSession) {
           await env.KV.delete(sessionKey);
-          await finalizeSession(lastSession, lastSession.lastSeen || now, env.KV);
+          // Use 'now' (server detection time) as the end of stream
+          // finalizeSession will then check the actual VOD duration for final accuracy
+          await finalizeSession(lastSession, now, env.KV);
         }
       }
       results.push({ user, status: livestream ? 'live' : 'offline' });

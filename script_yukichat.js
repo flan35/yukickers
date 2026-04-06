@@ -373,9 +373,9 @@
 
       // Sync presence (even if waiting)
       // If active, sync position. If waiting, sync presence status.
-      // Ad-hoc: send POST every 10s if waiting, every 2s if active.
+      // Ad-hoc: send POST every 30s if waiting, every 2s if active.
       const nowTs = Date.now();
-      const shouldSyncPost = yukichat.isActive ? (nowTs - yukichat.msgTime > 2000) : (nowTs - (yukichat.lastWaitingSync || 0) > 10000);
+      const shouldSyncPost = yukichat.isActive ? (nowTs - yukichat.msgTime > 2000) : (nowTs - (yukichat.lastWaitingSync || 0) > 30000);
 
       if (shouldSyncPost || isImmediate) {
         if (!yukichat.isActive) yukichat.lastWaitingSync = nowTs;
@@ -409,8 +409,8 @@
       }
 
       // GET current world state
-      // Optimization: If waiting, only GET every 10s. If active, every 2s.
-      const shouldSyncGet = yukichat.isActive ? true : (nowTs - (yukichat.lastGetSync || 0) > 10000);
+      // Optimization: If waiting, only GET every 30s. If active, every 2s.
+      const shouldSyncGet = yukichat.isActive ? true : (nowTs - (yukichat.lastGetSync || 0) > 30000);
 
       if (shouldSyncGet || isImmediate) {
         if (!yukichat.isActive) yukichat.lastGetSync = nowTs;
