@@ -56,19 +56,20 @@
     if (!statsEl) {
       statsEl = document.createElement('div');
       statsEl.id = 'yukichat-stats-floating';
+      statsEl.innerHTML = `
+        <div class="stat-item is-active"><i class="fa-solid fa-comments"></i> チャット中: <span id="num-active">--</span>人</div>
+        <div class="stat-item is-waiting"><i class="fa-solid fa-hourglass-half"></i> 待機中: <span id="num-waiting">--</span>人</div>
+      `;
       container.appendChild(statsEl);
     }
   }
   initStatsUI();
 
   function updateStatsUI(active, waiting) {
-    const statsEl = document.getElementById('yukichat-stats-floating');
-    if (statsEl) {
-      statsEl.innerHTML = `
-        <div class="stat-item is-active"><i class="fa-solid fa-comments"></i> チャット中: <span>${active}</span>人</div>
-        <div class="stat-item is-waiting"><i class="fa-solid fa-hourglass-half"></i> 待機中: <span>${waiting}</span>人</div>
-      `;
-    }
+    const activeEl = document.getElementById('num-active');
+    const waitingEl = document.getElementById('num-waiting');
+    if (activeEl) activeEl.innerText = active;
+    if (waitingEl) waitingEl.innerText = waiting;
   }
 
   // Initialize Avatar List
@@ -194,7 +195,8 @@
             x: yukichat.x,
             y: yukichat.y,
             msg: '',
-            password: yukichat.password
+            password: yukichat.password,
+            is_waiting: 0
           })
         });
 
@@ -260,7 +262,8 @@
           x: yukichat.x,
           y: yukichat.y,
           msg: rawText, // Send original
-          password: yukichat.password
+          password: yukichat.password,
+          is_waiting: 0
         })
       });
 
@@ -408,12 +411,6 @@
           updateStatsUI(data.activeCount || 0, data.waitingCount || 0);
 
           if (yukichat.isActive) {
-            // Detect if I was kicked (not in the user list)
-            if (!data.users[yukichat.id]) {
-              exitRoom(false);
-              alert('管理者によってキックされました。');
-              return;
-            }
             updateRemoteUsers(data.users);
             renderHistory(data.logs);
           }
