@@ -147,7 +147,8 @@
 
     yukichat.isActive = false;
     yukichat.initialLogsShown = false;
-    yukichat.lastLogTs = null; // Clear log cache to ensure refresh upon re-entry
+    yukichat.lastLogTs = null;
+    yukichat.lastLogFingerprint = null; // Reset so logs are re-rendered on re-entry
     
     Object.keys(yukichat.avatars).forEach(uid => {
       if (yukichat.avatars[uid]) yukichat.avatars[uid].remove();
