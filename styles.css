@@ -3827,8 +3827,33 @@ body.content-ready {
   }
 }
 
-/* Admin Styles */
-.admin-kick-btn {
+/* Avatar Kick Button */
+.avatar-kick-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 24px;
+  height: 24px;
+  background: #ff4d4d;
+  color: white;
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  z-index: 100;
+  transition: transform 0.2s;
+}
+
+.avatar-kick-btn:hover {
+  transform: scale(1.2);
+  background: #ff0000;
+}
+
+.admin-delete-log-btn {
   background: none;
   border: none;
   color: #ff4d4d;
@@ -3839,7 +3864,7 @@ body.content-ready {
   transition: transform 0.2s;
 }
 
-.admin-kick-btn:hover {
+.admin-delete-log-btn:hover {
   transform: scale(1.2);
   color: #ff0000;
 }

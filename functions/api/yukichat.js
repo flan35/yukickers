@@ -33,6 +33,11 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
       }
 
+      if (action === 'deleteLog' && password === '1234' && targetId) {
+        await env.DB.prepare('DELETE FROM yukichat_logs WHERE id = ?').bind(targetId).run();
+        return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
+      }
+
       if (action === 'clearLogs' && password === '1234') {
         await env.DB.prepare('DELETE FROM yukichat_logs').run();
         return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });

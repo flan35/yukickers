@@ -289,6 +289,7 @@
       el.innerHTML = `
         <img src="${state.avatar}" alt="Avatar">
         <div class="avatar-name-tag">${state.is_admin ? '<i class="fa-solid fa-crown"></i> ' : ''}${state.name}</div>
+        ${yukichat.isAdmin && !state.isLocal ? `<button class="avatar-kick-btn" title="キックする" onclick="yukichatKickUser('${uid}', '${state.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-square-xmark"></i></button>` : ''}
       `;
       stage.appendChild(el);
       yukichat.avatars[uid] = el;
@@ -410,7 +411,7 @@
     historyList.innerHTML = logs.reverse().map(log => `
       <div class="history-item ${log.is_admin ? 'is-admin' : ''}">
         <span class="log-name">
-          ${yukichat.isAdmin ? `<button class="admin-kick-btn" onclick="yukichatKickUser('${log.id}', '${log.name}')"><i class="fa-solid fa-square-xmark"></i></button>` : ''}
+          ${yukichat.isAdmin ? `<button class="admin-delete-log-btn" title="ログを削除" onclick="yukichatDeleteLog('${log.id}')"><i class="fa-solid fa-square-xmark"></i></button>` : ''}
           ${log.is_admin ? '<i class="fa-solid fa-crown"></i> ' : ''}${log.name}:
         </span>
         <span class="log-msg">${log.msg}</span>
@@ -445,6 +446,18 @@
       });
       syncWithServer();
     } catch (e) { console.error('Kick failed', e); }
+  };
+
+  window.yukichatDeleteLog = async (logId) => {
+    if (!confirm('このチャットを削除しますか？')) return;
+    try {
+      await fetch('/api/yukichat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'deleteLog', targetId: logId, password: yukichat.password })
+      });
+      syncWithServer();
+    } catch (e) { console.error('Delete log failed', e); }
   };
 
   async function clearAllLogs() {
