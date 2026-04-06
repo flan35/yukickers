@@ -12,10 +12,10 @@
     users: {}, 
     avatars: {}, 
     isActive: false,
-    syncInterval: null,
     isAdmin: false,
     password: '',
     isKicked: false,
+    isIntersecting: false,
   };
 
   localStorage.setItem('yukichat_id', yukichat.id);
@@ -57,12 +57,23 @@
     if (!statsEl) {
       statsEl = document.createElement('div');
       statsEl.id = 'yukichat-stats-floating';
+      statsEl.style.opacity = '0'; // Hidden by default
       statsEl.innerHTML = `
         <div class="stat-item is-active"><i class="fa-solid fa-comments"></i> チャット中: <span id="num-active">--</span>人</div>
         <div class="stat-item is-waiting"><i class="fa-solid fa-hourglass-half"></i> 待機中: <span id="num-waiting">--</span>人</div>
       `;
       container.appendChild(statsEl);
     }
+
+    // Visibility Observer
+    const observer = new IntersectionObserver((entries) => {
+      yukichat.isIntersecting = entries[0].isIntersecting;
+      if (yukichat.isIntersecting) {
+        if (statsEl) statsEl.style.opacity = '1';
+        syncWithServer(true); // Sync immediately when in view
+      }
+    }, { threshold: 0.1 });
+    observer.observe(container);
   }
   initStatsUI();
 
@@ -357,6 +368,9 @@
 
   async function syncWithServer(isImmediate = false) {
     try {
+      // Optimization: If NOT active and NOT in view, skip everything.
+      if (!yukichat.isActive && !yukichat.isIntersecting && !isImmediate) return;
+
       // Sync presence (even if waiting)
       // If active, sync position. If waiting, sync presence status.
       // Ad-hoc: send POST every 10s if waiting, every 2s if active.
