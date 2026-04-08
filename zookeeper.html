@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ユキッカーズ・パズルバトル</title>
+    <link rel="stylesheet" href="zookeeper.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- ログイン / マッチング待機画面 -->
+        <div id="lobby" class="screen active">
+            <div class="glass-card">
+                <h1>YUKICKERS<br>PUZZLE BATTLE</h1>
+                <p class="subtitle">ユキッカーズ・パズルバトル</p>
+                
+                <div class="input-group">
+                    <label for="username">プレイヤー名</label>
+                    <input type="text" id="username" placeholder="名前を入力..." maxlength="10">
+                </div>
+                
+                <div class="avatar-selector">
+                    <label>アバターを選択</label>
+                    <div class="avatar-grid" id="avatarList">
+                        <!-- JSで生成 -->
+                    </div>
+                </div>
+
+                <button id="btnJoin" class="premium-btn">対戦相手を探す</button>
+                <button id="btnCpu" class="premium-btn secondary-btn" style="margin-top: 10px; background: #6366f1;">CPUと対戦</button>
+                <div id="matchingStatus" class="status-msg hidden">
+                    <div class="spinner"></div>
+                    <p>対戦相手を探しています...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ゲーム画面 -->
+        <div id="game" class="screen">
+            <div class="game-header">
+                <!-- プレイヤー1 (自分) -->
+                <div class="player-stats self">
+                    <div class="hp-bar-container">
+                        <div id="p1HpBar" class="hp-bar" style="width: 100%;"></div>
+                        <span id="p1HpText">100 / 100</span>
+                    </div>
+                    <div class="player-info">
+                        <img id="p1Avatar" src="" alt="">
+                        <div class="name-id">
+                            <span id="p1Name">PLAYER 1</span>
+                        </div>
+                    </div>
+                    <div class="battle-stats">
+                        <div class="stat-item atk"><span>ATK</span><strong id="p1Atk">0</strong></div>
+                        <div class="stat-item def"><span>DEF</span><strong id="p1Def">0</strong></div>
+                    </div>
+                </div>
+
+                <div class="round-timer">
+                    <div id="roundLabel">ROUND 1</div>
+                    <div id="phaseTimer">30</div>
+                </div>
+
+                <!-- プレイヤー2 (相手) -->
+                <div class="player-stats opponent">
+                    <div class="hp-bar-container">
+                        <div id="p2HpBar" class="hp-bar" style="width: 100%;"></div>
+                        <span id="p2HpText">100 / 100</span>
+                    </div>
+                    <div class="player-info">
+                        <img id="p2Avatar" src="" alt="">
+                        <div class="name-id">
+                            <span id="p2Name">PLAYER 2</span>
+                        </div>
+                    </div>
+                    <div class="battle-stats">
+                        <div class="stat-item atk"><span>ATK</span><strong id="p2Atk">0</strong></div>
+                        <div class="stat-item def"><span>DEF</span><strong id="p2Def">0</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-body">
+                <div id="puzzleBoard" class="puzzle-board"></div>
+            </div>
+
+            <!-- バトルフェーズ・リザルト演出 -->
+            <div id="battleOverlay" class="overlay hidden">
+                <div id="battleText" class="battle-text">BATTLE START!</div>
+            </div>
+        </div>
+
+        <!-- 結果画面 -->
+        <div id="result" class="screen">
+            <div class="glass-card result-card">
+                <h2 id="resultTitle">WIN!</h2>
+                <div class="result-stats">
+                    <p>残りHP: <span id="finalHp">--</span></p>
+                    <p>最大連鎖: <span id="maxCombo">--</span></p>
+                </div>
+                <button onclick="location.reload()" class="premium-btn">ロビーに戻る</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="zookeeper.js"></script>
+</body>
+</html>

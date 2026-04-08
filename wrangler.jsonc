@@ -10,5 +10,12 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "yukickers-db",
+      "database_id": "f8c6085f-7f0b-4921-b8ed-292053fc08fa"
+    }
   ]
 }

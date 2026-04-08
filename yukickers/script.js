@@ -1448,7 +1448,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const scheduleData = [
     { date: '2026.03.30', time: '21:00', type: 'INTERVIEW', title: 'ユキッカーズ面接（みーちゃん）', venue: 'KICK', image: 'mi.jpg', link: 'https://kick.com/yuki_0121' },
     { date: '2026.05.00', time: '', type: 'GW CAMP', title: '(GW) 1泊2日キャンプ＆バーベキュー', venue: '屋外', image: 'dummy.jpg' },
-    { date: '2026.05.00', time: '', type: 'SPECIAL', title: 'ユキッカーズオーディション', venue: 'KICK', image: 'dummy.jpg' },
+    { date: '2026.05.16', time: '21:00', type: 'SPECIAL', title: 'ユキッカーズオーディション', venue: 'KICK', image: 'Audition.jpg', link: 'https://x.com/nyan56see/status/2041737411672338671' },
     { date: '2026.08.00', time: '', type: 'EVENT', title: '富士山', venue: '現地', image: 'dummy.jpg' }
   ];
 

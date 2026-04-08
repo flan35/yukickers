@@ -1493,7 +1493,7 @@ document.addEventListener('DOMContentLoaded', () => {
     { date: '2026.03.30', time: '21:00', type: 'INTERVIEW', title: 'ユキッカーズ面接（みーちゃん）', venue: 'KICK', image: 'mi.jpg', link: 'https://kick.com/yuki_0121' },
     { date: '2026.04.26', time: '11:00', type: 'EVENT', title: '超演劇～ニコ生の女神が消えた空白の1年～', venue: 'ニコニコ超会議', image: 'nicotyo.jpg', link: 'https://chokaigi.jp/' },
     { date: '2026.05.00', time: '', type: 'GW CAMP', title: '(GW) 1泊2日キャンプ＆バーベキュー', venue: '屋外', image: 'BBQ.jpg' },
-    { date: '2026.05.00', time: '', type: 'SPECIAL', title: 'ユキッカーズオーディション', venue: 'KICK', image: 'dummy.jpg' },
+    { date: '2026.05.16', time: '21:00', type: 'SPECIAL', title: 'ユキッカーズオーディション', venue: 'KICK', image: 'Audition.jpg', link: 'https://x.com/nyan56see/status/2041737411672338671' },
     { date: '2026.08.00', time: '', type: 'EVENT', title: '富士山', venue: '現地', image: 'dummy.jpg' }
   ];
 
