@@ -310,7 +310,7 @@
           x: yukichat.x,
           y: yukichat.y,
           msg: rawText, // Send original
-          is_emote: chatInput.dataset.isEmote === 'true' ? 1 : 0,
+          is_emote: (chatInput.dataset.isEmote === 'true' || ['❤️', '✨', '👍', '😊', '😭', '🎉', '🔥', '🙏'].includes(rawText)) ? 1 : 0,
           password: yukichat.password,
           is_waiting: 0
         })
@@ -318,7 +318,7 @@
 
       if (res.ok) {
         const data = await res.json();
-        const isEmote = chatInput.dataset.isEmote === 'true';
+        const isEmote = chatInput.dataset.isEmote === 'true' || ['❤️', '✨', '👍', '😊', '😭', '🎉', '🔥', '🙏'].includes(rawText);
         const finalMsg = data.msg || rawText;
         
         // Show the moderated version on sender's own screen
@@ -331,7 +331,7 @@
       }
     } catch (e) {
       if (yukichat.isLocalMode) {
-        const isEmote = chatInput.dataset.isEmote === 'true';
+        const isEmote = chatInput.dataset.isEmote === 'true' || ['❤️', '✨', '👍', '😊', '😭', '🎉', '🔥', '🙏'].includes(rawText);
         showBubble(yukichat.id, rawText, false, isEmote);
         chatInput.dataset.isEmote = 'false';
       } else {
@@ -563,7 +563,8 @@
       const oldState = yukichat.users[uid];
       renderAvatar(uid, state);
       if (state.msg && (!oldState || oldState.msg !== state.msg)) {
-        showBubble(uid, state.msg);
+        const isEmoteMsg = ['❤️', '✨', '👍', '😊', '😭', '🎉', '🔥', '🙏'].includes(state.msg);
+        showBubble(uid, state.msg, false, isEmoteMsg);
       }
       yukichat.users[uid] = state;
     });
