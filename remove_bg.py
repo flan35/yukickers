@@ -71,4 +71,4 @@ def remove_background(input_path, output_path):
     new_img.save(output_path, "PNG")
 
 if __name__ == "__main__":
-    remove_background("chibi_toromi.png", "chibi_toromi_no_bg.png")
+    remove_background("chibi_reiko_source.png", "chibi_reiko.png")

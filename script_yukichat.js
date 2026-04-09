@@ -28,7 +28,9 @@
     { file: 'chibi_kariko.png', name: 'カリフラワー狩子' },
     { file: 'chibi_ponchan.png', name: 'ぽんちゃん' },
     { file: 'chibi_michaaam.png', name: 'michaaam' },
-    { file: 'chibi_toromi.png', name: 'とろみ' }
+    { file: 'chibi_toromi.png', name: 'とろみ' },
+    { file: 'chibi_urita.png', name: '瓜田純士' },
+    { file: 'chibi_reiko.png', name: '瓜田麗子' }
   ];
 
   const adminChibi = { file: 'chibi_manager.png', name: '管理人' };
