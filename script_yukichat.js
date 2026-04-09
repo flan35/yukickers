@@ -365,11 +365,18 @@
         <div class="avatar-name-tag">${state.is_admin ? '<i class="fa-solid fa-crown"></i> ' : ''}${state.name}</div>
         ${yukichat.isAdmin && !state.isLocal ? `
           <div class="avatar-admin-actions">
-            <button class="avatar-kick-btn" title="キック（1分）" onclick="yukichatKickUser('${uid}', '${state.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-square-xmark"></i></button>
-            <button class="avatar-ban-btn" title="永久追放" onclick="yukichatBanUser('${uid}', '${state.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-ban"></i></button>
+            <button class="avatar-kick-btn" title="キック（1分）"><i class="fa-solid fa-square-xmark"></i></button>
+            <button class="avatar-ban-btn" title="永久追放"><i class="fa-solid fa-ban"></i></button>
           </div>
         ` : ''}
       `;
+      
+      if (yukichat.isAdmin && !state.isLocal) {
+        const kickBtn = el.querySelector('.avatar-kick-btn');
+        const banBtn = el.querySelector('.avatar-ban-btn');
+        if (kickBtn) kickBtn.onclick = (e) => { e.stopPropagation(); yukichatKickUser(uid, state.name); };
+        if (banBtn) banBtn.onclick = (e) => { e.stopPropagation(); yukichatBanUser(uid, state.name); };
+      }
       
       // Emote trigger for local user
       if (state.isLocal) {
@@ -581,14 +588,26 @@
     const isAtBottom = historyList.scrollHeight - historyList.clientHeight <= historyList.scrollTop + 20;
 
     historyList.innerHTML = logs.reverse().map(log => `
-      <div class="history-item ${log.is_admin ? 'is-admin' : ''}">
+      <div class="history-item ${log.is_admin ? 'is-admin' : ''}" data-log-id="${log.id}">
         <span class="log-name">
-          ${yukichat.isAdmin ? `<button class="admin-delete-log-btn" title="ログを削除" onclick="yukichatDeleteLog('${log.id}')"><i class="fa-solid fa-square-xmark"></i></button>` : ''}
+          ${yukichat.isAdmin ? `<button class="admin-delete-log-btn" title="ログを削除"><i class="fa-solid fa-square-xmark"></i></button>` : ''}
           ${log.is_admin ? '<i class="fa-solid fa-crown"></i> ' : ''}${log.name}:
         </span>
         <span class="log-msg">${log.msg}</span>
       </div>
     `).join('');
+
+    if (yukichat.isAdmin) {
+      historyList.querySelectorAll('.history-item').forEach(item => {
+        const btn = item.querySelector('.admin-delete-log-btn');
+        if (btn) {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            yukichatDeleteLog(item.dataset.logId);
+          };
+        }
+      });
+    }
 
     // Add Clear Logs button if admin
     if (yukichat.isAdmin && !document.getElementById('admin-clear-logs')) {
