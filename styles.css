@@ -3429,6 +3429,8 @@ body.content-ready {
   align-items: center;
   justify-content: center;
   transition: opacity 0.5s, transform 0.5s;
+  overflow-y: auto; /* Added for mobile safety */
+  padding: 20px 0;
 }
 
 .yukichat-overlay:not(.active) {
@@ -3510,6 +3512,7 @@ body.content-ready {
   position: relative;
   overflow: hidden;
   cursor: crosshair;
+  touch-action: none; /* Prevent scrolling when moving avatars */
 }
 
 .yukichat-stage {
@@ -3783,8 +3786,12 @@ body.content-ready {
   .yukichat-container {
     height: auto;
     min-height: 500px;
-    max-height: 85vh;
+    max-height: none; /* Remove height constraint to allow normal flow */
     border-radius: 20px;
+  }
+  .yukichat-stage-wrapper {
+    height: 350px; /* Fixed height to stabilize coordinate calculation */
+    flex: none;
   }
   .setup-content {
     padding: 20px;
