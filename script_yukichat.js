@@ -118,34 +118,54 @@
 
   if (nameInput) nameInput.value = yukichat.name;
 
-  // Admin Toggle Trigger (Secret)
-  if (setupOverlay) {
-    const setupTitle = setupOverlay.querySelector('h3');
-    const triggerArea = setupOverlay.querySelector('.yukichat-disclaimer') || setupTitle;
-    let clickCount = 0;
-    if (triggerArea) {
-      triggerArea.style.cursor = 'pointer';
-      triggerArea.style.userSelect = 'none'; // Prevent selection while fast clicking
-      triggerArea.style.touchAction = 'manipulation'; // Prevent double-tap zoom on mobile
-      
-      triggerArea.addEventListener('click', () => {
-        clickCount++;
-        if (clickCount >= 5) {
-          const pw = prompt('パスワードを入力してください');
-          if (pw === '1234') {
-            yukichat.isAdmin = true;
-            yukichat.password = pw;
-            alert('管理者モードが有効になりました');
-            if (setupTitle) {
-              setupTitle.innerText = 'アバターを選んでね（管理者）';
-              setupTitle.style.color = '#ff0055';
-            }
-            renderAvatarSelector(); // Refresh list to show Manager chibi
-          }
-          clickCount = 0;
+  // Admin Custom Toggle Trigger
+  const adminTriggerBtn = document.getElementById('admin-trigger-btn');
+  const adminLoginModal = document.getElementById('yukichat-admin-login');
+  const adminPwInput = document.getElementById('admin-pw-input');
+  const adminLoginSubmit = document.getElementById('admin-login-submit');
+  const adminLoginCancel = document.getElementById('admin-login-cancel');
+  const adminLoginError = document.getElementById('admin-login-error');
+
+  if (adminTriggerBtn && adminLoginModal) {
+    // Show Modal
+    adminTriggerBtn.addEventListener('click', () => {
+      adminLoginModal.style.display = 'flex';
+      adminLoginModal.style.opacity = '1';
+      adminLoginModal.style.pointerEvents = 'auto';
+      adminLoginError.style.display = 'none';
+      adminPwInput.value = '';
+      adminPwInput.focus();
+    });
+
+    // Cancel Button
+    adminLoginCancel.addEventListener('click', () => {
+      adminLoginModal.style.display = 'none';
+    });
+
+    // Execute Login
+    const executeLogin = () => {
+      const pw = adminPwInput.value;
+      if (pw === '1234') {
+        yukichat.isAdmin = true;
+        yukichat.password = pw;
+        adminLoginModal.style.display = 'none';
+        
+        const setupTitle = setupOverlay.querySelector('h3');
+        if (setupTitle) {
+          setupTitle.innerHTML = 'アバターを選んでね <span style="color:#ff0055; font-size: 0.8rem;">(管理者)</span>';
         }
-      });
-    }
+        renderAvatarSelector(); // Refresh list to show Manager chibi
+      } else {
+        adminLoginError.style.display = 'block';
+        adminPwInput.value = '';
+        adminPwInput.focus();
+      }
+    };
+
+    adminLoginSubmit.addEventListener('click', executeLogin);
+    adminPwInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') executeLogin();
+    });
   }
 
   const exitRoom = async (isAuto = false) => {

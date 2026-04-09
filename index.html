@@ -429,8 +429,11 @@
             <div class="avatar-grid" id="yukichat-avatar-list">
               <!-- Injected by script_yukichat.js -->
             </div>
-            <div class="setup-name-input">
+            <div class="setup-name-input" style="position: relative;">
               <input type="text" id="yukichat-user-name" placeholder="なまえ（空欄でもOK）" maxlength="10">
+              <button id="admin-trigger-btn" title="Admin Login" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(0,0,0,0.1); cursor: pointer; font-size: 1.2rem;">
+                <i class="fa-solid fa-lock"></i>
+              </button>
             </div>
             <button id="yukichat-enter-btn" class="btn-primary-neon">入室する！</button>
             <p class="yukichat-disclaimer">
@@ -465,6 +468,19 @@
             <button id="yukichat-exit-btn" class="btn-mini-gray" title="退出する"><i class="fa-solid fa-right-from-bracket"></i> 退出</button>
             <input type="text" id="yukichat-input" placeholder="メッセージを入力...（Enterで送信）" maxlength="50">
             <button id="yukichat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        </div>
+
+        <!-- Admin Custom Login Modal -->
+        <div id="yukichat-admin-login" class="yukichat-overlay" style="display: none; z-index: 200;">
+          <div class="setup-content">
+            <h3 style="color: #ff0055; margin-bottom: 15px;"><i class="fa-solid fa-lock"></i> 管理者ログイン</h3>
+            <p id="admin-login-error" style="color: red; font-size: 0.8rem; display: none; margin-bottom: 10px;">パスワードが違います</p>
+            <input type="password" id="admin-pw-input" placeholder="パスワードを入力" style="margin-bottom: 20px; padding: 12px 20px; width: 100%; border-radius: 25px; border: 2px solid #ccc; text-align: center; font-family: inherit; font-weight: 700;">
+            <div style="display: flex; gap: 15px; justify-content: center;">
+              <button id="admin-login-cancel" class="btn-mini-gray" style="flex: 1; justify-content: center;">キャンセル</button>
+              <button id="admin-login-submit" class="btn-primary-neon" style="flex: 1; padding: 10px 20px; font-size: 0.9rem;">ログイン</button>
+            </div>
           </div>
         </div>
       </div>
