@@ -36,7 +36,10 @@
     { file: 'chibi_reiko.png', name: '瓜田麗子' }
   ];
 
-  const adminChibi = { file: 'chibi_manager.png', name: '管理人' };
+  const adminChibis = [
+    { file: 'chibi_manager.png', name: '管理人' },
+    { file: 'yukickersR.png', name: 'ユキッカーズ' }
+  ];
 
   const stage = document.getElementById('yukichat-stage');
   const setupOverlay = document.getElementById('yukichat-setup');
@@ -94,7 +97,9 @@
     if (!avatarList) return;
     avatarList.innerHTML = '';
     const list = [...memberChibis];
-    if (yukichat.isAdmin) list.unshift(adminChibi);
+    if (yukichat.isAdmin) {
+      adminChibis.forEach(ac => list.unshift(ac));
+    }
 
     list.forEach(m => {
       const div = document.createElement('div');
@@ -116,10 +121,14 @@
   // Admin Toggle Trigger (Secret)
   if (setupOverlay) {
     const setupTitle = setupOverlay.querySelector('h3');
+    const triggerArea = setupOverlay.querySelector('.yukichat-disclaimer') || setupTitle;
     let clickCount = 0;
-    if (setupTitle) {
-      setupTitle.style.cursor = 'pointer';
-      setupTitle.onclick = () => {
+    if (triggerArea) {
+      triggerArea.style.cursor = 'pointer';
+      triggerArea.style.userSelect = 'none'; // Prevent selection while fast clicking
+      triggerArea.style.touchAction = 'manipulation'; // Prevent double-tap zoom on mobile
+      
+      triggerArea.addEventListener('click', () => {
         clickCount++;
         if (clickCount >= 5) {
           const pw = prompt('パスワードを入力してください');
@@ -127,13 +136,15 @@
             yukichat.isAdmin = true;
             yukichat.password = pw;
             alert('管理者モードが有効になりました');
-            setupTitle.innerText = 'アバターを選んでね（管理者）';
-            setupTitle.style.color = '#ff0055';
+            if (setupTitle) {
+              setupTitle.innerText = 'アバターを選んでね（管理者）';
+              setupTitle.style.color = '#ff0055';
+            }
             renderAvatarSelector(); // Refresh list to show Manager chibi
           }
           clickCount = 0;
         }
-      };
+      });
     }
   }
 
