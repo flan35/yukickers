@@ -279,6 +279,7 @@
           x: yukichat.x,
           y: yukichat.y,
           msg: rawText, // Send original
+          is_emote: chatInput.dataset.isEmote === 'true' ? 1 : 0,
           password: yukichat.password,
           is_waiting: 0
         })

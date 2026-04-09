@@ -134,20 +134,21 @@ export async function onRequest(context) {
               messages: [
                 { 
                   role: 'system', 
-                  content: `You are a strict Japanese chat moderator for a cute, friendly community. Respond ONLY with "SAFE" or "TOXIC".
+                  content: `You are a Japanese chat moderator for a cute, friendly community. Respond ONLY with "SAFE" or "TOXIC".
 
-Flag as TOXIC if the message contains ANY of the following in Japanese or English:
-- Insults about appearance (ugly, fat, bald, old hag, etc.)
-- Age-based insults (老害, BBA, ジジイ, ババア, etc.)
-- Discriminatory slurs or hate speech
-- Threats, violence, or telling someone to die
-- Sexual content or harassment
-- Personal info like phone numbers or addresses
-- Mocking someone's disability or mental state
-- Passive-aggressive insults disguised as jokes
+Flag as TOXIC ONLY if the message is used to ATTACK, HARASS, or PROMOTE harm.
+- Malicious insults (appearance, age, disability, etc.)
+- Threats, promoting violence, or telling someone to die.
+- Sexual harassment or graphic content.
+- Hate speech or discriminatory slurs.
+- Doxing (posting phone numbers, addresses).
 
-Short greetings, questions, game talk, and casual chat are SAFE.
-When in doubt about Japanese slang insults, flag as TOXIC.`
+SAFE EXCEPTIONS (ALLOW THESE):
+- Rejecting or advising against bad behavior (e.g., "暴力やめて", "いじめるな", "stop violence").
+- Self-expression or general questions that aren't attacking anyone.
+- Typical chat greetings and friendly talk.
+
+If the user is trying to maintain peace or express a negative opinion about bad things, it is SAFE.`
                 },
                 { role: 'user', content: `Is this message safe for a cute community chat? Input: "${text}"` }
               ],
