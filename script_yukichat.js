@@ -16,7 +16,10 @@
     password: '',
     isKicked: false,
     isIntersecting: false,
+    isLocalMode: false, // Fallback for testing without server
   };
+
+  const isLocalEnv = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
   localStorage.setItem('yukichat_id', yukichat.id);
 
@@ -198,8 +201,8 @@
         isLocal: true
       });
 
-      // Initial entry sync
       try {
+        // Initial entry sync
         const res = await fetch(`/api/yukichat?id=${yukichat.id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -232,10 +235,9 @@
         
         await syncWithServer(true);
       } catch (e) {
-        console.error('Enter failed', e);
-        alert('接続エラーが発生しました。');
-        yukichat.isActive = false;
-        setupOverlay.classList.add('active');
+        console.warn('Backend connection failed, entering Local Mode', e);
+        yukichat.isLocalMode = true;
+        if (activeCountEl) activeCountEl.innerText = '(Local Mode)';
       }
     };
   }
@@ -284,17 +286,25 @@
 
       if (res.ok) {
         const data = await res.json();
+        const isEmote = chatInput.dataset.isEmote === 'true';
         const finalMsg = data.msg || rawText;
         
         // Show the moderated version on sender's own screen
-        showBubble(yukichat.id, finalMsg);
+        showBubble(yukichat.id, finalMsg, false, isEmote);
         
         // Update state but exclude it from next sync to avoid repeats
         yukichat.msg = '';
         yukichat.msgTime = Date.now();
+        chatInput.dataset.isEmote = 'false';
       }
     } catch (e) {
-      console.error('Chat Send Failed:', e);
+      if (yukichat.isLocalMode) {
+        const isEmote = chatInput.dataset.isEmote === 'true';
+        showBubble(yukichat.id, rawText, false, isEmote);
+        chatInput.dataset.isEmote = 'false';
+      } else {
+        console.error('Chat Send Failed:', e);
+      }
     }
   };
 
@@ -328,6 +338,17 @@
           </div>
         ` : ''}
       `;
+      
+      // Emote trigger for local user
+      if (state.isLocal) {
+        const img = el.querySelector('img');
+        img.style.cursor = 'help';
+        img.onclick = (event) => {
+          event.stopPropagation();
+          toggleEmoteMenu(el);
+        };
+      }
+
       stage.appendChild(el);
       yukichat.avatars[uid] = el;
     }
@@ -349,7 +370,7 @@
     el.style.zIndex = 10 + Math.floor(state.y);
   }
 
-  function showBubble(uid, text, isStatic = false) {
+  function showBubble(uid, text, isStatic = false, isEmote = false) {
     const el = yukichat.avatars[uid];
     if (!el) return;
 
@@ -357,22 +378,75 @@
     if (old) old.remove();
     if (!text) return;
 
+    let emoteClass = '';
+    if (isEmote) {
+      const mapping = {
+        '❤️': 'love', '✨': 'sparkle', '👍': 'good', '😊': 'happy',
+        '😭': 'sad', '🎉': 'burst', '🔥': 'fire', '🙏': 'pray'
+      };
+      emoteClass = `is-emote-${mapping[text] || 'love'}`;
+    }
+
     const b = document.createElement('div');
-    b.className = 'yukichat-bubble';
+    b.className = `yukichat-bubble ${isEmote ? 'is-emote' : ''} ${emoteClass}`;
     b.innerText = text;
     el.appendChild(b);
 
     if (!isStatic) {
       setTimeout(() => {
         if (b && b.parentNode) b.remove();
-      }, 5000);
+      }, isEmote ? 3000 : 5000);
     }
   }
 
+  function toggleEmoteMenu(anchorEl) {
+    let menu = document.getElementById('emote-menu');
+    if (menu) {
+      menu.remove();
+      return;
+    }
+
+    menu = document.createElement('div');
+    menu.id = 'emote-menu';
+    menu.className = 'emote-menu';
+    const emotes = ['❤️', '✨', '👍', '😊', '😭', '🎉', '🔥', '🙏'];
+    const radius = 80;
+    
+    emotes.forEach((emo, i) => {
+      const angle = (i * (360 / emotes.length)) - 90; // Start from top
+      const rad = angle * (Math.PI / 180);
+      const x = Math.cos(rad) * radius;
+      const y = Math.sin(rad) * radius;
+
+      const btn = document.createElement('span');
+      btn.className = 'emote-btn';
+      btn.innerText = emo;
+      btn.style.left = `${x}px`;
+      btn.style.top = `${y}px`;
+      btn.style.animationDelay = `${i * 0.05}s`;
+
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        sendEmote(emo);
+        menu.remove();
+      };
+      menu.appendChild(btn);
+    });
+
+    anchorEl.appendChild(menu);
+  }
+
+  function sendEmote(emoji) {
+    chatInput.value = emoji;
+    chatInput.dataset.isEmote = 'true';
+    submitMsg();
+  }
+
   async function syncWithServer(isImmediate = false) {
+    if (yukichat.isLocalMode && !isImmediate) return;
     try {
       // Optimization: If NOT active and NOT in view, skip everything.
-      if (!yukichat.isActive && !yukichat.isIntersecting && !isImmediate) return;
+      if (!yukichat.isActive && !yukichat.isIntersecting && !isImmediate && !yukichat.isLocalMode) return;
 
       // Sync presence (even if waiting)
       // If active, sync position. If waiting, sync presence status.
@@ -393,6 +467,7 @@
             x: yukichat.isActive ? yukichat.x : 50,
             y: yukichat.isActive ? yukichat.y : 50,
             msg: '',
+            is_emote: chatInput.dataset.isEmote === 'true' ? 1 : 0,
             password: yukichat.password,
             is_waiting: yukichat.isActive ? 0 : 1
           })

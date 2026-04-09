@@ -194,8 +194,8 @@ When in doubt about Japanese slang insults, flag as TOXIC.`
         'INSERT OR REPLACE INTO yukichat_users (id, name, avatar, x, y, msg, ts, is_admin, ip, is_waiting) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
       ).bind(id, modName.text, avatar || 'chibi_yuki.png', x || 50, y || 50, modMsg.text, now, isAdmin, ip, isWaiting).run();
 
-      // 3. Log Chat Message
-      if (modMsg.text) {
+      // 3. Log Chat Message (Skip if it's an emote)
+      if (modMsg.text && !data.is_emote) {
         await env.DB.prepare('INSERT INTO yukichat_logs (name, msg, ts, is_admin) VALUES (?, ?, ?, ?)').bind(modName.text, modMsg.text, now, isAdmin).run();
         // Keep only top 20 logs
         await env.DB.prepare('DELETE FROM yukichat_logs WHERE id NOT IN (SELECT id FROM yukichat_logs ORDER BY id DESC LIMIT 20)').run();

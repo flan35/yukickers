@@ -3611,6 +3611,142 @@ body.content-ready {
   writing-mode: horizontal-tb; /* Explicitly set to avoid vertical inheritance if any */
 }
 
+.yukichat-bubble.is-emote {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  font-size: 3.5rem;
+  padding: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.yukichat-bubble.is-emote::after {
+  display: none; /* Hide the arrow for plain emoji emotes */
+}
+
+/* ❤️ Heart: Floating zig-zag */
+.yukichat-bubble.is-emote-love { animation: emoteFloat 2s ease-out forwards; }
+@keyframes emoteFloat {
+  0% { transform: translate(-50%, 0) rotate(0) scale(0.5); opacity: 0; }
+  20% { transform: translate(-50%, -20px) rotate(10deg) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -130px) rotate(-10deg) scale(1.2); opacity: 0; }
+}
+
+/* ✨ Sparkle: Rotate and flicker */
+.yukichat-bubble.is-emote-sparkle { animation: emoteSparkle 2s ease-out forwards; }
+@keyframes emoteSparkle {
+  0% { transform: translate(-50%, 0) rotate(0) scale(0); opacity: 0; }
+  30% { transform: translate(-50%, -40px) rotate(180deg) scale(1.3); opacity: 1; }
+  100% { transform: translate(-50%, -80px) rotate(360deg) scale(1); opacity: 0; }
+}
+
+/* 👍 Good: Pulse */
+.yukichat-bubble.is-emote-good { animation: emotePulse 1.5s ease-out forwards; }
+@keyframes emotePulse {
+  0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
+  20% { transform: translate(-50%, -20px) scale(1.5); opacity: 1; }
+  40% { transform: translate(-50%, -20px) scale(1.2); opacity: 1; }
+  60% { transform: translate(-50%, -20px) scale(1.5); opacity: 1; }
+  100% { transform: translate(-50%, -40px) scale(1); opacity: 0; }
+}
+
+/* 😊 Happy: Bounce */
+.yukichat-bubble.is-emote-happy { animation: emoteBounce 2s ease-out forwards; }
+@keyframes emoteBounce {
+  0%, 100% { transform: translate(-50%, 0) scale(1); opacity: 0; }
+  10%, 30%, 50% { transform: translate(-50%, -30px) scale(1.1); opacity: 1; }
+  20%, 40% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translate(-50%, -40px); opacity: 0; }
+}
+
+/* 😭 Sad: Shake */
+.yukichat-bubble.is-emote-sad { animation: emoteShake 2s ease-out forwards; }
+@keyframes emoteShake {
+  0% { transform: translate(-50%, 0); opacity: 0; }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-52%, -10px); opacity: 1; }
+  20%, 40%, 60%, 80% { transform: translate(-48%, -10px); opacity: 1; }
+  100% { transform: translate(-50%, -30px); opacity: 0; }
+}
+
+/* 🎉 Burst: Zoom burst */
+.yukichat-bubble.is-emote-burst { animation: emoteBurst 1.5s ease-out forwards; }
+@keyframes emoteBurst {
+  0% { transform: translate(-50%, 0) scale(0); opacity: 0; }
+  30% { transform: translate(-50%, -30px) scale(2); opacity: 1; }
+  100% { transform: translate(-50%, -60px) scale(1.5); opacity: 0; }
+}
+
+/* 🔥 Fire: Flicker */
+.yukichat-bubble.is-emote-fire { animation: emoteFlicker 2s ease-out forwards; }
+@keyframes emoteFlicker {
+  0% { transform: translate(-50%, 0) scale(0.8); opacity: 0; }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-50%, -20px) scale(1.1); opacity: 1; }
+  20%, 40%, 60%, 80% { transform: translate(-50%, -25px) scale(1.3); opacity: 1; }
+  100% { transform: translate(-50%, -80px) scale(0.5); opacity: 0; }
+}
+
+/* 🙏 Pray: Hover/Pulse */
+.yukichat-bubble.is-emote-pray { animation: emotePray 2s ease-out forwards; }
+@keyframes emotePray {
+  0% { transform: translate(-50%, 0); opacity: 0; }
+  30% { transform: translate(-50%, -20px); opacity: 1; }
+  60% { transform: translate(-50%, -25px); opacity: 1; }
+  100% { transform: translate(-50%, -50px); opacity: 0; }
+}
+
+.emote-menu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.emote-btn {
+  position: absolute;
+  font-size: 2rem;
+  cursor: pointer;
+  transition: transform 0.2s, filter 0.2s;
+  pointer-events: auto;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid var(--yukichat-accent);
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  transform: translate(-50%, -50%) scale(0);
+  animation: emoteBtnPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes emoteBtnPop {
+  from { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.emote-btn {
+  font-size: 1.8rem;
+  cursor: pointer;
+  transition: transform 0.2s, filter 0.2s;
+}
+
+.emote-btn:hover {
+  transform: translate(-50%, -50%) scale(1.3);
+  filter: drop-shadow(0 0 8px var(--yukichat-accent));
+  background: #fff;
+  z-index: 1001;
+}
+
 .yukichat-bubble::after {
   content: '';
   position: absolute;
