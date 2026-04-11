@@ -104,19 +104,26 @@ export async function onRequest(context) {
       const matchId = url.searchParams.get('matchId');
       const userId = url.searchParams.get('userId');
 
+      // 共通：待機人数をカウント（30秒以内の有効な待機者）
+      const queueObj = await env.DB.prepare('SELECT COUNT(*) as count FROM zookeeper_queue WHERE joined_at > ?').bind(now - 30).first();
+      const queueCount = queueObj ? queueObj.count : 0;
+
       if (matchId) {
         const match = await env.DB.prepare('SELECT * FROM zookeeper_matches WHERE match_id = ?').bind(matchId).first();
-        return new Response(JSON.stringify(match), { headers: corsHeaders });
+        return new Response(JSON.stringify({ ...match, queueCount }), { headers: corsHeaders });
       }
 
       if (userId) {
         // Check if user has been matched by someone else
         const match = await env.DB.prepare('SELECT * FROM zookeeper_matches WHERE (p1_id = ? OR p2_id = ?) AND phase != "finished" ORDER BY start_ts DESC LIMIT 1').bind(userId, userId).first();
         if (match) {
-          return new Response(JSON.stringify({ status: 'matched', matchId: match.match_id, match }), { headers: corsHeaders });
+          return new Response(JSON.stringify({ status: 'matched', matchId: match.match_id, match, queueCount }), { headers: corsHeaders });
         }
-        return new Response(JSON.stringify({ status: 'waiting' }), { headers: corsHeaders });
+        return new Response(JSON.stringify({ status: 'waiting', queueCount }), { headers: corsHeaders });
       }
+
+      // 公開情報の取得（マッチIDもユーザーIDもない場合）
+      return new Response(JSON.stringify({ status: 'info', queueCount }), { headers: corsHeaders });
     }
 
     return new Response('Not Found', { status: 404 });

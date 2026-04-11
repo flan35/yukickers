@@ -1,7 +1,7 @@
-const API_URL = '/api/zookeeper/match';
+const API_URL = '/api/yukipazu/match';
 const GRID_SIZE = 8;
 const ROUND_TIME = 30;
-const INITIAL_HP = 100;
+const INITIAL_HP = 25; // 決着を早くするために25に設定
 
 const CHARACTERS = [
     { id: 'inoshishi', img: 'chibi_inoshishi.png', name: 'いのしし', type: 'atk' },
@@ -33,10 +33,13 @@ let state = {
     phase: 'waiting',
     timer: ROUND_TIME,
     board: [],
+    activeCharacters: [], // 使用する6人
     selectedTile: null,
     isProcessing: false,
     maxCombo: 0,
-    combo: 0
+    combo: 0,
+    lastFallEndTime: 0, 
+    comboGraceTime: 3000 
 };
 
 localStorage.setItem('yukickers_puzzle_id', state.userId);
@@ -87,6 +90,9 @@ btnCpu.onclick = async () => {
     state.isP1 = true;
     state.username = usernameInput.value || '名無し';
     
+    // 選出
+    setupActiveCharacters();
+
     // CPU opponent setup
     const cpuChar = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
     state.opponent = { name: cpuChar.name + ' (CPU)', avatar: cpuChar.img };
@@ -96,14 +102,63 @@ btnCpu.onclick = async () => {
     game.classList.add('active');
     
     // Header
-    document.getElementById('p1Name').innerText = state.username;
     document.getElementById('p1Avatar').src = state.avatar;
-    document.getElementById('p2Name').innerText = state.opponent.name;
+    document.getElementById('p1Name').innerText = state.username;
     document.getElementById('p2Avatar').src = state.opponent.avatar;
-
+    document.getElementById('p2Name').innerText = state.opponent.name;
+    
     initBoard();
     startRound();
 };
+
+function setupActiveCharacters() {
+    const yuki = CHARACTERS.find(c => c.id === 'yuki');
+    const others = CHARACTERS.filter(c => c.id !== 'yuki');
+    
+    // Shuffle others
+    const shuffled = others.sort(() => Math.random() - 0.5);
+    
+    // Final 6 members (Yuki + 5 others)
+    state.activeCharacters = [yuki, ...shuffled.slice(0, 5)];
+    
+    // Shuffle the active list to randomize index
+    state.activeCharacters.sort(() => Math.random() - 0.5);
+}
+
+let queueInterval = null;
+
+async function fetchQueueCount() {
+    try {
+        // ロビー画面が表示されている時だけ取得
+        if (!lobby.classList.contains('active')) {
+            if (queueInterval) clearInterval(queueInterval);
+            queueInterval = null;
+            return;
+        }
+
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        const count = data.queueCount || 0;
+        document.getElementById('queueCountDisplay').innerText = `待機中: ${count}人`;
+        
+        // 1人以上なら20秒ごとに更新、0人なら停止
+        if (count > 0) {
+            if (!queueInterval) {
+                queueInterval = setInterval(fetchQueueCount, 20000);
+            }
+        } else {
+            if (queueInterval) {
+                clearInterval(queueInterval);
+                queueInterval = null;
+            }
+        }
+    } catch (e) {
+        console.error("Failed to fetch queue count", e);
+    }
+}
+
+// 起動時に実行
+fetchQueueCount();
 
 async function joinQueue() {
     try {
@@ -133,6 +188,7 @@ async function joinQueue() {
 }
 
 async function startMatch(matchId) {
+    setupActiveCharacters();
     state.matchId = matchId;
     const res = await fetch(`${API_URL}?matchId=${matchId}`);
     const match = await res.json();
@@ -155,14 +211,14 @@ async function startMatch(matchId) {
 
 // --- Game Logic ---
 function initBoard() {
-    puzzleBoard.innerHTML = '';
+    puzzleBoard.innerHTML = '<div id="comboDisplay" class="combo-display">0 COMBO</div>';
     state.board = [];
     for (let r = 0; r < GRID_SIZE; r++) {
         state.board[r] = [];
         for (let c = 0; c < GRID_SIZE; c++) {
             let type;
             do {
-                type = Math.floor(Math.random() * CHARACTERS.length);
+                type = Math.floor(Math.random() * state.activeCharacters.length);
             } while (
                 (c >= 2 && state.board[r][c-1].type === type && state.board[r][c-2].type === type) ||
                 (r >= 2 && state.board[r-1][c].type === type && state.board[r-2][c].type === type)
@@ -176,27 +232,32 @@ function initBoard() {
 }
 
 function createTileElement(r, c, typeIndex) {
-    const char = CHARACTERS[typeIndex];
+    const char = state.activeCharacters[typeIndex];
     const div = document.createElement('div');
     div.className = 'tile';
     div.dataset.r = r;
     div.dataset.c = c;
     div.style.gridRow = r + 1;
     div.style.gridColumn = c + 1;
-    div.innerHTML = `<div class="tile-inner"><img src="${char.img}" alt="" pointer-events="none"></div>`;
+    div.style.userSelect = 'none';
+    div.style.touchAction = 'none';
+    div.style.transition = 'transform 0.1s, grid-row 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    div.innerHTML = `<div class="tile-inner"><img src="${char.img}" alt="" pointer-events="none" draggable="false"></div>`;
     div.onclick = (e) => {
-        // datasetから最新の座標を取得
         const targetR = parseInt(div.dataset.r);
         const targetC = parseInt(div.dataset.c);
         onTileClick(targetR, targetC);
     };
+    div.oncontextmenu = (e) => e.preventDefault();
     return div;
 }
 
 function onTileClick(r, c) {
-    if (state.isProcessing || state.phase !== 'puzzle') return;
+    if (state.phase !== 'puzzle') return;
 
     const clickedTile = state.board[r][c];
+    if (!clickedTile || clickedTile.isDead) return;
+
     if (!state.selectedTile) {
         state.selectedTile = clickedTile;
         clickedTile.el.classList.add('selected');
@@ -215,15 +276,15 @@ function onTileClick(r, c) {
 }
 
 async function swapTiles(t1, t2, isReverting = false) {
-    state.isProcessing = true;
     t1.el.classList.remove('selected');
     
-    // Physical swap animations
     const r1 = t1.r, c1 = t1.c, r2 = t2.r, c2 = t2.c;
+    t1.el.dataset.r = r2; t1.el.dataset.c = c2;
+    t2.el.dataset.r = r1; t2.el.dataset.c = c1;
+    
     t1.el.style.gridRow = r2 + 1; t1.el.style.gridColumn = c2 + 1;
     t2.el.style.gridRow = r1 + 1; t2.el.style.gridColumn = c1 + 1;
     
-    // Logical swap
     state.board[r1][c1] = t2; state.board[r2][c2] = t1;
     t1.r = r2; t1.c = c2; t2.r = r1; t2.c = c1;
 
@@ -233,27 +294,34 @@ async function swapTiles(t1, t2, isReverting = false) {
         const matches = findMatches();
         if (matches.length > 0) {
             state.selectedTile = null;
+            const now = Date.now();
+            if (state.lastFallEndTime > 0 && now - state.lastFallEndTime < state.comboGraceTime) {
+            } else if (state.lastFallEndTime > 0) {
+                state.combo = 0;
+            }
             await processMatches(matches);
         } else {
             await swapTiles(t1, t2, true);
             state.selectedTile = null;
-            state.isProcessing = false;
         }
-    } else {
-        state.isProcessing = false;
     }
 }
 
 function findMatches() {
     let matches = [];
-    // Horiz
+    const getType = (r, c) => {
+        if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) return null;
+        const t = state.board[r][c];
+        return (t && !t.isDead) ? t.type : null;
+    };
+
     for (let r = 0; r < GRID_SIZE; r++) {
         for (let c = 0; c < GRID_SIZE - 2; c++) {
-            let type = state.board[r][c].type;
-            if (type === state.board[r][c+1].type && type === state.board[r][c+2].type) {
+            let type = getType(r, c);
+            if (type !== null && type === getType(r, c+1) && type === getType(r, c+2)) {
                 let match = [state.board[r][c], state.board[r][c+1], state.board[r][c+2]];
                 let next = c + 3;
-                while (next < GRID_SIZE && state.board[r][next].type === type) {
+                while (next < GRID_SIZE && getType(r, next) === type) {
                     match.push(state.board[r][next]);
                     next++;
                 }
@@ -262,14 +330,13 @@ function findMatches() {
             }
         }
     }
-    // Vert
     for (let c = 0; c < GRID_SIZE; c++) {
         for (let r = 0; r < GRID_SIZE - 2; r++) {
-            let type = state.board[r][c].type;
-            if (type === state.board[r+1][c].type && type === state.board[r+2][c].type) {
+            let type = getType(r, c);
+            if (type !== null && type === getType(r+1, c) && type === getType(r+2, c)) {
                 let match = [state.board[r][c], state.board[r+1][c], state.board[r+2][c]];
                 let next = r + 3;
-                while (next < GRID_SIZE && state.board[next][c].type === type) {
+                while (next < GRID_SIZE && getType(next, c) === type) {
                     match.push(state.board[next][c]);
                     next++;
                 }
@@ -284,40 +351,51 @@ function findMatches() {
 async function processMatches(matchGroups) {
     state.combo++;
     if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+    
+    // 消去が発生した瞬間に猶予タイマーをリセット（延長）する
+    state.lastFallEndTime = Date.now();
+    resetComboTimer();
 
     let matchedTiles = new Set();
     matchGroups.forEach(group => {
-        const type = CHARACTERS[group[0].type].type;
+        const charInfo = state.activeCharacters[group[0].type];
+        const type = charInfo.type;
         const count = group.length;
         
-        // Stats
-        if (type === 'atk') state.atk += count;
-        else if (type === 'def') state.def += count;
-        else if (type === 'special') { state.atk += count; state.def += count; }
+        const bonus = 1 + (state.combo * 0.1); 
+        if (type === 'atk') state.atk += Math.floor(count * bonus);
+        else if (type === 'def') state.def += Math.floor(count * bonus);
+        else if (type === 'special') { 
+            state.atk += Math.floor(count * bonus); 
+            state.def += Math.floor(count * bonus); 
+        }
 
-        group.forEach(t => matchedTiles.add(t));
+        group.forEach(t => {
+            t.isDead = true;
+            matchedTiles.add(t);
+        });
     });
 
     updateStatsDisplay();
 
-    // Remove tiles
     matchedTiles.forEach(t => t.el.classList.add('match-anim'));
-    await wait(300);
+    await wait(600);
     matchedTiles.forEach(t => {
         t.el.remove();
-        state.board[t.r][t.c] = null;
+        if (state.board[t.r][t.c] === t) {
+            state.board[t.r][t.c] = null;
+        }
     });
 
-    // Fall
     await fallTiles();
 
-    // Check cascades
     const newMatches = findMatches();
     if (newMatches.length > 0) {
         await processMatches(newMatches);
     } else {
-        state.combo = 0;
-        state.isProcessing = false;
+        // Cascade finished, record end time
+        state.lastFallEndTime = Date.now();
+        resetComboTimer();
         if (!state.isCpu) syncScore();
     }
 }
@@ -330,30 +408,39 @@ async function fallTiles() {
                 emptySpaces++;
             } else if (emptySpaces > 0) {
                 const tile = state.board[r][c];
-                state.board[r + emptySpaces][c] = tile;
+                const dist = emptySpaces;
+                state.board[r + dist][c] = tile;
                 state.board[r][c] = null;
-                tile.r = r + emptySpaces;
-                tile.el.dataset.r = tile.r; // IMPORTANT: Update dataset coordinate
+                tile.r = r + dist;
+                tile.el.dataset.r = tile.r; 
+                tile.el.dataset.c = tile.c; 
+                
+                // 見た目だけ上にオフセットさせてから下ろす
                 tile.el.style.gridRow = tile.r + 1;
+                tile.el.style.transform = `translateY(-${dist * 100}%)`;
+                tile.el.style.transition = 'none';
+
+                setTimeout(() => {
+                    tile.el.style.transition = 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    tile.el.style.transform = 'translateY(0)';
+                }, 10);
             }
         }
-        // Fill new
         for (let i = 0; i < emptySpaces; i++) {
             const r = emptySpaces - 1 - i;
-            const type = Math.floor(Math.random() * CHARACTERS.length);
-            const tile = createTileElement(r, c, type); // Fix: use final r, not -1
+            const type = Math.floor(Math.random() * state.activeCharacters.length);
+            const tile = createTileElement(r, c, type); 
             tile.style.gridRow = (r + 1); 
             state.board[r][c] = { r, c, type, el: tile };
             puzzleBoard.appendChild(tile);
-            // Anim from top
             tile.style.transform = `translateY(-${(emptySpaces + 1) * 100}%)`;
             setTimeout(() => {
-                tile.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                tile.style.transition = 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
                 tile.style.transform = '';
             }, 10);
         }
     }
-    await wait(250); // Slightly faster
+    await wait(500);
 }
 
 // --- Round & Battle ---
@@ -421,9 +508,31 @@ async function syncScore() {
     });
 }
 
+function resetComboTimer() {
+    clearTimeout(state.comboTimeout);
+    state.comboTimeout = setTimeout(() => {
+        const now = Date.now();
+        if (now - state.lastFallEndTime >= state.comboGraceTime) {
+            state.combo = 0;
+            updateStatsDisplay();
+        }
+    }, state.comboGraceTime);
+}
+
 function updateStatsDisplay() {
     document.getElementById('p1Atk').innerText = state.atk;
     document.getElementById('p1Def').innerText = state.def;
+    
+    // コンボ表示の更新
+    const comboEl = document.getElementById('comboDisplay');
+    if (state.combo > 1) {
+        comboEl.innerText = `${state.combo} COMBO`;
+        comboEl.classList.remove('active');
+        void comboEl.offsetWidth; // リスタートアニメーション
+        comboEl.classList.add('active');
+    } else {
+        comboEl.classList.remove('active');
+    }
 }
 
 async function waitForBattleResults() {

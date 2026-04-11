@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ユキッカーズ・パズルバトル</title>
-    <link rel="stylesheet" href="zookeeper.css">
+    <title>ユキパズ！</title>
+    <link rel="stylesheet" href="yukipazu.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -12,8 +12,8 @@
         <!-- ログイン / マッチング待機画面 -->
         <div id="lobby" class="screen active">
             <div class="glass-card">
-                <h1>YUKICKERS<br>PUZZLE BATTLE</h1>
-                <p class="subtitle">ユキッカーズ・パズルバトル</p>
+                <h1>ユキパズ！</h1>
+                <p class="subtitle">YUKICKERS PUZZLE</p>
                 
                 <div class="input-group">
                     <label for="username">プレイヤー名</label>
@@ -28,6 +28,7 @@
                 </div>
 
                 <button id="btnJoin" class="premium-btn">対戦相手を探す</button>
+                <div id="queueCountDisplay" class="queue-count">待機中: 0人</div>
                 <button id="btnCpu" class="premium-btn secondary-btn" style="margin-top: 10px; background: #6366f1;">CPUと対戦</button>
                 <div id="matchingStatus" class="status-msg hidden">
                     <div class="spinner"></div>
