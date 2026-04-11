@@ -79,7 +79,7 @@ export async function onRequest(context) {
 
       // 3. Sync Phase / Battle Result
       if (action === 'sync') {
-        const { matchId, phase, p1_hp, p2_hp, round, resetPoints } = data;
+        const { matchId, phase, p1_hp, p2_hp, round, resetPoints, winner_id } = data;
         let query = 'UPDATE zookeeper_matches SET last_update_ts = ?';
         const params = [now];
 
@@ -90,7 +90,7 @@ export async function onRequest(context) {
         if (resetPoints) {
            query += ', p1_atk = 0, p1_def = 0, p1_special = 0, p2_atk = 0, p2_def = 0, p2_special = 0';
         }
-        if (winnerId) { query += ', winner_id = ?'; params.push(winnerId); }
+        if (winner_id) { query += ', winner_id = ?, phase = "finished"'; params.push(winner_id); }
 
         query += ' WHERE match_id = ?';
         params.push(matchId);
@@ -98,23 +98,77 @@ export async function onRequest(context) {
         await env.DB.prepare(query).bind(...params).run();
         return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
       }
+
+      // 4. Record CPU Score
+      if (action === 'record_cpu') {
+        const { userId, name, avatar, score, maxCombo } = data;
+        await env.DB.prepare(`
+          INSERT INTO yukipazu_scores_cpu (user_id, name, avatar, score, max_combo, created_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).bind(userId, name, avatar, score, maxCombo, now).run();
+        return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
+      }
     }
 
     if (method === 'GET') {
       const matchId = url.searchParams.get('matchId');
       const userId = url.searchParams.get('userId');
+      const action = url.searchParams.get('action');
 
-      // 共通：待機人数をカウント（30秒以内の有効な待機者）
+      // 共通：待機人数をカウント
       const queueObj = await env.DB.prepare('SELECT COUNT(*) as count FROM zookeeper_queue WHERE joined_at > ?').bind(now - 30).first();
       const queueCount = queueObj ? queueObj.count : 0;
 
+      // Ranking Action
+      if (action === 'ranking') {
+        let pvpRanking = { results: [] };
+        let cpuRanking = { results: [] };
+        
+        try {
+          // PvP Ranking (Wins) - winner_id カラムがない場合にエラーで全体が止まるのを防ぐ
+          pvpRanking = await env.DB.prepare(`
+            SELECT 
+              winner_id as user_id, 
+              MAX(CASE WHEN winner_id = p1_id THEN p1_name ELSE p2_name END) as name,
+              MAX(CASE WHEN winner_id = p1_id THEN p1_avatar ELSE p2_avatar END) as avatar,
+              COUNT(*) as wins
+            FROM zookeeper_matches 
+            WHERE winner_id IS NOT NULL 
+            GROUP BY winner_id 
+            ORDER BY wins DESC 
+            LIMIT 10
+          `).all();
+        } catch (e) {
+          console.error("PvP Ranking SQL Error:", e);
+        }
+
+        try {
+          // CPU Ranking (High Scores) - テーブルがない場合にエラーで全体が止まるのを防ぐ
+          cpuRanking = await env.DB.prepare(`
+            SELECT name, avatar, score, max_combo, created_at
+            FROM yukipazu_scores_cpu 
+            ORDER BY score DESC 
+            LIMIT 10
+          `).all();
+        } catch (e) {
+          console.error("CPU Ranking SQL Error:", e);
+        }
+
+        return new Response(JSON.stringify({ 
+          pvp: pvpRanking.results || [], 
+          cpu: cpuRanking.results || [],
+          queueCount 
+        }), { headers: corsHeaders });
+      }
+
       if (matchId) {
         const match = await env.DB.prepare('SELECT * FROM zookeeper_matches WHERE match_id = ?').bind(matchId).first();
+        if (!match) return new Response(JSON.stringify({ error: 'Match not found' }), { status: 404, headers: corsHeaders });
         return new Response(JSON.stringify({ ...match, queueCount }), { headers: corsHeaders });
       }
 
       if (userId) {
-        // Check if user has been matched by someone else
+        // Check if user has been matched
         const match = await env.DB.prepare('SELECT * FROM zookeeper_matches WHERE (p1_id = ? OR p2_id = ?) AND phase != "finished" ORDER BY start_ts DESC LIMIT 1').bind(userId, userId).first();
         if (match) {
           return new Response(JSON.stringify({ status: 'matched', matchId: match.match_id, match, queueCount }), { headers: corsHeaders });
@@ -122,13 +176,13 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ status: 'waiting', queueCount }), { headers: corsHeaders });
       }
 
-      // 公開情報の取得（マッチIDもユーザーIDもない場合）
       return new Response(JSON.stringify({ status: 'info', queueCount }), { headers: corsHeaders });
     }
 
-    return new Response('Not Found', { status: 404 });
+    return new Response('Not Found', { status: 404, headers: corsHeaders });
 
   } catch (err) {
+    console.error("Critical API Error:", err);
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
   }
 }

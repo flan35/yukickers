@@ -395,6 +395,105 @@ h1 {
     100% { transform: scale(1); }
 }
 
+/* Ranking Modal */
+.ranking-card {
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.ranking-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    cursor: pointer;
+    border-radius: 10px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.tab-btn.active {
+    background: var(--pink-main);
+    box-shadow: 0 0 15px var(--pink-main);
+}
+
+.ranking-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ranking-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px 15px;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rank-num {
+    width: 30px;
+    font-weight: 900;
+    font-size: 1.2rem;
+    color: var(--pink-main);
+}
+
+.ranking-item:nth-child(1) .rank-num { color: #ffd700; font-size: 1.5rem; }
+.ranking-item:nth-child(2) .rank-num { color: #c0c0c0; }
+.ranking-item:nth-child(3) .rank-num { color: #cd7f32; }
+
+.rank-avatar {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    background: rgba(0,0,0,0.2);
+    border-radius: 50%;
+}
+
+.rank-info {
+    flex: 1;
+    text-align: left;
+}
+
+.rank-name {
+    display: block;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.rank-score {
+    font-size: 0.8rem;
+    color: #38bdf8;
+}
+
+.rank-value {
+    font-weight: 900;
+    font-size: 1.1rem;
+}
+
+/* Scrollbar */
+.ranking-content::-webkit-scrollbar { width: 5px; }
+.ranking-content::-webkit-scrollbar-track { background: transparent; }
+.ranking-content::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+
 /* 結果 */
 .result-card h2 {
     font-size: 4rem;

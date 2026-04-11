@@ -161,52 +161,72 @@ async function fetchQueueCount() {
 fetchQueueCount();
 
 async function joinQueue() {
+    console.log("Attempting to join queue...", { userId: state.userId, name: state.username });
     try {
         const res = await fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({ action: 'join', userId: state.userId, name: state.username, avatar: state.avatar })
         });
         const data = await res.json();
+        console.log("Join Queue Response:", data);
         
         if (data.status === 'matched') {
+            console.log("Match found immediately!", data.matchId);
             startMatch(data.matchId);
         } else {
+            console.log("Waiting for opponent... starting poll.");
             // Poll for match
             const poll = setInterval(async () => {
-                const res = await fetch(`${API_URL}?userId=${state.userId}`);
-                const data = await res.json();
-                if (data.status === 'matched') {
-                    clearInterval(poll);
-                    startMatch(data.matchId);
+                try {
+                    const res = await fetch(`${API_URL}?userId=${state.userId}`);
+                    const data = await res.json();
+                    if (data.status === 'matched') {
+                        console.log("Match found via poll!", data.matchId);
+                        clearInterval(poll);
+                        startMatch(data.matchId);
+                    }
+                } catch (pe) {
+                    console.error("Poll error:", pe);
                 }
             }, 2000);
         }
     } catch (e) {
-        console.error(e);
+        console.error("Join Queue Error:", e);
+        alert("マッチングサーバーに接続できませんでした。");
         btnJoin.disabled = false;
+        btnCpu.disabled = false;
+        document.getElementById('matchingStatus').classList.add('hidden');
     }
 }
 
 async function startMatch(matchId) {
+    console.log("Starting match:", matchId);
     setupActiveCharacters();
     state.matchId = matchId;
-    const res = await fetch(`${API_URL}?matchId=${matchId}`);
-    const match = await res.json();
-    
-    state.isP1 = match.p1_id === state.userId;
-    state.opponent = state.isP1 ? { name: match.p2_name, avatar: match.p2_avatar } : { name: match.p1_name, avatar: match.p1_avatar };
-    
-    // Update Header
-    document.getElementById('p1Name').innerText = state.username;
-    document.getElementById('p1Avatar').src = state.avatar;
-    document.getElementById('p2Name').innerText = state.opponent.name;
-    document.getElementById('p2Avatar').src = state.opponent.avatar;
+    try {
+        const res = await fetch(`${API_URL}?matchId=${matchId}`);
+        const match = await res.json();
+        console.log("Match Data loaded:", match);
+        
+        state.isP1 = match.p1_id === state.userId;
+        state.opponent = state.isP1 ? { name: match.p2_name, avatar: match.p2_avatar } : { name: match.p1_name, avatar: match.p1_avatar };
+        
+        // Update Header
+        document.getElementById('p1Name').innerText = state.username;
+        document.getElementById('p1Avatar').src = state.avatar;
+        document.getElementById('p2Name').innerText = state.opponent.name;
+        document.getElementById('p2Avatar').src = state.opponent.avatar;
 
-    lobby.classList.remove('active');
-    game.classList.add('active');
-    
-    initBoard();
-    startRound();
+        lobby.classList.remove('active');
+        game.classList.add('active');
+        
+        initBoard();
+        startRound();
+    } catch (e) {
+        console.error("Start Match Error:", e);
+        alert("対戦データの読み込みに失敗しました。");
+        location.reload();
+    }
 }
 
 // --- Game Logic ---
@@ -588,15 +608,30 @@ async function runBattleCalculation() {
 
     // Sync HP back (Only if PvP)
     if (!state.isCpu && state.isP1) {
+        const isFinished = state.hp - p1Dmg <= 0 || state.opponentHp - p2Dmg <= 0 || state.round >= 10;
+        let winner_id = null;
+        if (isFinished) {
+            const finalP1 = state.hp - p1Dmg;
+            const finalP2 = state.opponentHp - p2Dmg;
+            if (finalP1 > finalP2) winner_id = state.userId; // Assuming p1 is self
+            else if (finalP1 < finalP2) {
+                // We need opponent ID. It is in the match object from server.
+                const res = await fetch(`${API_URL}?matchId=${state.matchId}`);
+                const m = await res.json();
+                winner_id = m.p2_id;
+            }
+        }
+
         await fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({ 
                 action: 'sync', 
                 matchId: state.matchId, 
-                p1_hp: Math.max(0, state.hp - p1Dmg), // This part was slightly wrong in previous logic, refined here
+                p1_hp: Math.max(0, state.hp - p1Dmg),
                 p2_hp: Math.max(0, state.opponentHp - p2Dmg),
                 round: state.round + 1,
-                resetPoints: true
+                resetPoints: true,
+                winner_id: winner_id
             })
         });
     }
@@ -646,6 +681,87 @@ function finishGame() {
     document.getElementById('resultTitle').innerText = win ? 'YOU WIN!' : (state.hp === state.opponentHp ? 'DRAW' : 'LOSE...');
     document.getElementById('finalHp').innerText = state.hp;
     document.getElementById('maxCombo').innerText = state.maxCombo;
+
+    // 結果の記録
+    if (state.isCpu) {
+        const score = state.hp * 100 + state.maxCombo * 500;
+        fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'record_cpu',
+                userId: state.userId,
+                name: state.username,
+                avatar: state.avatar,
+                score: score,
+                maxCombo: state.maxCombo
+            })
+        });
+    }
+}
+
+/* --- Ranking Logic --- */
+let rankingData = null;
+let currentTab = 'pvp';
+
+const btnRanking = document.getElementById('btnRanking');
+const rankingModal = document.getElementById('rankingModal');
+const rankingList = document.getElementById('rankingList');
+const tabPvp = document.getElementById('tabPvp');
+const tabCpu = document.getElementById('tabCpu');
+const btnCloseRanking = document.getElementById('btnCloseRanking');
+
+btnRanking.onclick = () => {
+    rankingModal.classList.remove('hidden');
+    fetchRanking();
+};
+
+btnCloseRanking.onclick = () => rankingModal.classList.add('hidden');
+
+tabPvp.onclick = () => {
+    currentTab = 'pvp';
+    tabPvp.classList.add('active');
+    tabCpu.classList.remove('active');
+    renderRanking();
+};
+
+tabCpu.onclick = () => {
+    currentTab = 'cpu';
+    tabCpu.classList.add('active');
+    tabPvp.classList.remove('active');
+    renderRanking();
+};
+
+async function fetchRanking() {
+    rankingList.innerHTML = '<div class="loading">読み込み中...</div>';
+    try {
+        const res = await fetch(`${API_URL}?action=ranking`);
+        rankingData = await res.json();
+        renderRanking();
+    } catch (e) {
+        rankingList.innerHTML = '<div class="error">読み込み失敗</div>';
+    }
+}
+
+function renderRanking() {
+    if (!rankingData) return;
+    const list = currentTab === 'pvp' ? rankingData.pvp : rankingData.cpu;
+    
+    if (!list || list.length === 0) {
+        rankingList.innerHTML = '<div style="padding:20px; text-align:center; opacity:0.5;">データがありません</div>';
+        return;
+    }
+
+    rankingList.innerHTML = list.map((item, index) => `
+        <div class="ranking-item">
+            <div class="rank-num">${index + 1}</div>
+            <img src="${item.avatar}" class="rank-avatar">
+            <div class="rank-info">
+                <span class="rank-name">${item.name}</span>
+                <span class="rank-score">${currentTab === 'pvp' ? '勝利数' : 'ハイスコア'}</span>
+            </div>
+            <div class="rank-value">${currentTab === 'pvp' ? (item.wins || 0) : (item.score || 0)}</div>
+        </div>
+    `).join('');
 }
 
 // Helpers

@@ -30,6 +30,7 @@
                 <button id="btnJoin" class="premium-btn">対戦相手を探す</button>
                 <div id="queueCountDisplay" class="queue-count">待機中: 0人</div>
                 <button id="btnCpu" class="premium-btn secondary-btn" style="margin-top: 10px; background: #6366f1;">CPUと対戦</button>
+                <button id="btnRanking" class="premium-btn secondary-btn" style="margin-top: 10px; background: #fb7185;">ランキングを表示</button>
                 <div id="matchingStatus" class="status-msg hidden">
                     <div class="spinner"></div>
                     <p>対戦相手を探しています...</p>
@@ -101,6 +102,24 @@
                     <p>最大連鎖: <span id="maxCombo">--</span></p>
                 </div>
                 <button onclick="location.reload()" class="premium-btn">ロビーに戻る</button>
+            </div>
+        </div>
+
+        <!-- ランキングモーダル -->
+        <div id="rankingModal" class="overlay hidden">
+            <div class="glass-card ranking-card">
+                <h2>RANKING</h2>
+                <div class="ranking-tabs">
+                    <button id="tabPvp" class="tab-btn active">対戦勝利数</button>
+                    <button id="tabCpu" class="tab-btn">CPUハイスコア</button>
+                </div>
+                <div class="ranking-content">
+                    <div id="rankingList" class="ranking-list">
+                        <!-- JSで注入 -->
+                        <div class="loading">読み込み中...</div>
+                    </div>
+                </div>
+                <button id="btnCloseRanking" class="premium-btn secondary-btn" style="margin-top: 20px;">閉じる</button>
             </div>
         </div>
     </div>
