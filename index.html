@@ -579,7 +579,10 @@
             <span class="badge"><i class="fa-solid fa-users"></i> オンライン対戦</span>
             <span class="badge"><i class="fa-solid fa-robot"></i> CPU対戦</span>
           </div>
-          <a href="yukipazu.html" class="btn-primary-neon">ゲームをプレイする <i class="fa-solid fa-play"></i></a>
+          <div class="game-actions">
+            <a href="yukipazu.html" class="btn-primary-neon">ゲームをプレイする <i class="fa-solid fa-play"></i></a>
+            <button id="open-pazu-howto" class="btn-primary-neon secondary">遊び方をみる <i class="fa-solid fa-circle-question"></i></button>
+          </div>
         </div>
       </div>
     </div>
@@ -595,8 +598,44 @@
     </div>
   </footer>
 
-
-  <!-- Raid Lottery Modal (Moved to body root for fixed positioning) -->
+  <!-- Yukipazu How-to-Play Modal -->
+  <div id="pazu-howto-modal" class="modal-overlay">
+    <div class="modal-content large">
+      <button id="close-pazu-howto" class="modal-close">&times;</button>
+      <div class="modal-header">
+        <h2 class="text-neon">HOW TO <span class="text-white">PLAY</span></h2>
+      </div>
+      <div class="modal-body">
+        <div class="yukipazu-guide no-margin">
+          <div class="guide-step">
+            <div class="step-num">01</div>
+            <h3>基本のルール</h3>
+            <p>同じキャラクターを縦または横に3つ以上並べて消しましょう。4つ、5つと同時に消すほど高いスコアとボーナスが得られます！</p>
+          </div>
+          <div class="guide-step">
+            <div class="step-num">02</div>
+            <h3>キャラのタイプ</h3>
+            <p>消したキャラの種類によって、ポイントが貯まります。</p>
+            <ul class="type-list">
+              <li><b>攻撃（ATK）</b>：敵に与えるダメージ。</li>
+              <li><b>防御（DEF）</b>：敵からのダメージ軽減。</li>
+              <li><b>特殊（SPECIAL）</b>：両方が大幅アップ！</li>
+            </ul>
+          </div>
+          <div class="guide-step">
+            <div class="step-num">03</div>
+            <h3>バトルの決着</h3>
+            <p>パズル後に貯まったポイントで自動バトル！HPが0になる前に敵を倒すと勝利です。大連鎖で逆転を狙おう！</p>
+          </div>
+          <div class="guide-step">
+            <div class="step-num">04</div>
+            <h3>CPU 5連戦</h3>
+            <p>CPU対戦は全5ステージのサバイバル。HPは次の戦いに引き継がれるので、温存が重要です。ボスの撃破を目指せ！</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div id="lottery-modal" class="modal-overlay">
     <div class="modal-content">
       <button id="close-modal" class="modal-close">&times;</button>

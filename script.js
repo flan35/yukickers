@@ -275,6 +275,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ==========================================================================
+  // Yukipazu How-to-Play Modal Logic
+  // ==========================================================================
+  const pazuHowtoModal = document.getElementById('pazu-howto-modal');
+  const openPazuHowtoBtn = document.getElementById('open-pazu-howto');
+  const closePazuHowtoBtn = document.getElementById('close-pazu-howto');
+
+  if (openPazuHowtoBtn && pazuHowtoModal) {
+    openPazuHowtoBtn.addEventListener('click', () => {
+      pazuHowtoModal.classList.add('active');
+    });
+  }
+
+  if (closePazuHowtoBtn && pazuHowtoModal) {
+    closePazuHowtoBtn.addEventListener('click', () => {
+      pazuHowtoModal.classList.remove('active');
+    });
+  }
+
+  // Close when clicking background
+  window.addEventListener('click', (e) => {
+    if (e.target === pazuHowtoModal) {
+      pazuHowtoModal.classList.remove('active');
+    }
+  });
+
   if (retryLotteryBtn) {
     retryLotteryBtn.addEventListener('click', () => {
       showView('settings');
