@@ -794,7 +794,7 @@ function finishGame() {
 
 /* --- Ranking Logic --- */
 let rankingData = null;
-let currentTab = 'pvp';
+let currentTab = 'cpu';
 
 const btnRanking = document.getElementById('btnRanking');
 const rankingModal = document.getElementById('rankingModal');
@@ -805,6 +805,10 @@ const btnCloseRanking = document.getElementById('btnCloseRanking');
 
 btnRanking.onclick = () => {
     rankingModal.classList.remove('hidden');
+    // CPUタブをデフォルトにする
+    currentTab = 'cpu';
+    tabCpu.classList.add('active');
+    tabPvp.classList.remove('active');
     fetchRanking();
 };
 
