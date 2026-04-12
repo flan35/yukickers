@@ -1,7 +1,8 @@
 const API_URL = '/api/yukipazu/match';
 const GRID_SIZE = 8;
 const ROUND_TIME = 30;
-const INITIAL_HP = 25; // 決着を早くするために25に設定
+const MAX_PLAYER_HP = 100; 
+const STAGE_CPU_HP = [0, 10, 20, 50, 100, 500]; // Stage 1-5
 
 const CHARACTERS = [
     { id: 'inoshishi', img: 'chibi_inoshishi.png', name: 'いのしし', type: 'atk' },
@@ -11,7 +12,8 @@ const CHARACTERS = [
     { id: 'miki', img: 'chibi_miki.png', name: 'みき', type: 'def' },
     { id: 'nodazouri', img: 'chibi_nodazouri.png', name: 'のだぞうり', type: 'def' },
     { id: 'toromi', img: 'chibi_toromi.png', name: 'とろみ', type: 'def' },
-    { id: 'yuki', img: 'chibi_yuki.png', name: 'ゆき', type: 'special' }
+    { id: 'yuki', img: 'chibi_yuki.png', name: 'ゆき', type: 'special' },
+    { id: 'boss', img: 'yukickersR.png', name: 'BOSS: ユキッカーズR', type: 'special' }
 ];
 
 let state = {
@@ -22,8 +24,8 @@ let state = {
     isP1: true,
     isCpu: false,
     opponent: null,
-    hp: INITIAL_HP,
-    opponentHp: INITIAL_HP,
+    hp: MAX_PLAYER_HP,
+    opponentHp: MAX_PLAYER_HP,
     atk: 0,
     def: 0,
     special: 0,
@@ -39,7 +41,10 @@ let state = {
     maxCombo: 0,
     combo: 0,
     lastFallEndTime: 0, 
-    comboGraceTime: 3000 
+    comboGraceTime: 3000,
+    cpuStage: 0, // 0:非CPU戦, 1-5:ステージ
+    totalScore: 0,
+    stageScore: 0
 };
 
 localStorage.setItem('yukickers_puzzle_id', state.userId);
@@ -58,6 +63,8 @@ const battleText = document.getElementById('battleText');
 
 // Init Avatar Selector
 CHARACTERS.forEach(char => {
+    if (char.id === 'boss') return; // ボスは選択肢に出さない
+    
     const div = document.createElement('div');
     div.className = 'avatar-item' + (state.avatar === char.img ? ' selected' : '');
     div.innerHTML = `<img src="${char.img}" alt="${char.name}">`;
@@ -89,31 +96,80 @@ btnCpu.onclick = async () => {
     state.isCpu = true;
     state.isP1 = true;
     state.username = usernameInput.value || '名無し';
+    state.matchId = 'cpu_' + Date.now();
     
     // 選出
     setupActiveCharacters();
 
-    // CPU opponent setup
-    const cpuChar = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
-    state.opponent = { name: cpuChar.name + ' (CPU)', avatar: cpuChar.img };
-    state.matchId = 'cpu_' + Date.now();
+    // CPUステージ開始 (UI更新・画面遷移は内部で実行)
+    startCpuStage(1);
+};
 
-    lobby.classList.remove('active');
-    game.classList.add('active');
+async function startCpuStage(stage) {
+    state.isCpu = true; // 念のためセット
+    state.cpuStage = stage;
+    state.round = 1;
+    state.cpuAtk = 0;
+    state.cpuDef = 0;
+    state.opponentHp = STAGE_CPU_HP[stage];
+    state.maxOpponentHp = STAGE_CPU_HP[stage]; 
     
-    // Header
-    document.getElementById('p1Avatar').src = state.avatar;
+    if (stage === 1) {
+        state.hp = MAX_PLAYER_HP;
+        state.totalScore = 0;
+        setupActiveCharacters(); // 駒の選出
+    }
+
+    // 対戦相手の設定
+    let cpuChar;
+    const normals = CHARACTERS.filter(c => c.id !== 'boss');
+    if (stage === 5) {
+        cpuChar = CHARACTERS.find(c => c.id === 'boss') || CHARACTERS[0];
+        game.classList.add('boss-battle'); 
+    } else {
+        cpuChar = normals[Math.floor(Math.random() * normals.length)];
+        game.classList.remove('boss-battle');
+    }
+
+    state.opponent = { 
+        name: (cpuChar.name || 'CPU') + (stage === 5 ? '' : ' (CPU)'), 
+        avatar: cpuChar.img || 'chibi_yuki.png'
+    };
+
+    // UI更新 (アバター等)
+    const p1Container = document.getElementById('p1Avatar');
+    const p2Container = document.getElementById('p2Avatar');
+    if (p1Container) p1Container.src = state.avatar;
+    if (p2Container) p2Container.src = state.opponent.avatar;
     document.getElementById('p1Name').innerText = state.username;
-    document.getElementById('p2Avatar').src = state.opponent.avatar;
     document.getElementById('p2Name').innerText = state.opponent.name;
     
-    initBoard();
+    updateHpBars(); // HP表示の同期
+    updateStageDisplay();
+    
+    if (stage === 1) {
+        lobby.classList.remove('active');
+        game.classList.add('active');
+        initBoard();
+    }
+    
     startRound();
-};
+}
+
+function updateStageDisplay() {
+    const stageInfo = document.getElementById('stageInfo');
+    if (stageInfo) {
+        stageInfo.innerText = state.isCpu ? `STAGE ${state.cpuStage}/5` : 'MATCH';
+    }
+    const totalScoreEl = document.getElementById('totalScore');
+    if (totalScoreEl) {
+        totalScoreEl.innerText = state.totalScore.toLocaleString();
+    }
+}
 
 function setupActiveCharacters() {
     const yuki = CHARACTERS.find(c => c.id === 'yuki');
-    const others = CHARACTERS.filter(c => c.id !== 'yuki');
+    const others = CHARACTERS.filter(c => c.id !== 'yuki' && c.id !== 'boss');
     
     // Shuffle others
     const shuffled = others.sort(() => Math.random() - 0.5);
@@ -383,6 +439,14 @@ async function processMatches(matchGroups) {
         const count = group.length;
         
         const bonus = 1 + (state.combo * 0.1); 
+        
+        // --- 新しいスコア計算 ---
+        let baseScore = count === 3 ? 100 : (count === 4 ? 150 : 200);
+        if (count > 5) baseScore += (count - 5) * 50; // 6個目以降は+50 bonus
+        
+        const gainedScore = Math.floor(baseScore * (1 + (state.combo - 1) * 0.1));
+        state.totalScore += gainedScore;
+
         if (type === 'atk') state.atk += Math.floor(count * bonus);
         else if (type === 'def') state.def += Math.floor(count * bonus);
         else if (type === 'special') { 
@@ -479,10 +543,13 @@ function startRound() {
         // CPU "Thinking" simulation
         const cpuInterval = setInterval(() => {
             if (state.phase !== 'puzzle') return clearInterval(cpuInterval);
-            // Gradually gain points based on round
-            const power = state.round * 0.5;
-            if (Math.random() < 0.3) state.cpuAtk += Math.floor(Math.random() * 3 + power);
-            if (Math.random() < 0.3) state.cpuDef += Math.floor(Math.random() * 2 + power);
+            // ステージに応じて強化
+            const stageBonus = state.cpuStage * 0.8; 
+            const freq = 0.2 + (state.cpuStage * 0.1); // ステージ5なら0.7の確率で毎秒加算
+            
+            if (Math.random() < freq) state.cpuAtk += Math.floor(Math.random() * 3 + stageBonus);
+            if (Math.random() < freq) state.cpuDef += Math.floor(Math.random() * 2 + stageBonus);
+            
             document.getElementById('p2Atk').innerText = state.cpuAtk;
             document.getElementById('p2Def').innerText = state.cpuDef;
         }, 1000);
@@ -543,6 +610,9 @@ function updateStatsDisplay() {
     document.getElementById('p1Atk').innerText = state.atk;
     document.getElementById('p1Def').innerText = state.def;
     
+    // スコアとステージ情報の更新を追加
+    updateStageDisplay();
+
     // コンボ表示の更新
     const comboEl = document.getElementById('comboDisplay');
     if (state.combo > 1) {
@@ -648,8 +718,24 @@ async function runBattleCalculation() {
     battleText.innerText = `-${p1Dmg}/${p2Dmg} DMG`;
     await wait(2000);
 
-    if (state.hp <= 0 || state.opponentHp <= 0 || state.round >= 10) {
+    if (state.hp <= 0 || state.round >= 10) {
         finishGame();
+    } else if (state.opponentHp <= 0) {
+        // ステージクリア
+        if (state.isCpu) {
+            if (state.cpuStage < 5) {
+                battleText.innerText = 'STAGE CLEAR!';
+                await wait(2000);
+                battleOverlay.classList.add('hidden');
+                startCpuStage(state.cpuStage + 1);
+            } else {
+                battleText.innerText = 'ALL CLEAR!!';
+                await wait(2500);
+                finishGame();
+            }
+        } else {
+            finishGame();
+        }
     } else {
         state.round++;
         battleOverlay.classList.add('hidden');
@@ -658,19 +744,26 @@ async function runBattleCalculation() {
 }
 
 function updateHpBars(match) {
-    if (!match) return;
+    if (!match && !state.isCpu) return;
     
-    // Always show local player on the left (p1-stats self)
-    // and opponent on the right (p2-stats opponent)
-    // The HTML has p1-stats self and p2-stats opponent
-    // Let's map them correctly
-    const myHp = state.isP1 ? match.p1_hp : match.p2_hp;
-    const opHp = state.isP1 ? match.p2_hp : match.p1_hp;
+    let myHp, opHp, myMax, opMax;
+    
+    if (state.isCpu) {
+        myHp = state.hp;
+        opHp = state.opponentHp;
+        myMax = MAX_PLAYER_HP;
+        opMax = state.maxOpponentHp;
+    } else {
+        myHp = state.isP1 ? match.p1_hp : match.p2_hp;
+        opHp = state.isP1 ? match.p2_hp : match.p1_hp;
+        myMax = 100; // PvPは100固定
+        opMax = 100;
+    }
 
-    document.getElementById('p1HpBar').style.width = myHp + '%';
-    document.getElementById('p1HpText').innerText = `${myHp} / 100`;
-    document.getElementById('p2HpBar').style.width = opHp + '%';
-    document.getElementById('p2HpText').innerText = `${opHp} / 100`;
+    document.getElementById('p1HpBar').style.width = (myHp / myMax * 100) + '%';
+    document.getElementById('p1HpText').innerText = `${myHp} / ${myMax}`;
+    document.getElementById('p2HpBar').style.width = (opHp / opMax * 100) + '%';
+    document.getElementById('p2HpText').innerText = `${opHp} / ${opMax}`;
 }
 
 function finishGame() {
@@ -678,13 +771,13 @@ function finishGame() {
     result.classList.add('active');
     
     const win = state.hp > state.opponentHp;
-    document.getElementById('resultTitle').innerText = win ? 'YOU WIN!' : (state.hp === state.opponentHp ? 'DRAW' : 'LOSE...');
+    document.getElementById('resultTitle').innerText = (win || (state.isCpu && state.cpuStage === 5 && state.opponentHp <= 0)) ? 'ALL CLEAR!' : (state.hp === state.opponentHp ? 'DRAW' : 'LOSE...');
     document.getElementById('finalHp').innerText = state.hp;
     document.getElementById('maxCombo').innerText = state.maxCombo;
+    document.getElementById('finalScoreDisplay').innerText = state.totalScore.toLocaleString();
 
     // 結果の記録
     if (state.isCpu) {
-        const score = state.hp * 100 + state.maxCombo * 500;
         fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({
@@ -692,7 +785,7 @@ function finishGame() {
                 userId: state.userId,
                 name: state.username,
                 avatar: state.avatar,
-                score: score,
+                score: state.totalScore,
                 maxCombo: state.maxCombo
             })
         });

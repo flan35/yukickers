@@ -22,167 +22,114 @@ export async function onRequest(context) {
   try {
     if (method === 'POST') {
       const data = await request.json();
-      const { action, userId, name, avatar, matchId, atk, def, special, phase, winnerId } = data;
+      const { action } = data;
 
-      // 1. Join Queue
+      // 1. Join Queue (Matching)
       if (action === 'join') {
-        if (!userId) return new Response('Missing userId', { status: 400 });
-
-        // Clean up old queue entries (> 30s)
+        const { userId, name, avatar } = data;
         await env.DB.prepare('DELETE FROM zookeeper_queue WHERE joined_at < ?').bind(now - 30).run();
-
-        // Check if already in queue
-        await env.DB.prepare('INSERT OR REPLACE INTO zookeeper_queue (user_id, name, avatar, joined_at) VALUES (?, ?, ?, ?)').bind(userId, name, avatar, now).run();
-
-        // Try to find an opponent (not including self)
         const opponent = await env.DB.prepare('SELECT * FROM zookeeper_queue WHERE user_id != ? ORDER BY joined_at ASC LIMIT 1').bind(userId).first();
 
         if (opponent) {
-          const newMatchId = `match_${now}_${userId}_${opponent.user_id}`;
-          
-          // Create Match
+          const matchId = 'm_' + Math.random().toString(36).substr(2, 9);
+          const seed = Math.floor(Math.random() * 1000000);
           await env.DB.prepare(`
-            INSERT INTO zookeeper_matches (
-              match_id, p1_id, p1_name, p1_avatar, p2_id, p2_name, p2_avatar, 
-              phase, start_ts, last_update_ts
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'puzzle', ?, ?)
-          `).bind(newMatchId, userId, name, avatar, opponent.user_id, opponent.name, opponent.avatar, now, now).run();
-
-          // Remove both from queue
-          await env.DB.prepare('DELETE FROM zookeeper_queue WHERE user_id IN (?, ?)').bind(userId, opponent.user_id).run();
-
-          return new Response(JSON.stringify({ status: 'matched', matchId: newMatchId }), { headers: corsHeaders });
+            INSERT INTO zookeeper_matches (match_id, p1_id, p1_name, p1_avatar, p2_id, p2_name, p2_avatar, seed, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(matchId, opponent.user_id, opponent.name, opponent.avatar, userId, name, avatar, seed, now).run();
+          await env.DB.prepare('DELETE FROM zookeeper_queue WHERE user_id IN (?, ?)').bind(opponent.user_id, userId).run();
+          return new Response(JSON.stringify({ status: 'matched', matchId }), { headers: corsHeaders });
+        } else {
+          await env.DB.prepare('INSERT OR REPLACE INTO zookeeper_queue (user_id, name, avatar, joined_at) VALUES (?, ?, ?, ?)').bind(userId, name, avatar, now).run();
+          return new Response(JSON.stringify({ status: 'waiting' }), { headers: corsHeaders });
         }
+      }
 
+      // 2. Refresh/Check Match (Survival)
+      if (action === 'refresh') {
+        const { userId } = data;
+        // 生存確認として joined_at を更新
+        await env.DB.prepare('UPDATE zookeeper_queue SET joined_at = ? WHERE user_id = ?').bind(now, userId).run();
+        
+        // 同時にマッチングが成立していないか確認
+        const match = await env.DB.prepare('SELECT match_id FROM zookeeper_matches WHERE p1_id = ? OR p2_id = ? ORDER BY created_at DESC LIMIT 1').bind(userId, userId).first();
+        if (match) return new Response(JSON.stringify({ status: 'matched', matchId: match.match_id }), { headers: corsHeaders });
         return new Response(JSON.stringify({ status: 'waiting' }), { headers: corsHeaders });
       }
 
-      // 2. Update Match State (Score/HP/Phase)
+      // 3. Update Battle Stats
       if (action === 'update') {
-        if (!matchId || !userId) return new Response('Missing ID', { status: 400 });
-
+        const { matchId, userId, atk, def, score } = data;
         const match = await env.DB.prepare('SELECT * FROM zookeeper_matches WHERE match_id = ?').bind(matchId).first();
-        if (!match) return new Response('Match not found', { status: 404 });
-
-        const isP1 = match.p1_id === userId;
-        const prefix = isP1 ? 'p1' : 'p2';
-
-        // Update ATK/DEF/SPECIAL for current round
-        await env.DB.prepare(`
-          UPDATE zookeeper_matches 
-          SET ${prefix}_atk = ?, ${prefix}_def = ?, ${prefix}_special = ?, last_update_ts = ?
-          WHERE match_id = ?
-        `).bind(atk || 0, def || 0, special || 0, now, matchId).run();
-
-        return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
-      }
-
-      // 3. Sync Phase / Battle Result
-      if (action === 'sync') {
-        const { matchId, phase, p1_hp, p2_hp, round, resetPoints, winner_id } = data;
-        let query = 'UPDATE zookeeper_matches SET last_update_ts = ?';
-        const params = [now];
-
-        if (phase) { query += ', phase = ?'; params.push(phase); }
-        if (p1_hp !== undefined) { query += ', p1_hp = ?'; params.push(p1_hp); }
-        if (p2_hp !== undefined) { query += ', p2_hp = ?'; params.push(p2_hp); }
-        if (round !== undefined) { query += ', round = ?'; params.push(round); }
-        if (resetPoints) {
-           query += ', p1_atk = 0, p1_def = 0, p1_special = 0, p2_atk = 0, p2_def = 0, p2_special = 0';
+        if (!match) return new Response('Not Found', { status: 404 });
+        
+        if (match.p1_id === userId) {
+          await env.DB.prepare('UPDATE zookeeper_matches SET p1_atk = ?, p1_def = ?, p1_ready_ts = ? WHERE match_id = ?').bind(atk, def, now, matchId).run();
+        } else {
+          await env.DB.prepare('UPDATE zookeeper_matches SET p2_atk = ?, p2_def = ?, p2_ready_ts = ? WHERE match_id = ?').bind(atk, def, now, matchId).run();
         }
-        if (winner_id) { query += ', winner_id = ?, phase = "finished"'; params.push(winner_id); }
-
-        query += ' WHERE match_id = ?';
-        params.push(matchId);
-
-        await env.DB.prepare(query).bind(...params).run();
         return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
       }
 
-      // 4. Record CPU Score
+      // 4. Sync Result (Winner)
+      if (action === 'sync') {
+        const { matchId, winnerId } = data;
+        try {
+          await env.DB.prepare('UPDATE zookeeper_matches SET winner_id = ? WHERE match_id = ?').bind(winnerId, matchId).run();
+        } catch (e) { console.error("Sync Winner Error:", e); }
+        return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
+      }
+
+      // 5. Record CPU Score
       if (action === 'record_cpu') {
         const { userId, name, avatar, score, maxCombo } = data;
-        await env.DB.prepare(`
-          INSERT INTO yukipazu_scores_cpu (user_id, name, avatar, score, max_combo, created_at)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `).bind(userId, name, avatar, score, maxCombo, now).run();
+        await env.DB.prepare('INSERT INTO yukipazu_scores_cpu (user_id, name, avatar, score, max_combo, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+          .bind(userId, name, avatar, score, maxCombo, now).run();
         return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
       }
     }
 
     if (method === 'GET') {
-      const matchId = url.searchParams.get('matchId');
-      const userId = url.searchParams.get('userId');
       const action = url.searchParams.get('action');
+      const userId = url.searchParams.get('userId');
+      const matchId = url.searchParams.get('matchId');
 
-      // 共通：待機人数をカウント
-      const queueObj = await env.DB.prepare('SELECT COUNT(*) as count FROM zookeeper_queue WHERE joined_at > ?').bind(now - 30).first();
-      const queueCount = queueObj ? queueObj.count : 0;
-
-      // Ranking Action
       if (action === 'ranking') {
         let pvpRanking = { results: [] };
         let cpuRanking = { results: [] };
-        
         try {
-          // PvP Ranking (Wins) - winner_id カラムがない場合にエラーで全体が止まるのを防ぐ
           pvpRanking = await env.DB.prepare(`
-            SELECT 
-              winner_id as user_id, 
-              MAX(CASE WHEN winner_id = p1_id THEN p1_name ELSE p2_name END) as name,
-              MAX(CASE WHEN winner_id = p1_id THEN p1_avatar ELSE p2_avatar END) as avatar,
-              COUNT(*) as wins
+            SELECT winner_id as id, p1_name as name, p1_avatar as avatar, COUNT(*) as wins 
             FROM zookeeper_matches 
             WHERE winner_id IS NOT NULL 
             GROUP BY winner_id 
-            ORDER BY wins DESC 
-            LIMIT 10
+            ORDER BY wins DESC LIMIT 10
           `).all();
-        } catch (e) {
-          console.error("PvP Ranking SQL Error:", e);
-        }
-
+        } catch (e) { console.error("PvP Ranking Error:", e); }
         try {
-          // CPU Ranking (High Scores) - テーブルがない場合にエラーで全体が止まるのを防ぐ
-          cpuRanking = await env.DB.prepare(`
-            SELECT name, avatar, score, max_combo, created_at
-            FROM yukipazu_scores_cpu 
-            ORDER BY score DESC 
-            LIMIT 10
-          `).all();
-        } catch (e) {
-          console.error("CPU Ranking SQL Error:", e);
-        }
-
-        return new Response(JSON.stringify({ 
-          pvp: pvpRanking.results || [], 
-          cpu: cpuRanking.results || [],
-          queueCount 
-        }), { headers: corsHeaders });
+          cpuRanking = await env.DB.prepare('SELECT name, avatar, score FROM yukipazu_scores_cpu ORDER BY score DESC LIMIT 10').all();
+        } catch (e) { console.error("CPU Ranking Error:", e); }
+        return new Response(JSON.stringify({ pvp: pvpRanking.results || [], cpu: cpuRanking.results || [] }), { headers: corsHeaders });
+      }
+      
+      if (userId) { // Old polling compatibility
+         const match = await env.DB.prepare('SELECT match_id FROM zookeeper_matches WHERE p1_id = ? OR p2_id = ? ORDER BY created_at DESC LIMIT 1').bind(userId, userId).first();
+         if (match) return new Response(JSON.stringify({ status: 'matched', matchId: match.match_id }), { headers: corsHeaders });
+         return new Response(JSON.stringify({ status: 'waiting' }), { headers: corsHeaders });
       }
 
       if (matchId) {
         const match = await env.DB.prepare('SELECT * FROM zookeeper_matches WHERE match_id = ?').bind(matchId).first();
-        if (!match) return new Response(JSON.stringify({ error: 'Match not found' }), { status: 404, headers: corsHeaders });
-        return new Response(JSON.stringify({ ...match, queueCount }), { headers: corsHeaders });
+        return new Response(JSON.stringify(match), { headers: corsHeaders });
       }
 
-      if (userId) {
-        // Check if user has been matched
-        const match = await env.DB.prepare('SELECT * FROM zookeeper_matches WHERE (p1_id = ? OR p2_id = ?) AND phase != "finished" ORDER BY start_ts DESC LIMIT 1').bind(userId, userId).first();
-        if (match) {
-          return new Response(JSON.stringify({ status: 'matched', matchId: match.match_id, match, queueCount }), { headers: corsHeaders });
-        }
-        return new Response(JSON.stringify({ status: 'waiting', queueCount }), { headers: corsHeaders });
-      }
-
-      return new Response(JSON.stringify({ status: 'info', queueCount }), { headers: corsHeaders });
+      const countObj = await env.DB.prepare('SELECT COUNT(*) as count FROM zookeeper_queue WHERE joined_at > ?').bind(now - 30).first();
+      return new Response(JSON.stringify({ queueCount: countObj ? countObj.count : 0 }), { headers: corsHeaders });
     }
 
     return new Response('Not Found', { status: 404, headers: corsHeaders });
 
   } catch (err) {
-    console.error("Critical API Error:", err);
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
   }
 }

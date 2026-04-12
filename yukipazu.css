@@ -263,10 +263,34 @@ h1 {
 
 .round-timer {
     text-align: center;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 10px 15px;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#stageInfo {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fb7185;
+    letter-spacing: 1px;
 }
 
 #roundLabel { font-size: 0.7rem; opacity: 0.6; font-weight: 700; }
-#phaseTimer { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+
+#phaseTimer { 
+    font-size: 1.8rem; 
+    font-weight: 900; 
+    color: var(--accent); 
+    line-height: 1;
+    margin: 2px 0;
+}
+
+.total-score-box {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #facc15;
+}
 
 /* パズルボード */
 .game-body {
@@ -507,4 +531,25 @@ h1 {
 .result-stats p {
     font-size: 1.2rem;
     margin-bottom: 10px;
+}
+
+/* Boss Battle Mode */
+.boss-battle #p2Name {
+    color: #ff0055 !important;
+    text-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
+}
+
+.boss-battle .opponent .hp-bar {
+    background: linear-gradient(90deg, #ff0055, #ff6b6b) !important;
+}
+
+.boss-battle #stageInfo {
+    color: #ff0055;
+    animation: bossPulse 1s infinite;
+}
+
+@keyframes bossPulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
 }
