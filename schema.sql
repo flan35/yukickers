@@ -34,3 +34,12 @@ CREATE TABLE IF NOT EXISTS yukichat_blacklist (
   ip TEXT,
   ts INTEGER
 );
+
+-- 爆弾仕分けゲームのスコアランキング
+CREATE TABLE IF NOT EXISTS bomb_factory_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT,
+  name TEXT,
+  score INTEGER,
+  ts INTEGER
+);

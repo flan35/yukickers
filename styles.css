@@ -4140,6 +4140,201 @@ body.content-ready {
   border-left: 4px solid var(--yukichat-accent);
 }
 
+}
+
+.yukichat-disclaimer {
+  margin-top: 15px;
+  font-size: 0.75rem;
+  color: #999;
+  line-height: 1.4;
+  text-align: left;
+  border-top: 1px dashed #eee;
+  padding-top: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .avatar-grid {
+    grid-template-columns: repeat(3, 1fr);
+    max-height: 280px;
+    gap: 10px;
+  }
+  .avatar-item img {
+    width: 50px;
+    height: 50px;
+  }
+  .yukichat-avatar {
+    width: 70px;
+    height: 70px;
+  }
+  .avatar-name-tag {
+    font-size: 0.6rem;
+  }
+  .yukichat-bubble {
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    bottom: 80px;
+  }
+  .chat-input-wrap input {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+  }
+  .chat-input-wrap button {
+    width: 50px;
+    height: 50px;
+  }
+  .btn-mini-gray {
+    height: 50px;
+    padding: 0 15px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Avatar Admin Actions */
+.avatar-admin-actions {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  display: flex;
+  gap: 4px;
+  z-index: 100;
+}
+
+.avatar-kick-btn, .avatar-ban-btn {
+  width: 24px;
+  height: 24px;
+  color: white;
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+
+.avatar-kick-btn {
+  background: #ff4d4d;
+}
+
+.avatar-ban-btn {
+  background: #333;
+}
+
+.avatar-kick-btn:hover, .avatar-ban-btn:hover {
+  transform: scale(1.2);
+}
+
+.avatar-ban-btn:hover {
+  background: #000;
+}
+
+.admin-delete-log-btn {
+  background: none;
+  border: none;
+  color: #ff4d4d;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 0.9rem;
+  vertical-align: middle;
+  transition: transform 0.2s;
+}
+
+.admin-delete-log-btn:hover {
+  transform: scale(1.2);
+  color: #ff0000;
+}
+
+.admin-clear-btn {
+  margin-left: auto;
+  background: var(--yukichat-accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.65rem;
+  cursor: pointer;
+  font-family: var(--font-primary);
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.admin-clear-btn:hover {
+  background: #ff4d4d;
+}
+
+/* Admin Global Styles (More Obvious) */
+.yukichat-avatar.is-admin .avatar-name-tag {
+  background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
+  color: #000;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 255, 255, 0.4);
+  border: 2px solid #fff;
+  font-weight: 900;
+}
+
+.history-item.is-admin {
+  background: rgba(255, 215, 0, 0.08);
+  border-left: 4px solid #ffd700;
+  padding-left: 8px;
+  margin-left: -4px;
+  border-radius: 4px;
+}
+
+.history-item.is-admin .log-name {
+  color: #c5a028; /* Deep Gold */
+  font-weight: 900;
+}
+
+/* Yukichat Stats Floating (Top Left of container) */
+#yukichat-stats-floating {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.stat-item {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  animation: statFadeIn 0.5s ease-out forwards;
+}
+
+@keyframes statFadeIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.stat-item i {
+  font-size: 1rem;
+}
+
+.stat-item span {
+  color: var(--yukichat-accent);
+  font-size: 1.1rem;
+  font-family: var(--font-pop);
+}
+
+.stat-item.is-active {
+  border-left: 4px solid var(--yukichat-accent);
+}
+
 .stat-item.is-waiting {
   border-left: 4px solid #aaa;
   background: rgba(240, 240, 240, 0.6);
@@ -4157,109 +4352,128 @@ body.content-ready {
   }
 }
 
-/* Yukipazu Section Styles */
-.yukipazu {
+/* Games Section */
+.games {
     background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
     position: relative;
     padding: 100px 0;
 }
 
-.game-teaser {
-    display: flex;
-    justify-content: center;
-    margin-top: 40px;
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+    max-width: 1000px;
+    margin: 40px auto 0;
 }
 
 .game-card {
-    max-width: 600px;
-    width: 100%;
-    padding: 50px;
+    padding: 40px 30px;
     text-align: center;
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    box-shadow: 0 0 40px rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(15px);
     border-radius: 24px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
+.game-card:hover {
+    transform: translateY(-10px);
+    border-color: var(--pink-main);
+    box-shadow: 0 15px 40px rgba(255, 133, 162, 0.2);
+}
+
+.pazu-card { border-color: rgba(56, 189, 248, 0.3); }
+.pazu-card .game-icon { color: #38bdf8; filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.5)); }
+
+.bomb-card { border-color: rgba(255, 68, 68, 0.3); }
+.bomb-card .game-icon { color: #ff4444; filter: drop-shadow(0 0 15px rgba(255, 68, 68, 0.5)); }
+
 .game-icon {
-    font-size: 5rem;
-    color: #38bdf8;
-    margin-bottom: 25px;
-    filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.5));
+    font-size: 4rem;
+    margin-bottom: 20px;
 }
 
 .game-card h3 {
-    font-size: 2.5rem;
-    margin-bottom: 20px;
+    font-size: 1.8rem;
+    margin-bottom: 15px;
     color: #fff;
     font-family: 'Dela Gothic One', sans-serif;
 }
 
 .game-card p {
-    font-size: 1.1rem;
-    margin-bottom: 30px;
-    line-height: 1.8;
-    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    margin-bottom: 25px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+    flex-grow: 1;
 }
 
 .game-preview-badges {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 40px; /* ボタンとの距離をしっかり確保 */
+    gap: 10px;
+    margin-bottom: 30px;
 }
 
 .game-preview-badges .badge {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 8px 18px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 6px 14px;
     border-radius: 20px;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     display: flex;
     align-items: center;
-    gap: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #fff;
     white-space: nowrap;
 }
 
+.game-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
 .game-card .btn-primary-neon {
-    display: inline-flex !important; /* width: 100% の上書き */
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 18px 45px;
-    font-size: 1.25rem;
+    gap: 8px;
+    padding: 12px 25px;
+    font-size: 1rem;
     text-decoration: none;
-    width: auto; /* 幅を自動に */
-    margin: 0 auto;
-    background: #38bdf8;
-    color: #0f172a;
+    width: auto;
+    background: var(--pink-main);
+    color: #fff;
     border-radius: 50px;
     font-weight: 900;
     transition: all 0.3s;
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
 }
 
+.pazu-card .btn-primary-neon { background: #38bdf8; color: #0f172a; }
+.bomb-card .btn-primary-neon { background: #ff4444; color: #fff; }
+
 .game-card .btn-primary-neon:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0 40px rgba(56, 189, 248, 0.6);
-    background: #7dd3fc;
+    transform: scale(1.05);
+    filter: brightness(1.1);
 }
 
 @media (max-width: 768px) {
-    .yukipazu { padding: 60px 0; }
-    .game-card { padding: 40px 20px; }
-    .game-card h3 { font-size: 1.8rem; }
-    .game-icon { font-size: 4rem; }
-    .game-card .btn-primary-neon {
-        width: 100%;
-        padding: 15px 25px;
-        font-size: 1.1rem;
+    .games { padding: 60px 0; }
+    .games-grid { 
+        grid-template-columns: 1fr;
+        padding: 0 20px;
     }
+    .game-card { padding: 30px 20px; }
+    .game-card h3 { font-size: 1.5rem; }
 }
-
 
 /* Yukipazu How-to-Play Guide */
 .yukipazu-guide {

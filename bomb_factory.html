@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yukickers Bomb Factory - 爆弾仕分けゲーム</title>
+    <link rel="stylesheet" href="bomb_factory.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <!-- 背景レイヤー -->
+        <div id="factory-bg"></div>
+
+        <!-- UIレイヤー -->
+        <div id="ui-overlay">
+            <div class="ui-left-group">
+                <div id="difficulty-indicator">
+                    <div class="label">SPEED</div>
+                    <div id="speed-value">Lv. 1</div>
+                </div>
+                <div id="score-board">
+                    <div class="label">SCORE</div>
+                    <div id="score-value">0</div>
+                </div>
+            </div>
+            <button id="btn-ranking-open">🏆 ランキング</button>
+        </div>
+
+        <!-- ゲームプレイエリア -->
+        <div id="play-area">
+            <!-- コンベアベルト（背景・装飾） -->
+            <div id="start-box"></div> <!-- 右下の供給ボックス -->
+
+            <!-- セグメント1: 右下から左下へ（左向き） -->
+            <div class="belt-path belt-s1"></div>
+            <!-- セグメント2: 左下から左上へ（上向き） -->
+            <div class="belt-path belt-s2"></div>
+            <!-- セグメント3: 左上から中央（分岐点）へ（右向き） -->
+            <div class="belt-path belt-s3"></div>
+            <!-- 分岐A: 中央から上（黒マシンへ） -->
+            <div class="belt-path belt-s-black"></div>
+            <!-- セグメント4: 中央から右上へ（右向き） -->
+            <div class="belt-path belt-s4"></div>
+            <!-- 分岐B: 右上から上（赤マシンへ） -->
+            <div class="belt-path belt-s-red"></div>
+            
+            <!-- マシン（仕分け口） -->
+            <div id="machine-black" class="machine">
+                <div class="machine-label">BLACK BOMB</div>
+                <div class="machine-entry"></div>
+            </div>
+            <div id="machine-red" class="machine">
+                <div class="machine-label">RED BOMB</div>
+                <div class="machine-entry"></div>
+            </div>
+
+            <!-- 分岐の矢印インジケーター -->
+            <div id="junction-arrow" class="arrow-right">
+                <div class="arrow-inner">➜</div>
+            </div>
+
+            <!-- 爆弾コンテナ -->
+            <div id="bomb-layer"></div>
+
+            <!-- エフェクトレイヤー -->
+            <div id="effect-layer"></div>
+        </div>
+
+        <!-- スタート画面 -->
+        <div id="start-screen" class="modal active">
+            <div class="modal-content">
+                <h1>Yukickers<br><span>Bomb Factory</span></h1>
+                <p>流れてくる爆弾を正しいゲートに仕分けよう！</p>
+                <div class="how-to">
+                    <div class="how-item">
+                        <img src="bomb_black.png" alt="Pon-chan">
+                        <span>黒（ぽんちゃん）はゲートを<br>切り替えて<b>上（黒マシン）</b>へ！</span>
+                    </div>
+                    <div class="how-item">
+                        <img src="bomb_red.png" alt="Inoshishi">
+                        <span>赤（イノシシ）は<br>そのまま<b>右（赤マシン）</b>へ！</span>
+                    </div>
+                </div>
+                <p class="controls-hint">スペースキー か 画面タップ でゲート切り替え</p>
+                <input type="text" id="username" placeholder="名前を入力してね" maxlength="10">
+                <div class="start-actions">
+                    <button id="btn-start">START GAME</button>
+                    <button id="btn-start-ranking" class="secondary">RANKING</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ゲームオーバー画面 -->
+        <div id="game-over-screen" class="modal">
+            <div class="modal-content">
+                <h1 class="bounce">GAME OVER!</h1>
+                <div class="final-score">
+                    <p>FINAL SCORE</p>
+                    <div id="last-score">0</div>
+                </div>
+                <button id="btn-restart">TRY AGAIN</button>
+                <button id="btn-ranking-view">VIEW RANKING</button>
+            </div>
+        </div>
+
+        <!-- ランキング画面 -->
+        <div id="ranking-modal" class="modal">
+            <div class="modal-content">
+                <h2>🏆 TOP 10 RANKING</h2>
+                <div id="ranking-list">
+                    <p>読み込み中...</p>
+                </div>
+                <button id="btn-ranking-close">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="bomb_factory.js"></script>
+</body>
+</html>

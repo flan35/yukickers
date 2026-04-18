@@ -1,0 +1,502 @@
+:root {
+    --primary-color: #ff8df1; /* Pink */
+    --secondary-color: #8dfdff; /* Cyan */
+    --accent-color: #ffe88d; /* Gold/Yellow */
+    --bg-dark: rgba(30, 10, 40, 0.8);
+    --glass-bg: rgba(255, 255, 255, 0.2);
+    --glass-border: rgba(255, 255, 255, 0.4);
+    --font-main: 'Outfit', 'Noto Sans JP', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+body {
+    background-color: #1a1a1a;
+    font-family: var(--font-main);
+    overflow: hidden;
+    color: white;
+}
+
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+#factory-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('bomb_factory_bg.png');
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.8) contrast(1.1);
+    z-index: 1;
+}
+
+#ui-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    z-index: 100;
+}
+
+.ui-left-group {
+    display: flex;
+    gap: 20px;
+}
+
+#score-board, #difficulty-indicator {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 2px solid var(--glass-border);
+    padding: 10px 20px;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#score-value, #speed-value {
+    font-size: 2rem;
+    font-weight: 700;
+    text-shadow: 0 0 10px var(--primary-color);
+}
+
+#btn-ranking-open {
+    background: var(--glass-bg);
+    border: 2px solid var(--glass-border);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s;
+}
+
+#btn-ranking-open:hover {
+    background: var(--primary-color);
+    border-color: white;
+}
+
+/* 爆弾のアニメーション用 */
+#play-area {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+}
+
+.bomb {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 20;
+    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+    transform: translate(-50%, -50%); /* 常に中心がパス上にくるように */
+}
+
+.bomb-black { background-image: url('bomb_black.png'); }
+.bomb-red { background-image: url('bomb_red.png'); }
+
+/* コンベアベルトの共通スタイル */
+.belt-path {
+    position: absolute;
+    background: #444;
+    border: 4px solid #666;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.belt-path::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.1) 0,
+        rgba(255, 255, 255, 0.1) 20px,
+        transparent 20px,
+        transparent 40px
+    );
+    animation: belt-scroll-x 2s linear infinite;
+}
+
+/* U字(S字)レイアウトの再配置 (スケッチに基づく) */
+#start-box {
+    position: absolute;
+    right: 10%;
+    bottom: 10%;
+    width: 140px;
+    height: 140px;
+    background: #555;
+    border: 5px solid #777;
+    border-radius: 10px;
+    z-index: 12;
+    background-image: 
+        linear-gradient(45deg, #444 25%, transparent 25%, transparent 50%, #444 50%, #444 75%, transparent 75%, transparent),
+        radial-gradient(circle at 70% 30%, rgba(255,255,255,0.1) 0%, transparent 50%);
+    background-size: 20px 20px, 100% 100%;
+}
+
+.belt-s1 {
+    right: 18%;
+    bottom: 18%; /* JSの 0.82 (bottom: 18%) に合わせる */
+    width: 65%;
+    height: 60px;
+}
+.belt-s1::after { animation: belt-scroll-x 2s linear infinite; } /* 右から左へなら、逆向きの可能性もある。JSに合わせて調整。ここではデフォルトxはプラス方向 */
+
+.belt-s2 {
+    left: 17%;
+    bottom: 18%; /* s1の高さに合わせる */
+    width: 60px;
+    height: 62%;
+}
+.belt-s2::after {
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.1) 0,
+        rgba(255, 255, 255, 0.1) 20px,
+        transparent 20px,
+        transparent 40px
+    );
+    animation: belt-scroll-y-neg 2s linear infinite;
+    width: 100%; height: 200%;
+}
+
+.belt-s3 {
+    left: 17%;
+    top: 20%;
+    width: calc(33% + 15px); /* 分岐点と確実に重ねる */
+    height: 60px;
+    border-right: none; /* 境界線を消す */
+}
+.belt-s3::after { animation: belt-scroll-x-neg 2s linear infinite; } /* 右向き */
+
+.belt-s-black {
+    left: 50%;
+    top: 0;
+    width: 60px;
+    height: 20%;
+    transform: translateX(-50%);
+}
+.belt-s-black::after {
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.1) 0,
+        rgba(255, 255, 255, 0.1) 20px,
+        transparent 20px,
+        transparent 40px
+    );
+    animation: belt-scroll-y-neg 2s linear infinite;
+    width: 100%; height: 200%;
+}
+
+.belt-s4 {
+    left: 50%;
+    top: 20%;
+    width: calc(30% + 30px); /* 80%の角（中心）+ベルト厚みの半分(30px)で止める */
+    height: 60px;
+    z-index: 10;
+    border-left: none;
+}
+.belt-s4::after { animation: belt-scroll-x-neg 2s linear infinite; } /* 右向き */
+
+.belt-s-red {
+    left: 80%;
+    top: 0;
+    width: 60px;
+    height: calc(20% + 60px); /* TopRow厚み分 下に伸ばす */
+    transform: translateX(-50%);
+    border-bottom: none;
+    z-index: 11;
+}
+.belt-s-red::after {
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.1) 0,
+        rgba(255, 255, 255, 0.1) 20px,
+        transparent 20px,
+        transparent 40px
+    );
+    animation: belt-scroll-y-neg 2s linear infinite;
+    width: 100%; height: 200%;
+}
+
+.start-actions {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.start-actions button {
+    flex: 1;
+}
+
+button.secondary {
+    background: #333;
+    color: #fff;
+    border: 2px solid #555;
+}
+
+button.secondary:hover {
+    background: #444;
+    border-color: #777;
+    transform: translateY(-2px);
+}
+}
+
+@keyframes belt-scroll-x {
+    from { transform: translateX(0); }
+    to { transform: translateX(-40px); }
+}
+
+@keyframes belt-scroll-x-neg {
+    from { transform: translateX(-40px); }
+    to { transform: translateX(0); }
+}
+
+@keyframes belt-scroll-y-neg {
+    from { transform: translateY(0); }
+    to { transform: translateY(-40px); }
+}
+/* マシン（仕分け口）のデザインを復元 */
+.machine {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    background: var(--bg-dark);
+    border: 5px solid white;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 12;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+.machine-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.machine-entry {
+    width: 70px;
+    height: 70px;
+    background: black;
+    border-radius: 50%;
+    border: 3px dashed var(--glass-border);
+}
+
+#machine-black {
+    left: 50%;
+    top: 20px;
+    transform: translateX(-50%);
+    border-color: #a0a0a0;
+}
+
+#machine-red {
+    left: 80%;
+    top: 20px;
+    transform: translateX(-50%);
+    border-color: #ff4d4d;
+}
+
+#junction-arrow {
+    position: absolute;
+    top: calc(20% + 30px); /* ベルトの中心高さ */
+    left: 50%;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.arrow-inner {
+    font-size: 5rem; /* 最大級に大きく */
+    color: #ffff00; /* 鮮やかなイエロー */
+    text-shadow: 
+        0 0 15px #ffff00,
+        0 0 30px #ffff00,
+        0 0 10px rgba(0,0,0,0.8);
+    font-weight: 900;
+    animation: arrow-glow 0.8s infinite alternate;
+}
+
+#junction-arrow.arrow-right {
+    transform: translate(-50%, -50%) rotate(0deg);
+}
+
+#junction-arrow.arrow-down {
+    transform: translate(-50%, -50%) rotate(270deg); /* 270度 = 上向き */
+}
+
+@keyframes arrow-glow {
+    from { opacity: 0.6; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1.1); }
+}
+.modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--bg-dark);
+    border: 3px solid var(--primary-color);
+    padding: 40px;
+    border-radius: 30px;
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 0 50px var(--primary-color);
+}
+
+h1 {
+    font-size: 3rem;
+    line-height: 1;
+    margin-bottom: 20px;
+}
+
+h1 span {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+}
+
+.how-to {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+}
+
+.how-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.how-item img {
+    width: 60px;
+    margin-bottom: 10px;
+}
+
+#username {
+    width: 100%;
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid var(--glass-border);
+    background: rgba(0,0,0,0.3);
+    color: white;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+button {
+    background: var(--primary-color);
+    border: none;
+    color: white;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.3s;
+    margin: 5px;
+}
+
+button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px var(--primary-color);
+}
+
+/* Animations */
+@keyframes explode {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(2); opacity: 0.8; filter: brightness(2); }
+    100% { transform: scale(3); opacity: 0; }
+}
+
+.explosion {
+    animation: explode 0.5s forwards;
+    background: radial-gradient(circle, #fff 0%, var(--primary-color) 50%, transparent 100%);
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    z-index: 50;
+}
+
+.bounce {
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+#ranking-list {
+    margin: 20px 0;
+    text-align: left;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.rank-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.rank-item:nth-child(1) { color: var(--accent-color); font-weight: 700; }
