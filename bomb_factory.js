@@ -300,9 +300,16 @@ function gameOver() {
     submitScore(state.score);
 }
 
+const getApiUrl = (path) => {
+    if (window.location.protocol === 'file:') {
+        return `https://yukickers.pages.dev${path}`;
+    }
+    return path;
+};
+
 async function submitScore(score) {
     try {
-        await fetch('/api/bomb_factory/ranking', {
+        await fetch(getApiUrl('/api/bomb_factory/ranking'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: state.userId, name: state.username, score: score })
@@ -314,7 +321,7 @@ async function showRanking() {
     rankingModal.classList.add('active');
     rankingList.innerHTML = '<p>読み込み中...</p>';
     try {
-        const res = await fetch('/api/bomb_factory/ranking');
+        const res = await fetch(getApiUrl('/api/bomb_factory/ranking'));
         const data = await res.json();
         rankingList.innerHTML = '';
         if (!data.ranking || data.ranking.length === 0) {
