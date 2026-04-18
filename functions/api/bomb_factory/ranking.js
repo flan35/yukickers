@@ -39,7 +39,7 @@ export async function onRequest(context) {
 
     if (request.method === 'GET') {
         try {
-            const results = await DB.prepare('SELECT name, score FROM bomb_factory_scores ORDER BY score DESC LIMIT 10')
+            const results = await DB.prepare('SELECT name, score FROM bomb_factory_scores ORDER BY score DESC LIMIT 20')
                 .all();
             return new Response(JSON.stringify({ ranking: results.results }), { headers: corsHeaders });
         } catch (e) {
