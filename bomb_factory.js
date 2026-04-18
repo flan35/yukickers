@@ -41,7 +41,6 @@ document.getElementById('btn-restart').onclick = () => {
     startGame();
 };
 
-document.getElementById('btn-ranking-open').onclick = showRanking;
 document.getElementById('btn-ranking-view').onclick = showRanking;
 document.getElementById('btn-start-ranking').addEventListener('click', showRanking);
 document.getElementById('btn-ranking-close').onclick = () => rankingModal.classList.remove('active');
@@ -308,6 +307,14 @@ const getApiUrl = (path) => {
 };
 
 async function submitScore(score) {
+    // ローカル環境（ファイル直接開きやlocalhost）からのスコア登録を禁止
+    if (window.location.protocol === 'file:' || 
+        window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1') {
+        console.log('Local environment detected. Score submission skipped.');
+        return;
+    }
+
     try {
         await fetch(getApiUrl('/api/bomb_factory/ranking'), {
             method: 'POST',
