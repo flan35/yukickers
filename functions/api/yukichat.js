@@ -116,7 +116,9 @@ export async function onRequest(context) {
         ];
         const positiveWords = ['だいすき', 'らぶ', 'にこにこ', 'きらきら', 'はぴはぴ', '天才！', '最高に可愛い', 'しあわせ', 'ゆめかわいい', 'なかよし', '最高！', '世界一！', '尊い', 'みんななかよし！'];
         
-        let moderated = text;
+        // Strip all HTML tags to prevent images and large text
+        let moderated = text.replace(/<[^>]*>?/gm, '');
+
         let isNG = false;
         ngWords.forEach(pattern => {
           if (pattern.test(text)) {

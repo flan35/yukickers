@@ -18,6 +18,10 @@
     isIntersecting: false,
     isLocalMode: false, // Fallback for testing without server
   };
+  const escapeHTML = (str) => String(str).replace(/[&<>"']/g, (m) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[m]);
+
 
   const isLocalEnv = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
@@ -591,9 +595,9 @@
       <div class="history-item ${log.is_admin ? 'is-admin' : ''}" data-log-id="${log.id}">
         <span class="log-name">
           ${yukichat.isAdmin ? `<button class="admin-delete-log-btn" title="ログを削除"><i class="fa-solid fa-square-xmark"></i></button>` : ''}
-          ${log.is_admin ? '<i class="fa-solid fa-crown"></i> ' : ''}${log.name}:
+          ${log.is_admin ? '<i class="fa-solid fa-crown"></i> ' : ''}${escapeHTML(log.name)}:
         </span>
-        <span class="log-msg">${log.msg}</span>
+        <span class="log-msg">${escapeHTML(log.msg)}</span>
       </div>
     `).join('');
 
