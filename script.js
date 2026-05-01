@@ -1546,38 +1546,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentFilter = 'all';
 
   async function renderMemberArchives() {
-    const historyContainer = document.getElementById('history-container');
-    if (!historyContainer) return;
-
-    // Table structure initialization
-    let tbody = document.getElementById('archive-tbody');
-    if (!tbody) {
-      historyContainer.innerHTML = `
-        <div style="overflow-x: auto;">
-          <table class="archive-table">
-            <thead>
-              <tr>
-                <th>配信日</th>
-                <th>メンバー</th>
-                <th>開始時間</th>
-                <th>終了時間</th>
-                <th>タイトル</th>
-                <th style="min-width: 100px;">配信時間</th>
-                <th>リンク</th>
-              </tr>
-            </thead>
-            <tbody id="archive-tbody">
-              <tr>
-                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
-                  配信履歴データを読み込み中...
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      `;
-      tbody = document.getElementById('archive-tbody');
-    }
+    const archiveGrid = document.getElementById('archive-grid');
+    if (!archiveGrid) return;
 
     try {
       const res = await fetch('/api/archive?action=list');
@@ -1588,6 +1558,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error('History render error:', err);
+      archiveGrid.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:50px;">履歴データの読み込みに失敗しました。</p>`;
     }
     
     setTimeout(reveal, 100);
@@ -1617,47 +1588,58 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderFilteredArchives() {
-    const tbody = document.getElementById('archive-tbody');
-    if (!tbody) return;
+    const archiveGrid = document.getElementById('archive-grid');
+    if (!archiveGrid) return;
 
     const filtered = currentFilter === 'all' 
       ? allHistory 
       : allHistory.filter(item => item.username === currentFilter);
 
     if (!filtered || filtered.length === 0) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
-            ${currentFilter === 'all' ? '配信履歴がまだありません' : 'このメンバーの履歴は見つかりませんでした'}
-          </td>
-        </tr>
+      archiveGrid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 80px;">
+          <i class="fa-solid fa-box-open" style="font-size: 3rem; opacity: 0.2; margin-bottom: 20px; display: block;"></i>
+          ${currentFilter === 'all' ? '配信履歴がまだありません' : 'このメンバーの履歴は見つかりませんでした'}
+        </div>
       `;
       return;
     }
 
-    tbody.innerHTML = filtered.map(item => {
+    archiveGrid.innerHTML = filtered.map(item => {
       const member = allMembers.find(m => m.kick === item.username) || { name: item.username, image: 'yukick.jpg' };
+      
+      // Kick VOD Thumbnail pattern: https://video-thumbnails.kick.com/videos/${videoId}/thumb.jpg
+      const thumbUrl = item.videoId 
+        ? `https://video-thumbnails.kick.com/videos/${item.videoId}/thumb.jpg` 
+        : 'yukickersmenber.jpg'; 
+
       return `
-        <tr>
-          <td>${item.date}</td>
-          <td>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <img src="${member.image}" alt="" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
-              <span class="archive-member">${member.name}</span>
+        <div class="archive-card reveal">
+          <div class="archive-thumb">
+            <img src="${thumbUrl}" alt="${item.title}" onerror="this.src='yukickersmenber.jpg'">
+            <div class="archive-duration">${item.duration || '--:--'}</div>
+          </div>
+          <div class="archive-card-content">
+            <div class="archive-card-header">
+              <img src="${member.image}" alt="" class="archive-avatar">
+              <div class="archive-member-info">
+                <span class="archive-member-name">${member.name}</span>
+                <span class="archive-date">${item.date}</span>
+              </div>
             </div>
-          </td>
-          <td style="font-family: var(--font-pop); color: #000;">${item.startTime}</td>
-          <td style="font-family: var(--font-pop); color: #000;">${item.endTime}</td>
-          <td class="archive-title-cell" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.title}</td>
-          <td class="archive-duration-cell" style="font-weight: 700;">${item.duration}</td>
-          <td>
-            <a href="${item.link}" target="_blank" class="btn-mini">
-              <i class="fa-solid fa-play"></i> 視聴
-            </a>
-          </td>
-        </tr>
+            <h4 class="archive-title">${item.title}</h4>
+            <div class="archive-card-footer">
+              <a href="${item.link || item.videoUrl || `https://kick.com/video/${item.videoId}`}" target="_blank" class="archive-link-btn">
+                <i class="fa-solid fa-play"></i> アーカイブを見る
+              </a>
+            </div>
+          </div>
+        </div>
       `;
     }).join('');
+    
+    // Trigger animation
+    setTimeout(reveal, 50);
   }
 
   // Initial fetch and periodic update
