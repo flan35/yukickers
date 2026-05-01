@@ -1383,6 +1383,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Live Theater State
+  let currentTheaterMember = null;
+
   // Kick LIVE Status Check
   async function checkLiveStatus() {
     const grid = document.querySelector('.members-grid');
@@ -1462,9 +1465,19 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (err) {
         console.warn(`Kick API fetch failed for ${username}`, err);
       }
+      
+      return card.classList.contains('is-live') ? {
+        kick: username,
+        name: card.querySelector('.member-name').textContent,
+        title: ticker ? ticker.textContent : ''
+      } : null;
     });
 
-    await Promise.all(checkPromises);
+    const checkResults = await Promise.all(checkPromises);
+    
+    // Determine who to show in Theater (Leader priority, then first live found)
+    const theaterMember = checkResults.find(m => m && m.kick === 'yuki_0121') || checkResults.find(m => m !== null);
+    updateLiveTheater(theaterMember);
 
     // Physically reorder the DOM elements based on is-live status
     const sortedCards = [...memberCards].sort((a, b) => {
@@ -1478,8 +1491,51 @@ document.addEventListener('DOMContentLoaded', () => {
     // Re-append in order (appendChild moves existing elements)
     sortedCards.forEach(card => grid.appendChild(card));
 
-    // Trigger reveal logic to ensure newly positioned elements are shown correctly
-    if (typeof reveal === 'function') reveal();
+    if (anyStatusChanged && typeof reveal === 'function') reveal();
+  }
+
+  function updateLiveTheater(member) {
+    const theater = document.getElementById('live-theater');
+    const hero = document.getElementById('hero-sub');
+    const playerContainer = document.getElementById('theater-player-container');
+    const nameEl = document.getElementById('theater-member-name');
+    const titleEl = document.getElementById('theater-stream-title');
+    const linkEl = document.getElementById('theater-kick-link');
+
+    if (!theater || !playerContainer) return;
+
+    if (!member) {
+      if (theater.style.display !== 'none') {
+        theater.style.display = 'none';
+        if (hero) hero.style.display = 'block';
+        playerContainer.innerHTML = '';
+        currentTheaterMember = null;
+      }
+      return;
+    }
+
+    // Update text content
+    nameEl.textContent = `${member.name} が配信中！`;
+    titleEl.textContent = member.title || '配信タイトルなし';
+    linkEl.href = `https://kick.com/${member.kick}`;
+
+    // Show theater and hide hero
+    if (theater.style.display === 'none') {
+      theater.style.display = 'block';
+      if (hero) hero.style.display = 'none';
+    }
+
+    // Update iframe only if member changed
+    if (currentTheaterMember !== member.kick) {
+      playerContainer.innerHTML = `
+        <iframe 
+          src="https://player.kick.com/${member.kick}" 
+          frameborder="0" 
+          scrolling="no" 
+          allowfullscreen="true">
+        </iframe>`;
+      currentTheaterMember = member.kick;
+    }
   }
 
   // Initial check and set interval (every 2 minutes)
@@ -1999,7 +2055,4 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     document.head.appendChild(style);
   }
-
-  initCheers();
-
 });

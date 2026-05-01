@@ -201,6 +201,36 @@
       <div class="hero-bg"></div>
       </header>
 
+    <!-- Live Theater (Dynamic) -->
+    <div id="live-theater" class="live-theater" style="display: none;">
+      <div class="container">
+        <div class="theater-card reveal">
+          <div class="theater-header">
+            <div class="live-indicator">
+              <span class="pulse"></span>
+              LIVE NOW
+            </div>
+            <div class="theater-title-row">
+              <h3 id="theater-member-name">...</h3>
+            </div>
+          </div>
+          <div class="theater-body">
+            <div id="theater-player-container" class="player-container">
+              <!-- Iframe will be injected here -->
+            </div>
+          </div>
+          <div class="theater-footer">
+            <div class="stream-details">
+              <i class="fa-solid fa-play"></i>
+              <span id="theater-stream-title">配信タイトルを読み込み中...</span>
+            </div>
+            <a id="theater-kick-link" href="#" target="_blank" class="btn-kick-mini">
+              Kickで全画面視聴
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- News Summary (Latest 5) -->
     <section class="section news-summary">
