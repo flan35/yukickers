@@ -43,3 +43,16 @@ CREATE TABLE IF NOT EXISTS bomb_factory_scores (
   score INTEGER,
   ts INTEGER
 );
+
+-- メンバー応援機能（いいね）
+CREATE TABLE IF NOT EXISTS member_cheers (
+  member_id TEXT PRIMARY KEY,
+  count INTEGER DEFAULT 0
+);
+
+-- 応援履歴（1日1回制限用）
+CREATE TABLE IF NOT EXISTS cheer_history (
+  ip TEXT,
+  date TEXT,
+  PRIMARY KEY (ip, date)
+);

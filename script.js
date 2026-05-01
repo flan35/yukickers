@@ -341,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Unique ID for checkboxes to avoid conflict between modals
       const checkId = `${containerId}-check-${id}`;
       item.innerHTML = `
-        <input type="checkbox" id="${checkId}" data-id="${id}" data-name="${name}" data-img="${img}" data-img-full="${img}" data-link="${card.querySelector('.card-link').href}" ${isLive ? 'checked' : ''}>
+        <input type="checkbox" id="${checkId}" data-id="${id}" data-name="${name}" data-img="${img}" data-img-full="${img}" data-link="${card.querySelector('.image-link').href}" ${isLive ? 'checked' : ''}>
         <label for="${checkId}" class="select-label">
           <img src="${img}" alt="${name}" class="select-avatar">
           <span class="select-name">${name}</span>
@@ -1326,15 +1326,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const memberCards = document.querySelectorAll('.profile-card[data-kick]');
     memberCards.forEach(async (card) => {
       const username = card.getAttribute('data-kick');
+      const statusBadge = card.querySelector('.status-badge');
+      const ticker = card.querySelector('.stream-title-ticker');
+      
       try {
         const response = await fetch(`https://kick.com/api/v2/channels/${username}`);
         if (response.ok) {
           const data = await response.json();
           if (data && data.livestream) {
             card.classList.add('is-live');
+            if (statusBadge) statusBadge.textContent = 'LIVE';
             
-            // Category Badge logic (Show category name or "Now Streaming")
-            let categoryName = '配信中';
+            // Get Category & Title
+            let categoryName = '';
             let rawCat = '';
             if (data.livestream.categories && data.livestream.categories.length > 0) {
               rawCat = data.livestream.categories[0].name;
@@ -1354,20 +1358,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Art': 'アート',
                 'IRL': '実写配信'
               };
-              categoryName = catMap[rawCat] || rawCat;
+              categoryName = `[${catMap[rawCat] || rawCat}] `;
             }
             
-            let catBadge = card.querySelector('.category-badge');
-            if (!catBadge) {
-              catBadge = document.createElement('div');
-              catBadge.className = 'category-badge';
-              const cardLink = card.querySelector('.card-link');
-              if (cardLink) cardLink.appendChild(catBadge);
+            const fullTitle = categoryName + (data.livestream.session_title || '無題の配信');
+            
+            if (ticker) {
+              ticker.textContent = fullTitle;
+              // Check for overflow to trigger ticker animation
+              const container = ticker.parentElement;
+              if (ticker.scrollWidth > container.offsetWidth) {
+                ticker.classList.add('animate');
+                // Adjust animation speed based on text length
+                const duration = Math.max(8, ticker.scrollWidth / 40); 
+                ticker.style.animationDuration = `${duration}s`;
+              } else {
+                ticker.classList.remove('animate');
+              }
             }
-            catBadge.textContent = categoryName;
-
           } else {
             card.classList.remove('is-live');
+            if (statusBadge) statusBadge.textContent = 'OFFLINE';
+            if (ticker) {
+              ticker.textContent = '';
+              ticker.classList.remove('animate');
+            }
           }
         }
       } catch (err) {
@@ -1769,5 +1784,128 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial render
     renderSchedule();
   }
+
+  // ==========================================================================
+  // Member Cheer (Like) Logic
+  // ==========================================================================
+  async function initCheers() {
+    const cheerBtns = document.querySelectorAll('.cheer-btn');
+    if (cheerBtns.length === 0) return;
+
+    try {
+      const response = await fetch('/api/cheer');
+      if (response.ok) {
+        const data = await response.json();
+        const counts = data.counts || {};
+        const hasCheeredToday = data.hasCheeredToday || false;
+
+        cheerBtns.forEach(btn => {
+          const memberId = btn.getAttribute('data-member');
+          const countEl = btn.querySelector('.cheer-count');
+          if (countEl) countEl.textContent = (counts[memberId] || 0).toLocaleString();
+
+          // Disable if already cheered today
+          if (hasCheeredToday) {
+            btn.disabled = true;
+            btn.title = '今日の応援は完了しました✨';
+          }
+        });
+      }
+    } catch (err) {
+      console.warn('Cheer fetch failed', err);
+    }
+  }
+
+  document.querySelectorAll('.cheer-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (btn.disabled) return;
+
+      const memberId = btn.getAttribute('data-member');
+      const countEl = btn.querySelector('.cheer-count');
+      
+      // Particle effect (reuse existing createParticles)
+      if (typeof createParticles === 'function') {
+        createParticles(e.clientX, e.clientY);
+      }
+
+      try {
+        const response = await fetch('/api/cheer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ member_id: memberId })
+        });
+
+        if (response.ok) {
+          // Success animation
+          btn.classList.add('cheered');
+          if (countEl) {
+            const current = parseInt(countEl.textContent.replace(/,/g, '')) || 0;
+            countEl.textContent = (current + 1).toLocaleString();
+          }
+          
+          // Disable all buttons for today
+          document.querySelectorAll('.cheer-btn').forEach(b => {
+            b.disabled = true;
+            b.title = '応援ありがとうございます！✨';
+          });
+
+          showToast('応援ありがとうございます！✨');
+        } else {
+          const data = await response.json();
+          if (data.error === 'already_cheered') {
+            showToast(data.message);
+            // Sync state by disabling buttons
+            document.querySelectorAll('.cheer-btn').forEach(b => b.disabled = true);
+          }
+        }
+      } catch (err) {
+        console.error('Cheer failed', err);
+      }
+    });
+  });
+
+  function showToast(msg) {
+    const toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--pink-main);
+      color: white;
+      padding: 12px 25px;
+      border-radius: 50px;
+      font-weight: 900;
+      z-index: 10000;
+      box-shadow: 0 10px 20px var(--pink-glow);
+      animation: toastAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      font-family: var(--font-japanese);
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.5s';
+      setTimeout(() => toast.remove(), 500);
+    }, 3000);
+  }
+
+  // Define toast animation if not exists
+  if (!document.getElementById('cheer-extra-styles')) {
+    const style = document.createElement('style');
+    style.id = 'cheer-extra-styles';
+    style.textContent = `
+      @keyframes toastAppear {
+        0% { transform: translate(-50%, 50px); opacity: 0; }
+        100% { transform: translate(-50%, 0); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  initCheers();
 
 });
