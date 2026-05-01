@@ -2363,10 +2363,28 @@ a {
     padding: 40px 25px;
   }
   .rules-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
   .rule-card {
-    padding: 40px 25px;
+    padding: 20px 15px;
+  }
+  .rule-icon {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+  }
+  .rule-card h3 {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+  }
+  .rule-card p {
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+  .rule-number {
+    font-size: 3rem;
+    top: -5px;
+    right: 10px;
   }
 }
 
