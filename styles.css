@@ -338,28 +338,51 @@ h1, h2, h3, .text-neon, .logo-text, .glitch-title {
   .news-summary {
     padding: 60px 0 !important;
   }
+  .news-summary .container {
+    padding: 0 5px; /* Minimal padding for the container */
+  }
   .news-tab-container {
-    gap: 30px;
-    padding-left: 20px;
-    padding-right: 20px;
+    gap: 20px;
+    padding-left: 15px;
+    padding-right: 15px;
     overflow-x: auto;
+    overflow-y: hidden; /* Prevent mysterious vertical scroll */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .news-tab-container::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome, Safari and Opera */
   }
   .news-list-wrap {
-    padding: 0 20px;
+    padding: 0; /* No extra padding for the wrapper */
+  }
+  .news-list {
+    border-radius: 15px; /* Slightly sharper corners for mobile edge-to-edge */
+    padding: 20px 15px; /* Internal padding */
   }
   .news-item {
     flex-direction: column;
-    gap: 15px;
-    padding: 25px 0;
+    gap: 10px;
+    padding: 20px 0;
     align-items: flex-start;
   }
   .news-meta {
     min-width: unset;
     flex-direction: row;
-    gap: 15px;
+    gap: 12px;
+    margin-bottom: 5px;
+    justify-content: flex-start; /* Ensure left alignment */
+    width: 100%;
+  }
+  .news-date {
+    min-width: unset; /* Allow it to be as small as needed */
+    margin-right: 5px;
   }
   .news-title {
     font-size: 1.05rem;
+    display: block; 
+    width: 100%;
+    text-align: left; /* Ensure left alignment */
   }
 }
 
@@ -580,64 +603,188 @@ a {
   left: 0;
   width: 100%;
   height: 100vh;
-  background: var(--sanrio-pink);
-  transform: translateX(100%);
-  transition: transform 0.4s ease;
-  z-index: 999;
+  background: var(--sanrio-pink); /* Match PC Navbar Pink */
+  transform: scaleY(0); /* Scroll/Makimono unroll effect */
+  transform-origin: top;
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.3s;
+  z-index: 2000;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
 }
 
 .mobile-menu.active {
-  transform: translateX(0);
+  transform: scaleY(1);
+  opacity: 1;
 }
 
-.mobile-menu ul {
-  list-style: none;
-  text-align: center;
+.mobile-menu-header {
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--sanrio-pink);
+  flex-shrink: 0;
 }
 
-.mobile-menu ul li {
-  margin: 30px 0;
+.menu-logo-img {
+  height: 40px;
 }
 
-.mobile-menu ul li a {
-  color: #fff;
-  font-family: var(--font-primary);
+.menu-close-btn {
+  background: none;
+  border: none;
   font-size: 1.8rem;
+  color: #fff;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.mobile-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+  overflow-y: auto;
+  background: var(--sanrio-pink);
+}
+
+.mobile-nav-list li {
+  margin: 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.mobile-nav-list li a {
+  display: flex;
+  align-items: center;
+  padding: 18px 25px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.2rem;
   font-weight: 700;
-  text-transform: uppercase;
+  transition: background 0.3s;
+  font-family: var(--font-japanese);
+}
+
+.mobile-nav-list li a:active {
+  background: rgba(255, 133, 162, 0.05);
+}
+
+.mobile-nav-list li a i:first-child {
+  width: 30px;
+  font-size: 1.3rem;
+  color: #fff;
+}
+
+.mobile-nav-list li a span {
+  flex-grow: 1;
+  margin-left: 15px;
+}
+
+.mobile-nav-list li a i:last-child {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.mobile-menu-footer {
+  padding: 20px;
+  background: var(--sanrio-pink);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.menu-footer-card {
+  background: linear-gradient(135deg, #fff0f5, #ffffff);
+  border-radius: 15px;
+  padding: 15px;
+  text-align: center;
+  border: 1px solid rgba(255, 133, 162, 0.15);
+  box-shadow: 0 4px 10px rgba(255, 133, 162, 0.05);
+}
+
+.menu-footer-img {
+  width: 100%;
+  max-width: 200px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.menu-footer-text {
+  font-weight: 900;
+  color: var(--pink-main);
+  font-size: 0.85rem;
+  margin: 0;
 }
 
 @media (max-width: 768px) {
   .nav-container {
     flex-direction: row;
-    justify-content: center;
-    padding: 15px 0;
+    justify-content: center !important; /* Always centered on mobile */
+    padding: 12px 0;
+    position: relative;
   }
   .nav-links {
     display: none;
   }
   .mobile-toggle {
     display: block;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #fff; /* White bars on pink bg */
+  }
+  .navbar {
+    padding: 8px 0 !important;
+    height: auto !important;
+    min-height: 60px;
+    background: var(--sanrio-pink) !important; /* Match PC Navbar Pink */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  }
+  .navbar.scrolled {
+    padding: 8px 0 !important;
   }
   .navbar.scrolled .nav-container {
-    justify-content: center;
+    justify-content: center !important; /* Keep centered when scrolled */
+  }
+  .logo-img {
+    height: 40px !important;
+    width: auto !important;
   }
   .hero {
-    padding-top: 60px; /* Tighter padding for mobile */
-    min-height: auto !important; /* Stop taking up full screen if not needed */
+    padding-top: 100px !important; /* Increased to avoid being hidden by navbar */
+    min-height: auto !important;
     padding-bottom: 40px;
   }
   .section {
-    padding: 60px 0 40px !important; /* Drastically reduce section gaps */
+    padding: 100px 0 40px !important; /* Increased for mobile navbar clearance */
   }
   .section-title {
     margin-bottom: 30px !important;
   }
   .japanese-title {
     margin-bottom: 25px !important;
+  }
+  
+  /* Member Section Mobile Fixes */
+  .section-description {
+    padding: 20px 15px !important;
+    font-size: 0.95rem !important;
+    line-height: 1.8 !important;
+  }
+  
+  .member-intro-box::before {
+    left: -5px !important;
+    top: -15px !important;
+    font-size: 1.4rem !important;
+  }
+  
+  .member-intro-box::after {
+    right: -5px !important;
+    bottom: -15px !important;
+    font-size: 1.4rem !important;
   }
 }
 
@@ -1221,6 +1368,7 @@ a {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   z-index: 10;
   border: 2px solid rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
 }
 
 .member-role i {
@@ -1243,6 +1391,8 @@ a {
   color: var(--text-main);
   font-family: var(--font-japanese);
   margin: 0;
+  padding: 0 45px;
+  word-break: break-all;
 }
 
 .social-icon-small {

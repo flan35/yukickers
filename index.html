@@ -109,15 +109,73 @@
 
   <!-- Mobile Dropdown Menu -->
   <div class="mobile-menu" id="mobile-menu">
-    <ul>
-      <li><a href="#home" data-nav="true">ほーむ</a></li>
-      <li><a href="#members" data-nav="true">めんばー</a></li>
-      <li><a href="#schedule" data-nav="true">すけじゅーる</a></li>
-      <li><a href="#history" data-nav="true">あーかいぶ</a></li>
-      <li><a href="#rules" data-nav="true">るーる</a></li>
-      <li><a href="#yukichat" data-nav="true">ゆきちゃと</a></li>
-      <li><a href="#games" data-nav="true">げーむ</a></li>
+    <div class="mobile-menu-header">
+      <div class="menu-logo-wrap">
+        <img src="rogo.jpg" alt="Yukickers" class="menu-logo-img">
+      </div>
+      <button class="menu-close-btn" id="menu-close" aria-label="Close menu">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    
+    <ul class="mobile-nav-list">
+      <li>
+        <a href="#home" data-nav="true">
+          <i class="fa-solid fa-house"></i>
+          <span>ほーむ</span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </a>
+      </li>
+      <li>
+        <a href="#members" data-nav="true">
+          <i class="fa-solid fa-users"></i>
+          <span>めんばー</span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </a>
+      </li>
+      <li>
+        <a href="#schedule" data-nav="true">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span>すけじゅーる</span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </a>
+      </li>
+      <li>
+        <a href="#history" data-nav="true">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>あーかいぶ</span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </a>
+      </li>
+      <li>
+        <a href="#rules" data-nav="true">
+          <i class="fa-solid fa-scroll"></i>
+          <span>るーる</span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </a>
+      </li>
+      <li>
+        <a href="#yukichat" data-nav="true">
+          <i class="fa-solid fa-comments"></i>
+          <span>ゆきちゃと</span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </a>
+      </li>
+      <li>
+        <a href="#games" data-nav="true">
+          <i class="fa-solid fa-gamepad"></i>
+          <span>げーむ</span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </a>
+      </li>
     </ul>
+
+    <div class="mobile-menu-footer">
+      <div class="menu-footer-card">
+        <img src="yukickersmenber.jpg" alt="Yukickers" class="menu-footer-img">
+        <p class="menu-footer-text">Welcome to Yukickers! ✨</p>
+      </div>
+    </div>
   </div>
 
   <!-- Home Section (Includes Hero, About, News Summary) -->
@@ -446,7 +504,7 @@
                   <i class="fa-solid fa-heart"></i>
                   <span class="cheer-count">0</span>
                 </button>
-                <h3 class="member-name">瓜田純士＆麗子</h3>
+                <h3 class="member-name">瓜田純士<br>＆麗子</h3>
                 <a href="https://x.com/Junshiurita" target="_blank" rel="noopener noreferrer" class="social-icon-small" title="Twitter">
                   <i class="fa-brands fa-x-twitter"></i>
                 </a>

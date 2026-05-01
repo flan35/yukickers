@@ -88,10 +88,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Mobile Menu Toggle
   const mobileToggle = document.getElementById('mobile-toggle');
   const mobileMenu = document.getElementById('mobile-menu');
+  const menuClose = document.getElementById('menu-close');
   let menuOpen = false;
 
-  mobileToggle.addEventListener('click', () => {
-    menuOpen = !menuOpen;
+  function setMenuState(open) {
+    menuOpen = open;
     if (menuOpen) {
       mobileMenu.classList.add('active');
       mobileToggle.innerHTML = '<i class="fa-solid fa-xmark"></i>';
@@ -99,7 +100,17 @@ document.addEventListener('DOMContentLoaded', () => {
       mobileMenu.classList.remove('active');
       mobileToggle.innerHTML = '<i class="fa-solid fa-bars"></i>';
     }
+  }
+
+  mobileToggle.addEventListener('click', () => {
+    setMenuState(!menuOpen);
   });
+
+  if (menuClose) {
+    menuClose.addEventListener('click', () => {
+      setMenuState(false);
+    });
+  }
 
   // Handle Unified SPA Navigation
   const navLinks = document.querySelectorAll('a[data-nav="true"]');
