@@ -155,7 +155,7 @@ h1, h2, h3, .text-neon, .logo-text, .glitch-title {
 
 /* Official Minimalist News Section (Floating with Date Capsule) */
 .news-summary {
-  padding: 80px 0 !important;
+  padding: 40px 0 80px !important; /* Reduced top padding for tighter layout */
   /* Subtle vertical scrim to enhance readability without 'boxing' items */
   background: linear-gradient(
     to bottom,
@@ -5013,7 +5013,7 @@ body.content-ready {
 .live-theater {
   margin-top: 0;
   padding-top: 240px; /* Further increased to guarantee visibility */
-  margin-bottom: 60px;
+  margin-bottom: 30px; /* Reduced from 60px */
   position: relative;
   z-index: 100;
   scroll-margin-top: 100px;
