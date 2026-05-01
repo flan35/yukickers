@@ -2323,16 +2323,16 @@ a {
   font-size: 0.9rem;
 }
 
-/* Animations & Reveal */
+/* Animations & Reveal - Disabled for immediate display as requested */
 .reveal {
-  opacity: 0;
-  transform: translateY(60px);
-  transition: all 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 1;
+  transform: none;
+  transition: none;
 }
 
 .reveal.active {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
 
 /* Responsive Design */
@@ -2446,9 +2446,10 @@ a {
 }
 
 /* LIVE Status Badges */
-.profile-card.is-live {
+/* LIVE Status Badges handled by JS DOM Reordering */
+/* .profile-card.is-live {
   order: -1;
-}
+} */
 
 .live-badge {
   display: none;

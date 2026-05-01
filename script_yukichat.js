@@ -27,23 +27,36 @@
 
   localStorage.setItem('yukichat_id', yukichat.id);
 
-  const memberChibis = [
-    { file: 'chibi_yuki.png', name: 'ユキちゃん' },
-    { file: 'chibi_nodazouri.png', name: '野田草履' },
-    { file: 'chibi_inoshishi.png', name: 'イノシシ' },
-    { file: 'chibi_miki.png', name: 'ミキ' },
-    { file: 'chibi_kariko.png', name: 'カリフラワー狩子' },
-    { file: 'chibi_ponchan.png', name: 'ぽんちゃん' },
-    { file: 'chibi_michaaam.png', name: 'michaaam' },
-    { file: 'chibi_toromi.png', name: 'とろみ' },
-    { file: 'chibi_urita.png', name: '瓜田純士' },
-    { file: 'chibi_reiko.png', name: '瓜田麗子' }
-  ];
+  let memberChibis = [];
+  let adminChibis = [];
 
-  const adminChibis = [
-    { file: 'chibi_manager.png', name: '管理人' },
-    { file: 'yukickersR.png', name: 'ユキッカーズ' }
-  ];
+  async function loadChatMembers() {
+    // Member data is now loaded from members.js as a global variable
+    if (typeof window.YUKICKERS_MEMBERS !== 'undefined') {
+      const data = window.YUKICKERS_MEMBERS;
+      
+      // Clear current lists
+      memberChibis = [];
+      adminChibis = [];
+
+      data.forEach(m => {
+        if (m.chibi) {
+          if (m.isAdmin) {
+            adminChibis.push({ file: m.chibi, name: m.name });
+          } else {
+            memberChibis.push({ file: m.chibi, name: m.name });
+          }
+        }
+      });
+      
+      renderAvatarSelector();
+    } else {
+      console.error('YUKICKERS_MEMBERS is not defined. Make sure members.js is loaded.');
+      // Fallback
+      memberChibis = [{ file: 'chibi_yuki.png', name: 'ユキちゃん' }];
+      renderAvatarSelector();
+    }
+  }
 
   const stage = document.getElementById('yukichat-stage');
   const setupOverlay = document.getElementById('yukichat-setup');
@@ -99,6 +112,10 @@
   // Initialize Avatar List
   function renderAvatarSelector() {
     if (!avatarList) return;
+    if (memberChibis.length === 0) {
+      avatarList.innerHTML = '<p style="grid-column: 1/-1; text-align: center; font-size: 0.8rem; color: #999;">アバター情報を読み込み中...</p>';
+      return;
+    }
     avatarList.innerHTML = '';
     const list = [...memberChibis];
     if (yukichat.isAdmin) {
@@ -706,5 +723,6 @@
   }
 
   startSync();
+  loadChatMembers();
 
 })();

@@ -1,16 +1,80 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Member Data for reference
-  const memberData = [
-    { username: 'yuki_0121', name: 'ユキちゃん', image: 'yuki.jpg' },
-    { username: 'nodazourip', name: '野田草履', image: 'nodazouri.jpg' },
-    { username: 'inosisi0909', name: 'イノシシ', image: 'inoshishi.jpg' },
-    { username: '04miki05', name: 'ミキ', image: 'miki.jpg' },
-    { username: 'kariko2525', name: 'カリフラワー狩子', image: 'kariko.jpg' },
-    { username: 'ponchan_2525', name: 'ぽんちゃん', image: 'ponchan.jpg' },
-    { username: 'michaaam', name: 'michaaam', image: 'mi.jpg' },
-    { username: 'toromi2525', name: 'とろみ', image: 'toromi.jpg' },
-    { username: 'uritafuufu', name: '瓜田純士＆麗子', image: 'urita.jpg' }
-  ];
+  // Member Data - Now loaded dynamically from members.json
+  let allMembers = [];
+  
+  async function loadMembers() {
+    // Member data is now loaded from members.js as a global variable
+    if (typeof window.YUKICKERS_MEMBERS !== 'undefined') {
+      allMembers = window.YUKICKERS_MEMBERS;
+      
+      // Render components that depend on member data
+      renderMemberCards();
+      
+      // Initialize systems that require rendered elements
+      initVisitorCounter();
+      initCheers();
+      
+      // Start Kick live status check
+      checkLiveStatus();
+      
+      // Initial lottery lists
+      generateMemberSelection('member-selection-list');
+      generateMemberSelection('pachinko-member-selection-list');
+    } else {
+      console.error('YUKICKERS_MEMBERS is not defined. Make sure members.js is loaded.');
+      const grid = document.getElementById('members-grid');
+      if (grid) grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px;">メンバー情報の読み込みに失敗しました。</div>';
+    }
+  }
+
+  function renderMemberCards() {
+    const grid = document.getElementById('members-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    allMembers.filter(m => m.showInList).forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'profile-card reveal';
+      card.setAttribute('data-kick', m.kick);
+      
+      let roleHtml = m.role ? `<div class="member-role">${m.roleIcon ? `<i class="fa-solid ${m.roleIcon}"></i> ` : ''}${m.role}</div>` : '';
+      
+      card.innerHTML = `
+        <div class="card-inner">
+          <div class="card-image-wrap">
+            <a href="https://kick.com/${m.kick}" target="_blank" rel="noopener noreferrer" class="image-link">
+              <img src="${m.image}" alt="${m.name}" class="card-image">
+              <div class="status-badge">OFFLINE</div>
+              ${roleHtml}
+            </a>
+          </div>
+          <div class="card-info">
+            <div class="member-name-row">
+              <button class="cheer-btn" data-member="${m.kick}" title="応援する！">
+                <i class="fa-solid fa-heart"></i>
+                <span class="cheer-count">0</span>
+              </button>
+              <h3 class="member-name">${m.name}</h3>
+              <a href="https://x.com/${m.twitter}" target="_blank" rel="noopener noreferrer" class="social-icon-small" title="Twitter">
+                <i class="fa-brands fa-x-twitter"></i>
+              </a>
+            </div>
+            <p class="member-username">@${m.kick}</p>
+            <div class="stream-title-box">
+              <div class="stream-title-ticker"></div>
+            </div>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+    
+    // Call reveal to make them visible (since delay/reveal is globally handled now)
+    if (typeof reveal === 'function') reveal();
+  }
+
+  // Trigger member loading
+  loadMembers();
 
   // Intro Overlay Logic (Session-based)
   const introOverlay = document.getElementById('intro-overlay');
@@ -83,7 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  initVisitorCounter();
+  // Removed static init call - now called inside loadMembers()
+  // initVisitorCounter();
 
   // Mobile Menu Toggle
   const mobileToggle = document.getElementById('mobile-toggle');
@@ -210,24 +275,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Reveal Animations on Scroll
+  // Reveal Animations on Scroll (Disabled for immediate display)
   function reveal() {
-    const reveals = document.querySelectorAll('.reveal');
-    for (let i = 0; i < reveals.length; i++) {
-      const windowHeight = window.innerHeight;
-      const elementTop = reveals[i].getBoundingClientRect().top;
-      const elementVisible = 100;
-      
-      if (elementTop < windowHeight - elementVisible) {
-        reveals[i].classList.add('active');
-      }
-    }
+    // Content is now displayed immediately via CSS
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
   }
 
-  // Add scroll event listener
-  window.addEventListener('scroll', reveal);
-  
-  // Trigger once on load to show elements already in view
+  // Initial trigger to ensure consistency
   reveal();
 
   // ==========================================================================
@@ -338,24 +392,21 @@ document.addEventListener('DOMContentLoaded', () => {
   function generateMemberSelection(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    const memberCards = document.querySelectorAll('.profile-card[data-kick]');
     container.innerHTML = '';
     
-    memberCards.forEach(card => {
-      const name = card.querySelector('h3').textContent;
-      const id = card.getAttribute('data-kick');
-      const img = card.querySelector('.card-image').src;
-      const isLive = card.classList.contains('is-live');
+    allMembers.filter(m => m.showInList).forEach(m => {
+      // Find the card in the DOM to check its live status
+      const card = document.querySelector(`.profile-card[data-kick="${m.kick}"]`);
+      const isLive = card ? card.classList.contains('is-live') : false;
       
       const item = document.createElement('div');
       item.className = 'select-item';
-      // Unique ID for checkboxes to avoid conflict between modals
-      const checkId = `${containerId}-check-${id}`;
+      const checkId = `${containerId}-check-${m.kick}`;
       item.innerHTML = `
-        <input type="checkbox" id="${checkId}" data-id="${id}" data-name="${name}" data-img="${img}" data-img-full="${img}" data-link="${card.querySelector('.image-link').href}" ${isLive ? 'checked' : ''}>
+        <input type="checkbox" id="${checkId}" data-id="${m.kick}" data-name="${m.name}" data-img="${m.image}" data-img-full="${m.image}" data-link="https://kick.com/${m.kick}" ${isLive ? 'checked' : ''}>
         <label for="${checkId}" class="select-label">
-          <img src="${img}" alt="${name}" class="select-avatar">
-          <span class="select-name">${name}</span>
+          <img src="${m.image}" alt="${m.name}" class="select-avatar">
+          <span class="select-name">${m.name}</span>
           ${isLive ? '<span class="live-indicator-dot"></span>' : ''}
         </label>
       `;
@@ -1334,18 +1385,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Kick LIVE Status Check
   async function checkLiveStatus() {
-    const memberCards = document.querySelectorAll('.profile-card[data-kick]');
-    memberCards.forEach(async (card) => {
+    const grid = document.querySelector('.members-grid');
+    if (!grid) return;
+    
+    const memberCards = Array.from(grid.querySelectorAll('.profile-card[data-kick]'));
+    
+    // Track if any status changed to trigger a re-sort and reveal
+    let anyStatusChanged = false;
+
+    const checkPromises = memberCards.map(async (card) => {
       const username = card.getAttribute('data-kick');
       const statusBadge = card.querySelector('.status-badge');
       const ticker = card.querySelector('.stream-title-ticker');
+      const wasLive = card.classList.contains('is-live');
       
       try {
         const response = await fetch(`https://kick.com/api/v2/channels/${username}`);
         if (response.ok) {
           const data = await response.json();
           if (data && data.livestream) {
+            if (!wasLive) anyStatusChanged = true;
             card.classList.add('is-live');
+            // Force reveal for live members to avoid "holes"
+            card.classList.add('active');
+            card.style.transitionDelay = '0s'; // Show immediately
+            
             if (statusBadge) statusBadge.textContent = 'LIVE';
             
             // Get Category & Title
@@ -1376,11 +1440,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (ticker) {
               ticker.textContent = fullTitle;
-              // Check for overflow to trigger ticker animation
               const container = ticker.parentElement;
               if (ticker.scrollWidth > container.offsetWidth) {
                 ticker.classList.add('animate');
-                // Adjust animation speed based on text length
                 const duration = Math.max(8, ticker.scrollWidth / 40); 
                 ticker.style.animationDuration = `${duration}s`;
               } else {
@@ -1388,6 +1450,7 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }
           } else {
+            if (wasLive) anyStatusChanged = true;
             card.classList.remove('is-live');
             if (statusBadge) statusBadge.textContent = 'OFFLINE';
             if (ticker) {
@@ -1400,6 +1463,23 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn(`Kick API fetch failed for ${username}`, err);
       }
     });
+
+    await Promise.all(checkPromises);
+
+    // Physically reorder the DOM elements based on is-live status
+    const sortedCards = [...memberCards].sort((a, b) => {
+      const aLive = a.classList.contains('is-live');
+      const bLive = b.classList.contains('is-live');
+      if (aLive && !bLive) return -1;
+      if (!aLive && bLive) return 1;
+      return 0; // Maintain original relative order
+    });
+
+    // Re-append in order (appendChild moves existing elements)
+    sortedCards.forEach(card => grid.appendChild(card));
+
+    // Trigger reveal logic to ensure newly positioned elements are shown correctly
+    if (typeof reveal === 'function') reveal();
   }
 
   // Initial check and set interval (every 2 minutes)
@@ -1465,7 +1545,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let html = `<button class="filter-btn ${currentFilter === 'all' ? 'active' : ''}" data-filter="all">すべて</button>`;
     
     activeUsernames.forEach(username => {
-      const member = memberData.find(m => m.username === username) || { name: username };
+      const member = allMembers.find(m => m.kick === username) || { name: username };
       html += `<button class="filter-btn ${currentFilter === username ? 'active' : ''}" data-filter="${username}">${member.name}</button>`;
     });
 
@@ -1500,7 +1580,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     tbody.innerHTML = filtered.map(item => {
-      const member = memberData.find(m => m.username === item.username) || { name: item.username, image: 'yukick.jpg' };
+      const member = allMembers.find(m => m.kick === item.username) || { name: item.username, image: 'yukick.jpg' };
       return `
         <tr>
           <td>${item.date}</td>
@@ -1827,13 +1907,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  document.querySelectorAll('.cheer-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
+  // Use Event Delegation for cheer buttons to support dynamic elements
+  const membersGrid = document.getElementById('members-grid');
+  if (membersGrid) {
+    membersGrid.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.cheer-btn');
+      if (!btn || btn.disabled) return;
+
       e.preventDefault();
       e.stopPropagation();
       
-      if (btn.disabled) return;
-
       const memberId = btn.getAttribute('data-member');
       const countEl = btn.querySelector('.cheer-count');
       
@@ -1876,7 +1959,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Cheer failed', err);
       }
     });
-  });
+  }
 
   function showToast(msg) {
     const toast = document.createElement('div');
