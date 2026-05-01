@@ -1550,7 +1550,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!archiveGrid) return;
 
     try {
-      const res = await fetch('/api/archive?action=list');
+      let apiUrl = '/api/archive?action=list';
+      // Fallback for local file preview
+      if (window.location.protocol === 'file:') {
+        apiUrl = 'https://yukickers.pages.dev/api/archive?action=list';
+      }
+      
+      const res = await fetch(apiUrl);
       if (res.ok) {
         allHistory = await res.json();
         renderFilteredArchives();
