@@ -68,7 +68,8 @@ export async function onRequest(context) {
                 endTime: end.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }),
                 title: v.session_title || 'No Title',
                 duration: durationStr,
-                link: `https://kick.com/${user}/videos`
+                thumbnail: v.thumbnail ? (v.thumbnail.src || v.thumbnail) : null,
+                link: `https://kick.com/video/${v.id}`
               });
             });
           }
@@ -233,6 +234,7 @@ async function finalizeSession(session, endTime, KV) {
           durationMs = match.duration; // match.duration is in ms
           end = new Date(start.getTime() + durationMs);
           if (match.session_title) title = match.session_title;
+          if (match.thumbnail) session.thumbnail = (match.thumbnail.src || match.thumbnail);
           console.log(`Matched VOD for ${session.username}: ${match.id}, corrected duration: ${durationMs}ms`);
         }
       }
@@ -257,7 +259,8 @@ async function finalizeSession(session, endTime, KV) {
     endTime: end.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }),
     title: title,
     duration: durationStr,
-    link: `https://kick.com/${session.username}/videos`
+    thumbnail: session.thumbnail || null,
+    link: `https://kick.com/video/${session.id}`
   };
 
   const historyRaw = await KV.get('history_list');

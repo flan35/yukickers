@@ -1608,10 +1608,8 @@ document.addEventListener('DOMContentLoaded', () => {
     archiveGrid.innerHTML = filtered.map(item => {
       const member = allMembers.find(m => m.kick === item.username) || { name: item.username, image: 'yukick.jpg' };
       
-      // Kick VOD Thumbnail pattern: https://video-thumbnails.kick.com/videos/${videoId}/thumb.jpg
-      const thumbUrl = item.videoId 
-        ? `https://video-thumbnails.kick.com/videos/${item.videoId}/thumb.jpg` 
-        : 'yukickersmenber.jpg'; 
+      // Use the thumbnail URL provided by the API, fallback to group image
+      const thumbUrl = item.thumbnail || 'yukickersmenber.jpg'; 
 
       return `
         <div class="archive-card reveal">
@@ -1629,7 +1627,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <h4 class="archive-title">${item.title}</h4>
             <div class="archive-card-footer">
-              <a href="${item.link || item.videoUrl || `https://kick.com/video/${item.videoId}`}" target="_blank" class="archive-link-btn">
+              <a href="${item.link || `https://kick.com/video/${item.id}`}" target="_blank" class="archive-link-btn">
                 <i class="fa-solid fa-play"></i> アーカイブを見る
               </a>
             </div>
