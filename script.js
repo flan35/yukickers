@@ -1452,14 +1452,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (ticker) {
               ticker.textContent = fullTitle;
-              const container = ticker.parentElement;
-              if (ticker.scrollWidth > container.offsetWidth) {
-                ticker.classList.add('animate');
-                const duration = Math.max(8, ticker.scrollWidth / 40); 
-                ticker.style.animationDuration = `${duration}s`;
-              } else {
-                ticker.classList.remove('animate');
-              }
+              ticker.classList.remove('animate');
             }
           } else {
             if (wasLive) anyStatusChanged = true;
