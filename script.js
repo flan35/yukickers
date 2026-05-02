@@ -1502,7 +1502,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerContainer = document.getElementById('theater-player-container');
     const nameEl = document.getElementById('theater-member-name');
     const titleEl = document.getElementById('theater-stream-title');
-    const linkEl = document.getElementById('theater-kick-link');
+
 
     if (!theater || !playerContainer) return;
 
@@ -1519,7 +1519,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update text content
     nameEl.textContent = `${member.name} が配信中！`;
     titleEl.textContent = member.title || '配信タイトルなし';
-    linkEl.href = `https://kick.com/${member.kick}`;
+
 
     // Show theater and hide hero
     if (theater.style.display === 'none') {
