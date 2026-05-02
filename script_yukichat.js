@@ -22,6 +22,12 @@
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[m]);
 
+  const formatTime = (ts) => {
+    if (!ts) return '';
+    const d = new Date(ts * 1000);
+    return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+
 
   const isLocalEnv = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
@@ -608,15 +614,21 @@
 
     const isAtBottom = historyList.scrollHeight - historyList.clientHeight <= historyList.scrollTop + 20;
 
-    historyList.innerHTML = logs.reverse().map(log => `
-      <div class="history-item ${log.is_admin ? 'is-admin' : ''}" data-log-id="${log.id}">
-        <span class="log-name">
-          ${yukichat.isAdmin ? `<button class="admin-delete-log-btn" title="ログを削除"><i class="fa-solid fa-square-xmark"></i></button>` : ''}
-          ${log.is_admin ? '<i class="fa-solid fa-crown"></i> ' : ''}${escapeHTML(log.name)}:
-        </span>
-        <span class="log-msg">${escapeHTML(log.msg)}</span>
-      </div>
-    `).join('');
+    historyList.innerHTML = logs.reverse().map(log => {
+      const isSystem = log.name === 'SYSTEM';
+      return `
+        <div class="history-item ${log.is_admin ? 'is-admin' : ''} ${isSystem ? 'is-system' : ''}" data-log-id="${log.id}">
+          <span class="log-time">${formatTime(log.ts)}</span>
+          ${isSystem ? '' : `
+            <span class="log-name">
+              ${yukichat.isAdmin ? `<button class="admin-delete-log-btn" title="ログを削除"><i class="fa-solid fa-square-xmark"></i></button>` : ''}
+              ${log.is_admin ? '<i class="fa-solid fa-crown"></i> ' : ''}${escapeHTML(log.name)}:
+            </span>
+          `}
+          <span class="log-msg">${escapeHTML(log.msg)}</span>
+        </div>
+      `;
+    }).join('');
 
     if (yukichat.isAdmin) {
       historyList.querySelectorAll('.history-item').forEach(item => {

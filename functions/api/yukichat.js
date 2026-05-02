@@ -190,6 +190,11 @@ If the user is trying to maintain peace or express a negative opinion about bad 
         }
       }
 
+      // Log entry if it's a new user
+      if (!existingUser) {
+        await env.DB.prepare('INSERT INTO yukichat_logs (name, msg, ts, is_admin) VALUES (?, ?, ?, ?)').bind('SYSTEM', `${modName.text} が入室しました`, now, 1).run();
+      }
+
       const modMsg = await moderateText(msg, false);
 
       // 2. Update User Position using D1
