@@ -1237,7 +1237,7 @@ a {
 /* Decorations for intro box */
 .member-intro-box::before,
 .member-intro-box::after {
-  content: '✨';
+  content: '笨ｨ';
   position: absolute;
   font-size: 1.8rem;
   z-index: 5;
@@ -4068,7 +4068,7 @@ body.content-ready {
   display: none; /* Hide the arrow for plain emoji emotes */
 }
 
-/* ❤️ Heart: Floating zig-zag */
+/* 笶､・・Heart: Floating zig-zag */
 .yukichat-bubble.is-emote-love { animation: emoteFloat 2s ease-out forwards; }
 @keyframes emoteFloat {
   0% { transform: translate(-50%, 0) rotate(0) scale(0.5); opacity: 0; }
@@ -4076,7 +4076,7 @@ body.content-ready {
   100% { transform: translate(-50%, -130px) rotate(-10deg) scale(1.2); opacity: 0; }
 }
 
-/* ✨ Sparkle: Rotate and flicker */
+/* 笨ｨ Sparkle: Rotate and flicker */
 .yukichat-bubble.is-emote-sparkle { animation: emoteSparkle 2s ease-out forwards; }
 @keyframes emoteSparkle {
   0% { transform: translate(-50%, 0) rotate(0) scale(0); opacity: 0; }
@@ -4084,7 +4084,7 @@ body.content-ready {
   100% { transform: translate(-50%, -80px) rotate(360deg) scale(1); opacity: 0; }
 }
 
-/* 👍 Good: Pulse */
+/* �総 Good: Pulse */
 .yukichat-bubble.is-emote-good { animation: emotePulse 1.5s ease-out forwards; }
 @keyframes emotePulse {
   0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
@@ -4094,7 +4094,7 @@ body.content-ready {
   100% { transform: translate(-50%, -40px) scale(1); opacity: 0; }
 }
 
-/* 😊 Happy: Bounce */
+/* �・ Happy: Bounce */
 .yukichat-bubble.is-emote-happy { animation: emoteBounce 2s ease-out forwards; }
 @keyframes emoteBounce {
   0%, 100% { transform: translate(-50%, 0) scale(1); opacity: 0; }
@@ -4104,7 +4104,7 @@ body.content-ready {
   100% { transform: translate(-50%, -40px); opacity: 0; }
 }
 
-/* 😭 Sad: Shake */
+/* �亊 Sad: Shake */
 .yukichat-bubble.is-emote-sad { animation: emoteShake 2s ease-out forwards; }
 @keyframes emoteShake {
   0% { transform: translate(-50%, 0); opacity: 0; }
@@ -4113,7 +4113,7 @@ body.content-ready {
   100% { transform: translate(-50%, -30px); opacity: 0; }
 }
 
-/* 🎉 Burst: Zoom burst */
+/* �脂 Burst: Zoom burst */
 .yukichat-bubble.is-emote-burst { animation: emoteBurst 1.5s ease-out forwards; }
 @keyframes emoteBurst {
   0% { transform: translate(-50%, 0) scale(0); opacity: 0; }
@@ -4121,7 +4121,7 @@ body.content-ready {
   100% { transform: translate(-50%, -60px) scale(1.5); opacity: 0; }
 }
 
-/* 🔥 Fire: Flicker */
+/* �櫨 Fire: Flicker */
 .yukichat-bubble.is-emote-fire { animation: emoteFlicker 2s ease-out forwards; }
 @keyframes emoteFlicker {
   0% { transform: translate(-50%, 0) scale(0.8); opacity: 0; }
@@ -4130,7 +4130,7 @@ body.content-ready {
   100% { transform: translate(-50%, -80px) scale(0.5); opacity: 0; }
 }
 
-/* 🙏 Pray: Hover/Pulse */
+/* �剌 Pray: Hover/Pulse */
 .yukichat-bubble.is-emote-pray { animation: emotePray 2s ease-out forwards; }
 @keyframes emotePray {
   0% { transform: translate(-50%, 0); opacity: 0; }
@@ -5323,6 +5323,201 @@ body.content-ready {
   }
   .archive-card-content {
     padding: 10px;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.stream-details i {
+  color: var(--pink-main);
+  flex-shrink: 0;
+}
+
+#theater-stream-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-kick-mini {
+  padding: 10px 25px;
+  background: var(--pink-main);
+  color: #fff;
+  border-radius: 50px;
+  font-weight: 900;
+  font-size: 0.9rem;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-kick-mini:hover {
+  background: var(--heart-color);
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 8px 20px var(--pink-glow);
+  color: #fff;
+}
+
+/* Archive Gallery Styles */
+.archive-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 items per row on desktop */
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.archive-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 133, 162, 0.15);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
+}
+
+.archive-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--pink-main);
+  box-shadow: 0 10px 25px var(--pink-glow);
+}
+
+.archive-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #f0f0f0;
+  position: relative;
+  overflow: hidden;
+}
+
+.archive-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.archive-card:hover .archive-thumb img {
+  transform: scale(1.1);
+}
+
+.archive-duration {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-family: var(--font-pop);
+}
+
+.archive-card-content {
+  padding: 12px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.archive-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.archive-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--pink-main);
+  object-fit: cover;
+}
+
+.archive-member-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.archive-member-name {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-main);
+}
+
+.archive-date {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.archive-title {
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: var(--text-main);
+  line-height: 1.3;
+  margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 2.2rem;
+}
+
+.archive-card-footer {
+  margin-top: auto;
+}
+
+.archive-link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: var(--pink-main);
+  color: #fff;
+  padding: 8px;
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: 0.75rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.archive-link-btn:hover {
+  background: var(--heart-color);
+  color: #fff;
+}
+
+@media (max-width: 1100px) {
+  .archive-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .live-theater {
+    margin-top: 0;
+    padding-top: 100px;
+    margin-bottom: 10px;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  .news-summary {
+    padding-top: 30px !important;
+  }
+  .archive-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 items per row on mobile */
+    gap: 10px;
+  }
+  .archive-card {
+    border-radius: 10px;
+  }
+  .archive-card-content {
+    padding: 10px;
   }
   .archive-title {
     font-size: 0.8rem;
@@ -5331,10 +5526,7 @@ body.content-ready {
   .archive-member-name {
     font-size: 0.75rem;
   }
+  .modal-title {
+    font-size: 1rem;
+  }
 }
-
-
-
-
-
-

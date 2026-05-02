@@ -68,7 +68,7 @@ export async function onRequest(context) {
                 endTime: end.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }),
                 title: v.session_title || 'No Title',
                 duration: durationStr,
-                thumbnail: v.thumbnail ? (v.thumbnail.src || v.thumbnail) : null,
+                thumbnail: fixThumbnail(v.thumbnail ? (v.thumbnail.url || v.thumbnail.src || v.thumbnail) : null),
                 link: `https://kick.com/video/${v.id}`
               });
             });
@@ -183,7 +183,8 @@ async function runCronTask(membersList, env, now) {
             username: user,
             start: livestream.start_time || livestream.created_at || now,
             title: streamTitle,
-            lastSeen: now // This record will only be updated in KV when start/title change
+            thumbnail: livestream.thumbnail ? (livestream.thumbnail.url || livestream.thumbnail.src || livestream.thumbnail) : null,
+            lastSeen: now 
           };
           await env.KV.put(sessionKey, JSON.stringify(newSession));
         }
@@ -203,6 +204,11 @@ async function runCronTask(membersList, env, now) {
   return results;
 }
 
+function fixThumbnail(url) {
+  if (!url) return null;
+  return url.replace('{width}', '1280').replace('{height}', '720');
+}
+
 async function finalizeSession(session, endTime, KV) {
   if (!session.id) return;
 
@@ -214,16 +220,18 @@ async function finalizeSession(session, endTime, KV) {
   let end = new Date(endTime);
   let durationMs = end - start;
   let title = session.title;
+  let thumb = session.thumbnail;
 
   // --- HIGH PRECISION VOD CORRECTION ---
   try {
-    // Fetch the latest videos for the user to find the exact duration
-    const vRes = await fetch(`https://kick.com/api/v2/channels/${session.username}/videos`);
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Referer': 'https://kick.com/'
+    };
+    const vRes = await fetch(`https://kick.com/api/v2/channels/${session.username}/videos`, { headers });
     if (vRes.ok) {
       const vData = await vRes.json();
       if (Array.isArray(vData)) {
-        // Find a video that started around the same time as our recorded session
-        // (within 30 minutes margin to be safe)
         const match = vData.find(v => {
           const vStart = new Date(v.created_at);
           const diff = Math.abs(vStart - start);
@@ -231,21 +239,20 @@ async function finalizeSession(session, endTime, KV) {
         });
 
         if (match && match.duration > 0) {
-          durationMs = match.duration; // match.duration is in ms
+          durationMs = match.duration; 
           end = new Date(start.getTime() + durationMs);
           if (match.session_title) title = match.session_title;
-          if (match.thumbnail) session.thumbnail = (match.thumbnail.src || match.thumbnail);
-          console.log(`Matched VOD for ${session.username}: ${match.id}, corrected duration: ${durationMs}ms`);
+          if (match.thumbnail) {
+            thumb = (match.thumbnail.url || match.thumbnail.src || match.thumbnail);
+          }
         }
       }
     }
   } catch (e) {
     console.error('VOD correction failed:', e);
-    // Continue with the estimated duration if VOD check fails
   }
-  // -------------------------------------
   
-  if (durationMs < 60000) return; // Ignore streams less than 1 min
+  if (durationMs < 60000) return; 
 
   const hours = Math.floor(durationMs / 3600000);
   const minutes = Math.floor((durationMs % 3600000) / 60000);
@@ -259,21 +266,16 @@ async function finalizeSession(session, endTime, KV) {
     endTime: end.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }),
     title: title,
     duration: durationStr,
-    thumbnail: session.thumbnail || null,
+    thumbnail: fixThumbnail(thumb),
     link: `https://kick.com/video/${session.id}`
   };
 
   const historyRaw = await KV.get('history_list');
   let history = historyRaw ? JSON.parse(historyRaw) : [];
-  
-  // Check if this record already exists in history (safety)
   if (history.some(h => h.id === record.id)) return;
 
-  // Unshift (add to front) and limit to 100 items
   history.unshift(record);
-  if (history.length > 100) {
-    history = history.slice(0, 100);
-  }
+  if (history.length > 100) history = history.slice(0, 100);
   
   await KV.put('history_list', JSON.stringify(history));
   await KV.put(idKey, "1");

@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.innerHTML = `
         <div class="card-inner">
           <div class="card-image-wrap">
-            <a href="https://kick.com/${m.kick}" target="_blank" rel="noopener noreferrer" class="image-link">
+            <a href="https://kick.com/${m.kick}" target="_blank" rel="noopener noreferrer" onclick="return handleKickLink(event, 'https://kick.com/${m.kick}')" class="image-link">
               <img src="${m.image}" alt="${m.name}" class="card-image">
               <div class="status-badge">OFFLINE</div>
               ${roleHtml}
@@ -192,16 +192,14 @@ document.addEventListener('DOMContentLoaded', () => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const targetId = link.getAttribute('href').substring(1);
-      
-      // Page Turn Effect
-      // Page Fade Effect
-      createParticles(e.clientX, e.clientY);
-      
       const targetSec = document.getElementById(targetId);
       const currentActive = document.querySelector('.page-section.active');
       
       if (!targetSec || currentActive === targetSec) return;
 
+      // Particle effect
+      createParticles(e.clientX, e.clientY);
+      
       if (currentActive) {
         currentActive.classList.remove('active');
         currentActive.classList.add('fade-out');
@@ -226,9 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Close mobile menu if open
-        mobileMenu.classList.remove('active');
-        mobileToggle.innerHTML = '<i class="fa-solid fa-bars"></i>';
-        menuOpen = false;
+        setMenuState(false);
 
         // Reset scroll position
         window.scrollTo(0, 0);
@@ -238,6 +234,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 400);
     });
   });
+
+  // Global Kick Link Handler for Mobile
+  window.handleKickLink = function(e, url) {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      if (e) e.preventDefault();
+      // On mobile, navigating in the same tab is more likely to stay in the browser
+      // or at least not trigger the app as aggressively as target="_blank"
+      window.location.href = url;
+      return false;
+    }
+    return true; // Continue with target="_blank" on Desktop
+  };
 
 
   // Particle Creation Function
@@ -1632,11 +1641,6 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
             <h4 class="archive-title">${item.title}</h4>
-            <div class="archive-card-footer">
-              <a href="${item.link || `https://kick.com/video/${item.id}`}" target="_blank" class="archive-link-btn">
-                <i class="fa-solid fa-play"></i> アーカイブを見る
-              </a>
-            </div>
           </div>
         </div>
       `;
@@ -1815,7 +1819,7 @@ document.addEventListener('DOMContentLoaded', () => {
           li.className = 'schedule-card-item';
           
           li.innerHTML = `
-            <a href="${evt.link || '#event'}" ${evt.link ? 'target="_blank" rel="noopener noreferrer"' : ''} class="schedule-card-link">
+            <a href="${evt.link || '#event'}" ${evt.link ? `target="_blank" rel="noopener noreferrer" onclick="return handleKickLink(event, '${evt.link}')"` : ''} class="schedule-card-link">
               <div class="schedule-card-thumb">
                 <img src="${evt.image || 'dummy.jpg'}" alt="Event Thumbnail">
               </div>
