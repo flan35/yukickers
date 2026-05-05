@@ -176,14 +176,16 @@ async function runCronTask(membersList, env, now) {
       if (livestream) {
         const streamId = String(livestream.id || livestream.created_at);
         const streamTitle = livestream.session_title || 'No Title';
-        // Only write if it's a NEW session or the title changed
-        if (!lastSession || lastSession.id !== streamId || lastSession.title !== streamTitle) {
+        const currentThumb = livestream.thumbnail ? (livestream.thumbnail.url || livestream.thumbnail.src || (typeof livestream.thumbnail === 'string' ? livestream.thumbnail : null)) : null;
+
+        // Only write if it's a NEW session, the title changed, or we finally got a thumbnail
+        if (!lastSession || lastSession.id !== streamId || lastSession.title !== streamTitle || (!lastSession.thumbnail && currentThumb)) {
           const newSession = {
             id: streamId,
             username: user,
             start: livestream.start_time || livestream.created_at || now,
             title: streamTitle,
-            thumbnail: livestream.thumbnail ? (livestream.thumbnail.url || livestream.thumbnail.src || livestream.thumbnail) : null,
+            thumbnail: currentThumb,
             lastSeen: now 
           };
           await env.KV.put(sessionKey, JSON.stringify(newSession));
@@ -191,8 +193,6 @@ async function runCronTask(membersList, env, now) {
       } else {
         if (lastSession) {
           await env.KV.delete(sessionKey);
-          // Use 'now' (server detection time) as the end of stream
-          // finalizeSession will then check the actual VOD duration for final accuracy
           await finalizeSession(lastSession, now, env.KV);
         }
       }
@@ -206,7 +206,11 @@ async function runCronTask(membersList, env, now) {
 
 function fixThumbnail(url) {
   if (!url) return null;
-  return url.replace('{width}', '1280').replace('{height}', '720');
+  // Handle Kick's placeholder format
+  if (typeof url === 'string') {
+    return url.replace('{width}', '1280').replace('{height}', '720');
+  }
+  return null;
 }
 
 async function finalizeSession(session, endTime, KV) {
@@ -232,18 +236,23 @@ async function finalizeSession(session, endTime, KV) {
     if (vRes.ok) {
       const vData = await vRes.json();
       if (Array.isArray(vData)) {
+        // Try to find a match. Relaxed criteria to 1 hour diff or same title
         const match = vData.find(v => {
           const vStart = new Date(v.created_at);
           const diff = Math.abs(vStart - start);
-          return diff < 1800000; // 30 minutes
+          const titleMatch = v.session_title === title;
+          return diff < 3600000 || titleMatch; // 1 hour or exact title match
         });
 
-        if (match && match.duration > 0) {
-          durationMs = match.duration; 
-          end = new Date(start.getTime() + durationMs);
+        if (match) {
+          if (match.duration > 0) {
+            durationMs = match.duration; 
+            end = new Date(start.getTime() + durationMs);
+          }
           if (match.session_title) title = match.session_title;
           if (match.thumbnail) {
-            thumb = (match.thumbnail.url || match.thumbnail.src || match.thumbnail);
+            // Be very robust with thumbnail property extraction
+            thumb = match.thumbnail.url || match.thumbnail.src || (typeof match.thumbnail === 'string' ? match.thumbnail : thumb);
           }
         }
       }
