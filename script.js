@@ -1650,6 +1650,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // News Data (Normalized for filtering)
   const newsData = [
+    { date: '2026.05.06', badge: 'イベント', badgeClass: 'event', title: '【延期のお知らせ】本日予定していた心霊スポット配信は延期となりました' },
     { date: '2026.04.09', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「瓜田純士＆麗子」が加入しました！' },
     { date: '2026.04.05', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「とろみ」が加入しました！' },
     { date: '2026.04.03', badge: 'イベント', badgeClass: 'event', title: '4月26日、ニコニコ超会議「超演劇」への出演が決定！' },
@@ -1665,7 +1666,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const scheduleData = [
     { date: '2026.03.30', time: '21:00', type: 'INTERVIEW', title: 'ユキッカーズ面接（みーちゃん）', venue: 'KICK', image: 'mi.jpg', link: 'https://kick.com/yuki_0121' },
     { date: '2026.04.26', time: '11:00', type: 'EVENT', title: '超演劇～ニコ生の女神が消えた空白の1年～', venue: 'ニコニコ超会議', image: 'nicotyo.jpg', link: 'https://chokaigi.jp/' },
-    { date: '2026.05.06', time: '20:30', type: 'HORROR', title: '心霊スポット（みーちゃん・ぽんちゃん・野田）', venue: 'KICK', image: 'ponchan.jpg' },
     { date: '2026.05.16', time: '', type: 'CAMP', title: '1泊2日キャンプ＆バーベキュー', venue: '屋外', image: 'BBQ.jpg' },
     { date: '2026.05.16', time: '20:00', type: 'AUDITION', title: 'ぽんちゃんの彼女オーディション', venue: 'KICK', image: 'ponkano.jpg', link: 'https://x.com/nyan56see/status/2051304275113021686' },
     { date: '2026.05.16', time: '21:00', type: 'SPECIAL', title: 'ユキッカーズオーディション', venue: 'KICK', image: 'Audition.jpg', link: 'https://x.com/nyan56see/status/2041737411672338671' },
@@ -1677,7 +1677,8 @@ document.addEventListener('DOMContentLoaded', () => {
     { title: 'スキー', icon: 'fa-person-skiing' },
     { title: '沖縄', icon: 'fa-umbrella-beach' },
     { title: '運動会', icon: 'fa-flag-checkered' },
-    { title: 'チーム対抗ドッジボール', icon: 'fa-volleyball' }
+    { title: 'チーム対抗ドッジボール', icon: 'fa-volleyball' },
+    { title: '心霊スポット（みーちゃん・ぽんちゃん・野田）', icon: 'fa-ghost' }
   ];
 
   function renderTbdSchedule() {
