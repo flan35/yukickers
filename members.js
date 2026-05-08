@@ -83,6 +83,15 @@ window.YUKICKERS_MEMBERS = [
     "showInList": true
   },
   {
+    "id": "nemuko_1111",
+    "name": "ねむこ",
+    "image": "nemuko.jpg",
+    "chibi": "nemuko.jpg",
+    "twitter": "nemuko_1111",
+    "kick": "nemuko_1111",
+    "showInList": true
+  },
+  {
     "id": "reiko",
     "name": "瓜田麗子",
     "chibi": "chibi_reiko.png",
