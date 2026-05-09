@@ -1311,6 +1311,64 @@ a {
   box-shadow: 0 0 10px var(--pink-glow);
 }
 
+/* Retired Member Styles */
+.profile-card.is-retired .card-image {
+  filter: grayscale(1) contrast(0.8) brightness(0.9);
+  opacity: 0.7;
+}
+
+.profile-card.is-retired .status-badge {
+  background: #444;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.profile-card.is-retired .card-inner {
+  background: #f0f0f0;
+  box-shadow: none;
+  border: 1px solid #ddd;
+}
+
+.profile-card.is-retired .member-name {
+  color: #888;
+}
+
+.profile-card.is-retired .cheer-btn,
+.profile-card.is-retired .social-icon-small,
+.profile-card.is-retired .stream-title-box {
+  filter: grayscale(1);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.profile-card.is-retired:hover .card-inner {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  border-color: #bbb;
+}
+
+.retired-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 10px 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  width: 120%;
+  text-align: center;
+  pointer-events: none;
+  z-index: 15;
+  border-top: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  letter-spacing: 4px;
+  font-family: var(--font-japanese);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
 /* Social Overlay (Hidden from here, moved to card-info) */
 .card-social-overlay {
   display: none;

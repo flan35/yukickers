@@ -34,17 +34,19 @@ document.addEventListener('DOMContentLoaded', () => {
     
     allMembers.filter(m => m.showInList).forEach(m => {
       const card = document.createElement('div');
-      card.className = 'profile-card reveal';
+      card.className = 'profile-card reveal' + (m.isRetired ? ' is-retired' : '');
       card.setAttribute('data-kick', m.kick);
-      
       let roleHtml = m.role ? `<div class="member-role">${m.roleIcon ? `<i class="fa-solid ${m.roleIcon}"></i> ` : ''}${m.role}</div>` : '';
+      let statusText = m.isRetired ? '脱退' : 'OFFLINE';
+      let retiredOverlay = m.isRetired ? '<div class="retired-overlay">脱退しました</div>' : '';
       
       card.innerHTML = `
         <div class="card-inner">
           <div class="card-image-wrap">
             <a href="https://kick.com/${m.kick}" target="_blank" rel="noopener noreferrer" onclick="return handleKickLink(event, 'https://kick.com/${m.kick}')" class="image-link">
               <img src="${m.image}" alt="${m.name}" class="card-image">
-              <div class="status-badge">OFFLINE</div>
+              <div class="status-badge">${statusText}</div>
+              ${retiredOverlay}
               ${roleHtml}
             </a>
           </div>
@@ -403,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!container) return;
     container.innerHTML = '';
     
-    allMembers.filter(m => m.showInList).forEach(m => {
+    allMembers.filter(m => m.showInList && !m.isRetired).forEach(m => {
       // Find the card in the DOM to check its live status
       const card = document.querySelector(`.profile-card[data-kick="${m.kick}"]`);
       const isLive = card ? card.classList.contains('is-live') : false;
