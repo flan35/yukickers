@@ -5385,5 +5385,61 @@ body.content-ready {
   }
 }
 
+/* Card Embedded Player Styles */
+.card-live-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  z-index: 1; /* Behind badges but over static image */
+  background: #000;
+}
+
+/* Display Mode Controls */
+.display-mode-controls {
+  display: inline-flex;
+  background: #f0f0f0;
+  padding: 5px;
+  border-radius: 50px;
+  margin-top: 15px;
+  gap: 5px;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.mode-btn {
+  background: transparent;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-family: var(--font-japanese);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mode-btn i {
+  font-size: 0.9rem;
+}
+
+.mode-btn.active {
+  background: var(--pink-main);
+  color: white;
+  box-shadow: 0 4px 10px var(--pink-glow);
+}
+
+.mode-btn:not(.active):hover {
+  background: rgba(255, 133, 162, 0.1);
+  color: var(--pink-main);
+}
+
+
+
 
 

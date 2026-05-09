@@ -8,7 +8,8 @@ window.YUKICKERS_MEMBERS = [
     "roleIcon": "fa-crown",
     "twitter": "nyan56see",
     "kick": "yuki_0121",
-    "showInList": true
+    "showInList": true,
+    "bio": "ユキッカーズのキャプテンです！みんなを引っ張っていけるように頑張ります✨ 応援よろしくお願いします！"
   },
   {
     "id": "nodazourip",
@@ -17,7 +18,8 @@ window.YUKICKERS_MEMBERS = [
     "chibi": "chibi_nodazouri.png",
     "twitter": "nodasori2525",
     "kick": "nodazourip",
-    "showInList": true
+    "showInList": true,
+    "bio": "ユキッカーズのメンバー、野田草履です。面白い配信を届けられるように精一杯頑張ります！"
   },
   {
     "id": "inosisi0909",
@@ -26,7 +28,8 @@ window.YUKICKERS_MEMBERS = [
     "chibi": "chibi_inoshishi.png",
     "twitter": "inosisi2525",
     "kick": "inosisi0909",
-    "showInList": true
+    "showInList": true,
+    "bio": "ユキッカーズのイノシシです！パワフルな配信でみんなを元気にします！🐗"
   },
   {
     "id": "04miki05",
@@ -35,7 +38,8 @@ window.YUKICKERS_MEMBERS = [
     "chibi": "chibi_miki.png",
     "twitter": "__miki__0090",
     "kick": "04miki05",
-    "showInList": true
+    "showInList": true,
+    "bio": "ミキです✨ ユキッカーズの一員として、楽しく配信していきたいです！よろしくお願いします。"
   },
   {
     "id": "kariko2525",
@@ -44,7 +48,8 @@ window.YUKICKERS_MEMBERS = [
     "chibi": "chibi_kariko.png",
     "twitter": "alcohol_pokemon",
     "kick": "kariko2525",
-    "showInList": true
+    "showInList": true,
+    "bio": "カリフラワー狩子です！個性豊かな配信をお楽しみに！カリフラワーじゃないよ！🥦"
   },
   {
     "id": "ponchan_2525",
@@ -53,7 +58,8 @@ window.YUKICKERS_MEMBERS = [
     "chibi": "chibi_ponchan.png",
     "twitter": "ponchan257ma",
     "kick": "ponchan_2525",
-    "showInList": true
+    "showInList": true,
+    "bio": "ぽんちゃんです✨ みんなと仲良く楽しく過ごしたいです！応援してね！"
   },
   {
     "id": "michaaam",
@@ -62,7 +68,8 @@ window.YUKICKERS_MEMBERS = [
     "chibi": "chibi_michaaam.png",
     "twitter": "_michaaam",
     "kick": "michaaam",
-    "showInList": true
+    "showInList": true,
+    "bio": "michaaam（みーちゃん）です！ユキッカーズを盛り上げていけるように頑張ります💖"
   },
   {
     "id": "toromi2525",
@@ -71,7 +78,8 @@ window.YUKICKERS_MEMBERS = [
     "chibi": "chibi_toromi.png",
     "twitter": "toromin2525",
     "kick": "toromi2525",
-    "showInList": true
+    "showInList": true,
+    "bio": "とろみです！まったりゆったり、みんなと楽しい時間を共有したいです。よろしくお願いします🍵"
   },
   {
     "id": "uritafuufu",
@@ -80,7 +88,8 @@ window.YUKICKERS_MEMBERS = [
     "chibi": "chibi_urita.png",
     "twitter": "Junshiurita",
     "kick": "uritafuufu",
-    "showInList": true
+    "showInList": true,
+    "bio": "瓜田純士＆麗子です。夫婦でユキッカーズを応援し、盛り上げていきます！"
   },
   {
     "id": "nemuko_1111",
@@ -89,26 +98,30 @@ window.YUKICKERS_MEMBERS = [
     "chibi": "nemuko.jpg",
     "twitter": "nemuko_1111",
     "kick": "nemuko_1111",
-    "showInList": true
+    "showInList": true,
+    "bio": "ねむこです💤 いつも眠いけど、配信は一生懸命頑張ります！癒やしの時間をお届けします。"
   },
   {
     "id": "reiko",
     "name": "瓜田麗子",
     "chibi": "chibi_reiko.png",
-    "showInList": false
+    "showInList": false,
+    "bio": "瓜田麗子です。よろしくお願いします。"
   },
   {
     "id": "manager",
     "name": "管理人",
     "chibi": "chibi_manager.png",
     "showInList": false,
-    "isAdmin": true
+    "isAdmin": true,
+    "bio": "ユキッカーズ公式サイトの管理人です。グループの活動を裏から支えています。"
   },
   {
     "id": "yukickersR",
     "name": "ユキッカーズ",
     "chibi": "yukickersR.png",
     "showInList": false,
-    "isAdmin": true
+    "isAdmin": true,
+    "bio": "ユキッカーズ公式アカウントです。"
   }
 ];

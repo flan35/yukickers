@@ -286,8 +286,19 @@
           <p class="section-description">
             個性豊かなユキッカーズのメンバーたちをご紹介！<br>
             配信中のメンバーは<span class="highlight-live">「LIVE」バッジ</span>がピンク色に光ってお知らせします✨<br>
-            画像をクリックして配信を見に行こう！
+            画像をクリックして配信を見に行こう！<br>
+            <span class="text-muted" style="font-size: 0.85rem; display: block; margin-top: 10px;">
+              <i class="fa-solid fa-circle-info"></i> 下のボタンで、配信中のメンバーを一括で「静止画」か「ライブ配信画面」に切り替えられます。
+            </span>
           </p>
+          <div class="display-mode-controls reveal">
+            <button id="mode-static" class="mode-btn active" title="静止画で表示します">
+              <i class="fa-solid fa-image"></i> 静止画
+            </button>
+            <button id="mode-live" class="mode-btn" title="実際の配信画面を表示します">
+              <i class="fa-solid fa-play"></i> 配信画面
+            </button>
+          </div>
         </div>
       </div>
       <div class="members-grid" id="members-grid">
@@ -447,7 +458,9 @@
           </div>
         </div>
 
-        <!-- Admin Custom Login Modal -->
+
+
+  <!-- Yukichat Admin Login Modal -->
         <div id="yukichat-admin-login" class="yukichat-overlay" style="display: none; z-index: 200;">
           <div class="setup-content">
             <h3 style="color: #ff0055; margin-bottom: 15px;"><i class="fa-solid fa-lock"></i> 管理者ログイン</h3>
@@ -792,6 +805,7 @@
       </div>
     </div>
   </div>
+
 
   <!-- Visitor Counter -->
   <div id="visitor-counter" class="visitor-counter">

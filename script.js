@@ -1456,10 +1456,41 @@ document.addEventListener('DOMContentLoaded', () => {
               ticker.textContent = fullTitle;
               ticker.classList.remove('animate');
             }
+
+            // Inject Iframe if live and player mode is enabled
+            const imageWrap = card.querySelector('.card-image-wrap');
+            const existingIframe = imageWrap?.querySelector('.card-live-player');
+            const staticImg = imageWrap?.querySelector('.card-image');
+
+            if (useCardPlayer) {
+              if (imageWrap && !existingIframe) {
+                const iframe = document.createElement('iframe');
+                iframe.src = `https://player.kick.com/${username}?autoplay=true&muted=true`;
+                iframe.frameBorder = "0";
+                iframe.scrolling = "no";
+                iframe.allowFullscreen = true;
+                iframe.className = "card-live-player";
+                imageWrap.appendChild(iframe);
+                
+                if (staticImg) staticImg.style.visibility = 'hidden';
+              }
+            } else {
+              if (existingIframe) existingIframe.remove();
+              if (staticImg) staticImg.style.visibility = 'visible';
+            }
           } else {
             if (wasLive) anyStatusChanged = true;
             card.classList.remove('is-live');
             if (statusBadge) statusBadge.textContent = 'OFFLINE';
+            
+            // Remove Iframe if offline and restore image
+            const imageWrap = card.querySelector('.card-image-wrap');
+            const iframe = imageWrap?.querySelector('.card-live-player');
+            if (iframe) iframe.remove();
+            
+            const staticImg = imageWrap?.querySelector('.card-image');
+            if (staticImg) staticImg.style.visibility = 'visible';
+
             if (ticker) {
               ticker.textContent = '';
               ticker.classList.remove('animate');
@@ -2059,4 +2090,26 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     document.head.appendChild(style);
   }
+  // ==========================================================================
+  // Display Mode (Static vs Player) Toggle Logic
+  // ==========================================================================
+  let useCardPlayer = false; // Default: Static
+  const btnStatic = document.getElementById('mode-static');
+  const btnLive = document.getElementById('mode-live');
+
+  function updateDisplayMode(enabled) {
+    useCardPlayer = enabled;
+    
+    // Update button states
+    if (btnStatic && btnLive) {
+      btnStatic.classList.toggle('active', !enabled);
+      btnLive.classList.toggle('active', enabled);
+    }
+
+    // Immediately trigger status check to refresh cards
+    if (typeof checkLiveStatus === 'function') checkLiveStatus();
+  }
+
+  if (btnStatic) btnStatic.onclick = () => updateDisplayMode(false);
+  if (btnLive) btnLive.onclick = () => updateDisplayMode(true);
 });
