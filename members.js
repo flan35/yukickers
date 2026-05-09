@@ -53,8 +53,7 @@ window.YUKICKERS_MEMBERS = [
     "chibi": "chibi_ponchan.png",
     "twitter": "ponchan257ma",
     "kick": "ponchan_2525",
-    "showInList": true,
-    "isRetired": true
+    "showInList": true
   },
   {
     "id": "michaaam",
