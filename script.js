@@ -1497,19 +1497,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (aLive && !bLive) return -1;
       if (!aLive && bLive) return 1;
       
-      if (aLive && bLive) {
-        // Both live: Captain first, then heart count
-        const aKick = a.getAttribute('data-kick');
-        const bKick = b.getAttribute('data-kick');
-        if (aKick === 'yuki_0121') return -1;
-        if (bKick === 'yuki_0121') return 1;
-        
-        const aHearts = parseInt(a.querySelector('.cheer-count')?.textContent.replace(/,/g, '') || '0');
-        const bHearts = parseInt(b.querySelector('.cheer-count')?.textContent.replace(/,/g, '') || '0');
-        return bHearts - aHearts;
-      }
+      // Both live OR both offline: Captain first, then heart count
+      const aKick = a.getAttribute('data-kick');
+      const bKick = b.getAttribute('data-kick');
+      if (aKick === 'yuki_0121') return -1;
+      if (bKick === 'yuki_0121') return 1;
       
-      return 0; // Maintain original relative order for offline
+      const aHearts = parseInt(a.querySelector('.cheer-count')?.textContent.replace(/,/g, '') || '0');
+      const bHearts = parseInt(b.querySelector('.cheer-count')?.textContent.replace(/,/g, '') || '0');
+      return bHearts - aHearts;
     });
 
     // Re-append in order (appendChild moves existing elements)
