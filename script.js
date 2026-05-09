@@ -1470,26 +1470,46 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn(`Kick API fetch failed for ${username}`, err);
       }
       
+      const cheerCountEl = card.querySelector('.cheer-count');
+      const cheerCount = cheerCountEl ? parseInt(cheerCountEl.textContent.replace(/,/g, '')) || 0 : 0;
+      
       return card.classList.contains('is-live') ? {
         kick: username,
         name: card.querySelector('.member-name').textContent,
-        title: ticker ? ticker.textContent : ''
+        title: ticker ? ticker.textContent : '',
+        cheerCount: cheerCount
       } : null;
     });
 
     const checkResults = await Promise.all(checkPromises);
     
-    // Determine who to show in Theater (Leader priority, then first live found)
-    const theaterMember = checkResults.find(m => m && m.kick === 'yuki_0121') || checkResults.find(m => m !== null);
+    // Determine who to show in Theater (Leader priority, then most hearts)
+    const liveMembers = checkResults.filter(m => m !== null);
+    const captain = liveMembers.find(m => m.kick === 'yuki_0121');
+    const theaterMember = captain || liveMembers.sort((a, b) => b.cheerCount - a.cheerCount)[0] || null;
+    
     updateLiveTheater(theaterMember);
 
-    // Physically reorder the DOM elements based on is-live status
+    // Physically reorder the DOM elements based on is-live status and heart counts
     const sortedCards = [...memberCards].sort((a, b) => {
       const aLive = a.classList.contains('is-live');
       const bLive = b.classList.contains('is-live');
       if (aLive && !bLive) return -1;
       if (!aLive && bLive) return 1;
-      return 0; // Maintain original relative order
+      
+      if (aLive && bLive) {
+        // Both live: Captain first, then heart count
+        const aKick = a.getAttribute('data-kick');
+        const bKick = b.getAttribute('data-kick');
+        if (aKick === 'yuki_0121') return -1;
+        if (bKick === 'yuki_0121') return 1;
+        
+        const aHearts = parseInt(a.querySelector('.cheer-count')?.textContent.replace(/,/g, '') || '0');
+        const bHearts = parseInt(b.querySelector('.cheer-count')?.textContent.replace(/,/g, '') || '0');
+        return bHearts - aHearts;
+      }
+      
+      return 0; // Maintain original relative order for offline
     });
 
     // Re-append in order (appendChild moves existing elements)

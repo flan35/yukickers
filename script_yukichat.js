@@ -224,7 +224,7 @@
     if (historyList) historyList.innerHTML = '';
     
     if (isAuto) {
-      alert('10分間チャット送信がなかったため、自動的に退室しました。');
+      alert('1時間チャット送信がなかったため、自動的に退室しました。');
     }
   };
 
@@ -279,7 +279,7 @@
         if (!res.ok) {
           const errData = await res.json();
           if (errData.reason === 'room_full') {
-            alert('現在、入室人数が上限（10人）に達しています。時間をおいて再度お試しください。');
+            alert('現在、入室人数が上限（20人）に達しています。時間をおいて再度お試しください。');
           } else if (errData.reason === 'name_ng') {
             alert('そのなまえは使用できません。別の名前を入力してください。');
           } else {
@@ -546,7 +546,7 @@
 
       if (yukichat.isActive) {
         // Idle Check: Time out if no chat for 10 minutes (Admins are exempt)
-        if (!yukichat.isAdmin && nowTs - yukichat.lastChatTs > 600000) {
+        if (!yukichat.isAdmin && nowTs - yukichat.lastChatTs > 3600000) {
           exitRoom(true); 
           return;
         }

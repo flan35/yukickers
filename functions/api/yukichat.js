@@ -182,7 +182,7 @@ If the user is trying to maintain peace or express a negative opinion about bad 
 
       if (!existingUser && isAdmin !== 1) {
         const activeCountData = await env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ?').bind(now - 120).first();
-        if ((activeCountData.count || 0) >= 10) {
+        if ((activeCountData.count || 0) >= 20) {
           return new Response(JSON.stringify({ status: 'error', reason: 'room_full' }), { 
             status: 429, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
