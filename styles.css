@@ -4654,18 +4654,33 @@ body.content-ready {
     padding: 8px 14px;
     bottom: 80px;
   }
+  .yukichat-controls {
+    padding: 15px;
+  }
+  .chat-input-wrap {
+    gap: 8px;
+  }
   .chat-input-wrap input {
-    padding: 12px 20px;
+    padding: 12px 15px;
     font-size: 0.9rem;
+    min-width: 0;
+    flex: 1;
   }
   .chat-input-wrap button {
     width: 50px;
     height: 50px;
+    flex-shrink: 0;
   }
   .btn-mini-gray {
+    width: 50px;
     height: 50px;
-    padding: 0 15px;
-    font-size: 0.8rem;
+    padding: 0;
+    font-size: 1.1rem; /* Slightly larger icon */
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .btn-mini-gray span {
+    display: none;
   }
 }
 
