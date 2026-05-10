@@ -1402,6 +1402,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const grid = document.querySelector('.members-grid');
     if (!grid) return;
     
+    // Sync heart counts first to ensure sort is accurate
+    await initCheers();
+    
     const memberCards = Array.from(grid.querySelectorAll('.profile-card[data-kick]'));
     
     // Track if any status changed to trigger a re-sort and reveal
@@ -1521,6 +1524,16 @@ document.addEventListener('DOMContentLoaded', () => {
     
     updateLiveTheater(theaterMember);
 
+    // Use common reorder function
+    reorderMembers();
+  }
+
+  function reorderMembers() {
+    const grid = document.getElementById('members-grid');
+    if (!grid) return;
+
+    const memberCards = Array.from(grid.querySelectorAll('.profile-card[data-kick]'));
+    
     // Physically reorder the DOM elements based on is-live status and heart counts
     const sortedCards = [...memberCards].sort((a, b) => {
       const aLive = a.classList.contains('is-live');
@@ -1542,7 +1555,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Re-append in order (appendChild moves existing elements)
     sortedCards.forEach(card => grid.appendChild(card));
 
-    if (anyStatusChanged && typeof reveal === 'function') reveal();
+    if (typeof reveal === 'function') reveal();
   }
 
   function updateLiveTheater(member) {
@@ -2039,6 +2052,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const current = parseInt(countEl.textContent.replace(/,/g, '')) || 0;
             countEl.textContent = (current + 1).toLocaleString();
           }
+          
+          // Reorder immediately!
+          reorderMembers();
           
           // Disable all buttons for today
           document.querySelectorAll('.cheer-btn').forEach(b => {
