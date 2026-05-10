@@ -1700,10 +1700,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // News Data (Normalized for filtering)
   const newsData = [
     { date: '2026.05.06', badge: 'イベント', badgeClass: 'event', title: '【本日開催！】心霊スポット配信は本日 20:30〜 予定通り開催いたします' },
-    { date: '2026.04.09', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「瓜田純士＆麗子」が加入しました！' },
-    { date: '2026.04.05', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「とろみ」が加入しました！' },
-    { date: '2026.04.03', badge: 'イベント', badgeClass: 'event', title: '4月26日、ニコニコ超会議「超演劇」への出演が決定！' },
-    { date: '2026.03.30', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「michaaam」が加入しました！' },
+    { date: '2026.05.04', badge: 'イベント', badgeClass: 'event', title: 'ぽんちゃんの彼女オーディション開催決定！！', link: 'https://x.com/nyan56see/status/2051304275113021686' },
+    { date: '2026.05.02', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「ねむこ」が加入しました！', link: 'https://kick.com/nemuko_1111' },
+    { date: '2026.04.09', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「瓜田純士＆麗子」が加入しました！', link: 'https://kick.com/uritafuufu' },
+    { date: '2026.04.08', badge: 'イベント', badgeClass: 'event', title: 'ユキッカーズオーディション開催決定！', link: 'https://x.com/nyan56see/status/2041737411672338671' },
+    { date: '2026.04.05', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「とろみ」が加入しました！', link: 'https://kick.com/toromi2525' },
+    { date: '2026.04.03', badge: 'イベント', badgeClass: 'event', title: '4月26日、ニコニコ超会議「超演劇」への出演が決定！', link: 'https://chokaigi.jp/' },
+    { date: '2026.03.30', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「michaaam」が加入しました！', link: 'https://kick.com/michaaam' },
     { date: '2026.03.28', badge: 'Info', badgeClass: 'info', title: 'グループルールに「BAN行為禁止」「瓜田さんへの配慮」「パパ活禁止」を追加しました' },
     { date: '2026.03.25', badge: 'Info', badgeClass: 'info', title: 'グループルールに「暴露をしない」を追加しました' },
     { date: '2026.03.23', badge: 'イベント', badgeClass: 'event', title: '３月２８日１９時～ユキッカーズ決起集会決定！' },
@@ -1761,8 +1764,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     container.innerHTML = displayData.map(item => {
+      const linkAttr = item.link ? `onclick="window.open('${item.link}', '_blank')"` : '';
+      const linkClass = item.link ? 'has-link' : '';
       return `
-        <li class="news-item">
+        <li class="news-item ${linkClass}" ${linkAttr}>
           <div class="news-meta">
             <span class="news-date">${item.date}</span>
             <span class="news-badge ${item.badgeClass}">${item.badge}</span>
