@@ -1699,8 +1699,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // News Data (Normalized for filtering)
   const newsData = [
-    { date: '2026.05.11', badge: 'イベント', badgeClass: 'event', title: '5/11 朝〜 シンジとみーちゃんの仙台旅行！' },
-    { date: '2026.05.11', badge: 'イベント', badgeClass: 'event', title: '5/11 12時〜 マイクラコラボ開催決定！（ユキちゃん・ぽんちゃん・むらまこ・こわいちゃん）' },
+    { date: '2026.05.10', badge: 'イベント', badgeClass: 'event', title: '5/11 朝〜 シンジとみーちゃんの仙台旅行！', link: 'https://kick.com/michaaam' },
+    { date: '2026.05.10', badge: 'イベント', badgeClass: 'event', title: '5/11 12時〜 マイクラコラボ開催決定！（ユキちゃん・ぽんちゃん・むらまこ・こわいちゃん）', link: 'https://kick.com/ponchan_2525' },
     { date: '2026.05.06', badge: 'イベント', badgeClass: 'event', title: '【本日開催！】心霊スポット配信は本日 20:30〜 予定通り開催いたします' },
     { date: '2026.05.04', badge: 'イベント', badgeClass: 'event', title: 'ぽんちゃんの彼女オーディション開催決定！！', link: 'https://x.com/nyan56see/status/2051304275113021686' },
     { date: '2026.05.02', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「ねむこ」が加入しました！', link: 'https://kick.com/nemuko_1111' },
@@ -1721,8 +1721,8 @@ document.addEventListener('DOMContentLoaded', () => {
     { date: '2026.03.30', time: '21:00', type: 'INTERVIEW', title: 'ユキッカーズ面接（みーちゃん）', venue: 'KICK', image: 'mi.jpg', link: 'https://kick.com/yuki_0121' },
     { date: '2026.04.26', time: '11:00', type: 'EVENT', title: '超演劇～ニコ生の女神が消えた空白の1年～', venue: 'ニコニコ超会議', image: 'nicotyo.jpg', link: 'https://chokaigi.jp/' },
     { date: '2026.05.06', time: '20:30', type: 'HORROR', title: '心霊スポット（みーちゃん・ぽんちゃん・野田）', venue: 'KICK', image: 'ponchan.jpg' },
-    { date: '2026.05.11', time: '朝から', type: 'TRIP', title: '仙台旅行（シンジ・みーちゃん）', venue: 'KICK', image: 'mi.jpg' },
-    { date: '2026.05.11', time: '12:00', type: 'COLLAB', title: 'マイクラコラボ（ユキちゃん・ぽんちゃん・むらまこ・こわいちゃん）', venue: 'KICK', image: 'yuki.jpg' },
+    { date: '2026.05.11', time: '朝から', type: 'TRIP', title: '仙台旅行（シンジ・みーちゃん）', venue: 'KICK', image: 'mi.jpg', link: 'https://kick.com/michaaam' },
+    { date: '2026.05.11', time: '12:00', type: 'COLLAB', title: 'マイクラコラボ（ユキちゃん・ぽんちゃん・むらまこ・こわいちゃん）', venue: 'KICK', image: 'yuki.jpg', link: 'https://kick.com/ponchan_2525' },
     { date: '2026.05.16', time: '', type: 'CAMP', title: '1泊2日キャンプ＆バーベキュー', venue: '屋外', image: 'BBQ.jpg' },
     { date: '2026.05.16', time: '20:00', type: 'SPECIAL', title: 'ユキッカーズオーディション', venue: 'KICK', image: 'Audition.jpg', link: 'https://x.com/nyan56see/status/2041737411672338671' },
     { date: '2026.05.16', time: '21:00', type: 'AUDITION', title: 'ぽんちゃんの彼女オーディション', venue: 'KICK', image: 'ponkano.jpg', link: 'https://x.com/nyan56see/status/2051304275113021686' },
