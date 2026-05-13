@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = 'profile-card reveal' + (m.isRetired ? ' is-retired' : '');
       card.setAttribute('data-kick', m.kick);
+      if (m.twitch) card.setAttribute('data-twitch', m.twitch);
       let roleHtml = m.role ? `<div class="member-role">${m.roleIcon ? `<i class="fa-solid ${m.roleIcon}"></i> ` : ''}${m.role}</div>` : '';
       let statusText = m.isRetired ? '脱退' : 'OFFLINE';
       let retiredOverlay = m.isRetired ? '<div class="retired-overlay">脱退しました</div>' : '';
@@ -1410,6 +1411,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Track if any status changed to trigger a re-sort and reveal
     let anyStatusChanged = false;
 
+    // 1. Check Twitch Statuses (Batch)
+    const twitchCards = Array.from(grid.querySelectorAll('.profile-card[data-twitch]'));
+    const twitchUsernames = twitchCards.map(c => c.getAttribute('data-twitch'));
+    let twitchData = {};
+
+    if (twitchUsernames.length > 0) {
+      try {
+        const tRes = await fetch(`/api/twitch?usernames=${twitchUsernames.join(',')}`);
+        if (tRes.ok) twitchData = await tRes.json();
+      } catch (err) { console.warn('Twitch API check failed', err); }
+    }
+
+    // 2. Check Kick Statuses (Individual)
     const checkPromises = memberCards.map(async (card) => {
       const username = card.getAttribute('data-kick');
       const statusBadge = card.querySelector('.status-badge');
@@ -1417,12 +1431,33 @@ document.addEventListener('DOMContentLoaded', () => {
       const wasLive = card.classList.contains('is-live');
       
       try {
-        const response = await fetch(`https://kick.com/api/v2/channels/${username}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.livestream) {
+        const twitchUsername = card.getAttribute('data-twitch');
+        const tInfo = twitchUsername ? twitchData[twitchUsername.toLowerCase()] : null;
+
+        // Prioritize Twitch if live, otherwise check Kick
+        if (tInfo && tInfo.is_live) {
+          if (!wasLive) anyStatusChanged = true;
+          card.classList.add('is-live');
+          card.classList.add('is-live-twitch');
+          card.classList.add('active');
+          card.style.transitionDelay = '0s';
+          if (statusBadge) statusBadge.textContent = 'LIVE (Twitch)';
+          
+          const fullTitle = `[Twitch] ${tInfo.title || '無題の配信'}`;
+          if (ticker) {
+            ticker.textContent = fullTitle;
+            ticker.classList.remove('animate');
+          }
+          
+          updateCardPlayer(card, twitchUsername, 'twitch', wasLive);
+        } else {
+          const response = await fetch(`https://kick.com/api/v2/channels/${username}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.livestream) {
             if (!wasLive) anyStatusChanged = true;
             card.classList.add('is-live');
+            card.classList.remove('is-live-twitch');
             // Force reveal for live members to avoid "holes"
             card.classList.add('active');
             card.style.transitionDelay = '0s'; // Show immediately
@@ -1455,35 +1490,15 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const fullTitle = categoryName + (data.livestream.session_title || '無題の配信');
             
-            if (ticker) {
               ticker.textContent = fullTitle;
               ticker.classList.remove('animate');
             }
 
-            // Inject Iframe if live and player mode is enabled
-            const imageWrap = card.querySelector('.card-image-wrap');
-            const existingIframe = imageWrap?.querySelector('.card-live-player');
-            const staticImg = imageWrap?.querySelector('.card-image');
-
-            if (useCardPlayer) {
-              if (imageWrap && !existingIframe) {
-                const iframe = document.createElement('iframe');
-                iframe.src = `https://player.kick.com/${username}?autoplay=true&muted=true`;
-                iframe.frameBorder = "0";
-                iframe.scrolling = "no";
-                iframe.allowFullscreen = true;
-                iframe.className = "card-live-player";
-                imageWrap.appendChild(iframe);
-                
-                if (staticImg) staticImg.style.visibility = 'hidden';
-              }
-            } else {
-              if (existingIframe) existingIframe.remove();
-              if (staticImg) staticImg.style.visibility = 'visible';
-            }
+            updateCardPlayer(card, username, 'kick', wasLive);
           } else {
             if (wasLive) anyStatusChanged = true;
             card.classList.remove('is-live');
+            card.classList.remove('is-live-twitch');
             if (statusBadge) statusBadge.textContent = 'OFFLINE';
             
             // Remove Iframe if offline and restore image
@@ -1509,6 +1524,8 @@ document.addEventListener('DOMContentLoaded', () => {
       
       return card.classList.contains('is-live') ? {
         kick: username,
+        twitch: card.getAttribute('data-twitch'),
+        platform: statusBadge.textContent.includes('Twitch') ? 'twitch' : 'kick',
         name: card.querySelector('.member-name').textContent,
         title: ticker ? ticker.textContent : '',
         cheerCount: cheerCount
@@ -1590,15 +1607,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Update iframe only if member changed
-    if (currentTheaterMember !== member.kick) {
+    const platform = member.platform || 'kick';
+    const streamId = platform === 'twitch' ? member.twitch : member.kick;
+    const playerUrl = platform === 'twitch' 
+      ? `https://player.twitch.tv/?channel=${streamId}&parent=${window.location.hostname}&autoplay=true&muted=false`
+      : `https://player.kick.com/${streamId}`;
+
+    if (currentTheaterMember !== streamId) {
       playerContainer.innerHTML = `
         <iframe 
-          src="https://player.kick.com/${member.kick}" 
+          src="${playerUrl}" 
           frameborder="0" 
           scrolling="no" 
           allowfullscreen="true">
         </iframe>`;
-      currentTheaterMember = member.kick;
+      currentTheaterMember = streamId;
+    }
+  }
+
+  function updateCardPlayer(card, username, platform, wasLive) {
+    const useCardPlayer = localStorage.getItem('yukickers_player_mode') === 'on';
+    const imageWrap = card.querySelector('.card-image-wrap');
+    const existingIframe = imageWrap?.querySelector('.card-live-player');
+    const staticImg = imageWrap?.querySelector('.card-image');
+
+    if (useCardPlayer) {
+      if (imageWrap && !existingIframe) {
+        const iframe = document.createElement('iframe');
+        if (platform === 'twitch') {
+          iframe.src = `https://player.twitch.tv/?channel=${username}&parent=${window.location.hostname}&autoplay=true&muted=true`;
+        } else {
+          iframe.src = `https://player.kick.com/${username}?autoplay=true&muted=true`;
+        }
+        iframe.frameBorder = "0";
+        iframe.scrolling = "no";
+        iframe.allowFullscreen = true;
+        iframe.className = "card-live-player";
+        imageWrap.appendChild(iframe);
+        
+        if (staticImg) staticImg.style.visibility = 'hidden';
+      }
+    } else {
+      if (existingIframe) existingIframe.remove();
+      if (staticImg) staticImg.style.visibility = 'visible';
     }
   }
 

@@ -8,6 +8,7 @@
     "roleIcon": "fa-crown",
     "twitter": "nyan56see",
     "kick": "yuki_0121",
+    "twitch": null,
     "showInList": true,
     "bio": "ユキッカーズのキャプテンです！みんなを引っ張っていけるように頑張ります✨ 応援よろしくお願いします！"
   },
@@ -18,6 +19,7 @@
     "chibi": "chibi_nodazouri.png",
     "twitter": "nodasori2525",
     "kick": "nodazourip",
+    "twitch": null,
     "showInList": true,
     "bio": "ユキッカーズのメンバー、野田草履です。面白い配信を届けられるように精一杯頑張ります！"
   },
@@ -125,6 +127,7 @@
     "chibi": "chibi_muramako.png",
     "twitter": "muramako_2525",
     "kick": "muramako",
+    "twitch": "murakamisuigun",
     "showInList": true,
     "bio": "むらまこです！ユキッカーズの新メンバーとして精一杯頑張ります。よろしくお願いします！"
   },

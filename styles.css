@@ -1311,6 +1311,26 @@ a {
   box-shadow: 0 0 10px var(--pink-glow);
 }
 
+.profile-card.is-live-twitch .status-badge {
+  background: #9146FF !important;
+  box-shadow: 0 0 10px rgba(145, 70, 255, 0.6) !important;
+}
+
+.profile-card.is-live-twitch .card-inner {
+  border-color: #9146FF !important;
+}
+
+.profile-card.is-live-twitch:hover .card-inner {
+  box-shadow: 0 15px 35px rgba(145, 70, 255, 0.3) !important;
+}
+
+.profile-card.is-live-twitch .category-badge {
+  background: linear-gradient(135deg, #9146FF, #b191ff) !important;
+  color: #fff !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+  box-shadow: 0 4px 15px rgba(145, 70, 255, 0.4) !important;
+}
+
 /* Retired Member Styles */
 .profile-card.is-retired .card-image {
   filter: grayscale(1) contrast(0.8) brightness(0.9);
