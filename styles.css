@@ -1311,6 +1311,14 @@ a {
   box-shadow: 0 0 10px var(--pink-glow);
 }
 
+.profile-card.is-live .card-inner {
+  border-color: var(--pink-main);
+}
+
+.profile-card.is-live:hover .card-inner {
+  box-shadow: 0 15px 35px rgba(255, 133, 162, 0.35) !important;
+}
+
 .profile-card.is-live-twitch .status-badge {
   background: #9146FF !important;
   box-shadow: 0 0 10px rgba(145, 70, 255, 0.6) !important;
