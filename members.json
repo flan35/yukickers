@@ -92,6 +92,13 @@
     "bio": "瓜田純士＆麗子です。夫婦でユキッカーズを応援し、盛り上げていきます！"
   },
   {
+    "id": "reiko",
+    "name": "瓜田麗子",
+    "chibi": "chibi_reiko.png",
+    "showInList": false,
+    "bio": "瓜田麗子です。よろしくお願いします。"
+  },
+  {
     "id": "nemuko_1111",
     "name": "ねむこ",
     "image": "nemuko.jpg",
@@ -105,18 +112,21 @@
     "id": "sinzi_10101986",
     "name": "シンジ",
     "image": "sinzi.jpg",
-    "chibi": "sinzi.jpg",
+    "chibi": "chibi_sinzi.png",
     "twitter": "AgohigeSinzi",
     "kick": "sinzi_10101986",
     "showInList": true,
     "bio": "シンジです！ユキッカーズの一員として、皆さんと楽しい時間を過ごしたいです。よろしくお願いします！"
   },
   {
-    "id": "reiko",
-    "name": "瓜田麗子",
-    "chibi": "chibi_reiko.png",
-    "showInList": false,
-    "bio": "瓜田麗子です。よろしくお願いします。"
+    "id": "muramako",
+    "name": "むらまこ",
+    "image": "muramako.jpg",
+    "chibi": "chibi_muramako.png",
+    "twitter": "muramako_2525",
+    "kick": "muramako",
+    "showInList": true,
+    "bio": "むらまこです！ユキッカーズの新メンバーとして精一杯頑張ります。よろしくお願いします！"
   },
   {
     "id": "manager",
