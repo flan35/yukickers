@@ -1712,6 +1712,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // News Data (Normalized for filtering)
   const newsData = [
+    { date: '2026.05.13', badge: 'メンバー', badgeClass: 'member', title: '新メンバー「シンジ」が加入しました！', link: 'https://kick.com/sinzi_10101986' },
     { date: '2026.05.10', badge: 'イベント', badgeClass: 'event', title: '5/11 朝〜 シンジとみーちゃんの仙台旅行！', link: 'https://kick.com/michaaam' },
     { date: '2026.05.10', badge: 'イベント', badgeClass: 'event', title: '5/11 12時〜 マイクラコラボ開催決定！（ユキちゃん・ぽんちゃん・むらまこ・こわいちゃん）', link: 'https://kick.com/ponchan_2525' },
     { date: '2026.05.06', badge: 'イベント', badgeClass: 'event', title: '【本日開催！】心霊スポット配信は本日 20:30〜 予定通り開催いたします' },

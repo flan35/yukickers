@@ -102,6 +102,16 @@
     "bio": "ねむこです💤 いつも眠いけど、配信は一生懸命頑張ります！癒やしの時間をお届けします。"
   },
   {
+    "id": "sinzi_10101986",
+    "name": "シンジ",
+    "image": "sinzi.jpg",
+    "chibi": "sinzi.jpg",
+    "twitter": "AgohigeSinzi",
+    "kick": "sinzi_10101986",
+    "showInList": true,
+    "bio": "シンジです！ユキッカーズの一員として、皆さんと楽しい時間を過ごしたいです。よろしくお願いします！"
+  },
+  {
     "id": "reiko",
     "name": "瓜田麗子",
     "chibi": "chibi_reiko.png",
