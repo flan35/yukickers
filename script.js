@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Member Data - Now loaded dynamically from members.json
   let allMembers = [];
+  let useCardPlayer = false; // Default: Static
   
   async function loadMembers() {
     // Member data is now loaded from members.js as a global variable
@@ -1490,6 +1491,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const fullTitle = categoryName + (data.livestream.session_title || '無題の配信');
             
+            if (ticker) {
               ticker.textContent = fullTitle;
               ticker.classList.remove('animate');
             }
@@ -1515,7 +1517,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         }
-      } catch (err) {
+      }
+    } catch (err) {
         console.warn(`Kick API fetch failed for ${username}`, err);
       }
       
@@ -1626,10 +1629,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateCardPlayer(card, username, platform, wasLive) {
-    const useCardPlayer = localStorage.getItem('yukickers_player_mode') === 'on';
+    const staticImg = card.querySelector('.card-image');
     const imageWrap = card.querySelector('.card-image-wrap');
     const existingIframe = imageWrap?.querySelector('.card-live-player');
-    const staticImg = imageWrap?.querySelector('.card-image');
 
     if (useCardPlayer) {
       if (imageWrap && !existingIframe) {
@@ -2171,7 +2173,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================================================
   // Display Mode (Static vs Player) Toggle Logic
   // ==========================================================================
-  let useCardPlayer = false; // Default: Static
+
   const btnStatic = document.getElementById('mode-static');
   const btnLive = document.getElementById('mode-live');
 
