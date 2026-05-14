@@ -449,7 +449,7 @@
                 <div class="volume-ctrl">
                   <i class="fa-solid fa-volume-low"></i>
                   <input type="range" id="music-volume" min="0" max="100" value="50">
-                  <button id="music-edit" class="music-edit-btn" style="display:none;"><i class="fa-solid fa-pen-to-square"></i></button>
+                  <!-- 編集ボタンはプレイリスト内に移動 -->
                 </div>
               </div>
             </div>
@@ -484,8 +484,17 @@
       <!-- Admin Playlist Manager (Positioned OUTSIDE the frame to prevent compression) -->
       <div id="yukichat-playlist-container" class="playlist-manager" style="display:none;">
         <div class="playlist-header">
-          <span><i class="fa-solid fa-list-ul"></i> プレイリスト管理</span>
-          <button id="playlist-add-current" class="playlist-add-btn">今の曲を保存</button>
+          <div class="playlist-title">
+            <i class="fa-solid fa-list-ul"></i> プレイリスト管理
+            <button id="music-edit" class="music-edit-inline-btn" title="曲のID/URLを直接セット"><i class="fa-solid fa-pen-to-square"></i></button>
+          </div>
+          <div class="playlist-controls-top">
+            <button id="playlist-sequential-btn" class="playlist-mode-btn" title="順次再生"><i class="fa-solid fa-repeat"></i> 順次: OFF</button>
+          </div>
+        </div>
+        <div class="playlist-add-form">
+          <input type="text" id="playlist-url-input" placeholder="YouTube URLまたはIDを入力...">
+          <button id="playlist-add-btn" class="playlist-add-submit">追加</button>
         </div>
         <div id="yukichat-playlist-items" class="playlist-list">
           <!-- Playlist items will be here -->
@@ -839,7 +848,7 @@
   </div>
 
 
-  <!-- Visitor Counter -->
+  <!-- Visitor Counter (Temporarily Hidden)
   <div id="visitor-counter" class="visitor-counter">
     <div class="counter-grid">
       <div class="counter-item">
@@ -856,6 +865,7 @@
       </div>
     </div>
   </div>
+  -->
 
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <script src="members.js"></script>

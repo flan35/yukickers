@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderMemberCards();
       
       // Initialize systems that require rendered elements
-      initVisitorCounter();
+      // initVisitorCounter(); // Temporarily disabled
       initCheers();
       
       // Start Kick live status check

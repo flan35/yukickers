@@ -16,7 +16,9 @@
     password: '',
     isKicked: false,
     isIntersecting: false,
-    isLocalMode: false, // Fallback for testing without server
+    isLocalMode: false, 
+    isSequential: false,
+    playlist: []
   };
   const escapeHTML = (str) => String(str).replace(/[&<>"']/g, (m) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -793,9 +795,13 @@
           updateMusicUI(currentMusicState);
         },
         'onStateChange': (event) => {
-          // If it ends (and for some reason loop didn't work), restart
+          // If a song ends, and sequential mode is ON, play the next one
           if (event.data === YT.PlayerState.ENDED && currentMusicState) {
-            ytPlayer.playVideo();
+            if (yukichat.isAdmin && yukichat.isSequential && yukichat.playlist.length > 0) {
+              playNextInPlaylist();
+            } else {
+              ytPlayer.playVideo(); // Single song loop (default)
+            }
           }
         }
       }
@@ -947,67 +953,92 @@
       e.stopPropagation();
       let inputVal = mNewIdInput.value.trim();
       if (!inputVal) return;
-
-      // Extract video ID from URL if necessary
-      let videoId = inputVal;
-      try {
-        if (inputVal.includes('youtube.com') || inputVal.includes('youtu.be')) {
-          const url = new URL(inputVal);
-          if (inputVal.includes('youtu.be')) {
-            videoId = url.pathname.slice(1);
-          } else {
-            videoId = url.searchParams.get('v');
-          }
-        }
-      } catch(err) { console.warn("URL parse failed", err); }
-
+      const videoId = extractVideoId(inputVal);
       if (!videoId) {
         alert("有効な動画IDまたはURLを入力してください。");
         return;
       }
-
-      try {
-        const res = await fetch('/api/yukichat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'set_video',
-            videoId: videoId,
-            id: yukichat.id,
-            password: yukichat.password
-          })
-        });
-        if (res.ok) {
-          if (mEditBox) mEditBox.style.display = 'none';
-          mNewIdInput.value = '';
-          syncWithServer(true);
-        }
-      } catch (err) { console.error("Video set failed", err); }
+      setGlobalVideo(videoId);
     };
+  }
+
+  function extractVideoId(input) {
+    let videoId = input;
+    try {
+      if (input.includes('youtube.com') || input.includes('youtu.be')) {
+        const url = new URL(input);
+        if (input.includes('youtu.be')) {
+          videoId = url.pathname.slice(1);
+        } else if (url.searchParams.has('v')) {
+          videoId = url.searchParams.get('v');
+        } else if (url.pathname.includes('/live/')) {
+          videoId = url.pathname.split('/live/')[1].split('?')[0];
+        } else if (url.pathname.includes('/shorts/')) {
+          videoId = url.pathname.split('/shorts/')[1].split('?')[0];
+        }
+      }
+    } catch(err) { console.warn("URL parse failed", err); }
+    return videoId;
+  }
+
+  async function setGlobalVideo(videoId) {
+    try {
+      const res = await fetch('/api/yukichat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'set_video',
+          videoId: videoId,
+          id: yukichat.id,
+          password: yukichat.password
+        })
+      });
+      if (res.ok) {
+        if (mEditBox) mEditBox.style.display = 'none';
+        mNewIdInput.value = '';
+        syncWithServer(true);
+      }
+    } catch (err) { console.error("Video set failed", err); }
+  }
+
+  async function playNextInPlaylist() {
+    if (!yukichat.playlist || yukichat.playlist.length === 0) return;
+    const currentIndex = yukichat.playlist.findIndex(item => item.video_id === currentMusicVideoId);
+    const nextIndex = (currentIndex + 1) % yukichat.playlist.length;
+    const nextVideo = yukichat.playlist[nextIndex];
+    if (nextVideo) {
+      setGlobalVideo(nextVideo.video_id);
+    }
   }
 
   // Playlist UI Management
   function renderPlaylist(playlist) {
     const listEl = document.getElementById('yukichat-playlist-items');
     if (!listEl) return;
+    yukichat.playlist = playlist;
 
-    // Use fingerprint to avoid redundant re-renders
-    const fingerprint = JSON.stringify(playlist);
+    const fingerprint = JSON.stringify(playlist) + currentMusicVideoId;
     if (yukichat.lastPlaylistFingerprint === fingerprint) return;
     yukichat.lastPlaylistFingerprint = fingerprint;
 
-    listEl.innerHTML = playlist.map(item => `
-      <div class="playlist-item">
-        <div class="playlist-item-info" onclick="yukichatSelectPlaylistItem('${item.video_id}')">
-          <i class="fa-solid fa-music"></i> ${escapeHTML(item.title)}
+    listEl.innerHTML = playlist.map(item => {
+      const isCurrent = item.video_id === currentMusicVideoId;
+      return `
+        <div class="playlist-item ${isCurrent ? 'is-current' : ''}">
+          <div class="playlist-item-info">
+            <i class="fa-solid ${isCurrent ? 'fa-volume-high' : 'fa-music'}"></i> ${escapeHTML(item.title)}
+          </div>
+          <div class="playlist-item-actions">
+            <button class="playlist-play-btn" onclick="yukichatSelectPlaylistItem('${item.video_id}')" title="再生">
+              <i class="fa-solid ${isCurrent ? 'fa-rotate-right' : 'fa-play'}"></i>
+            </button>
+            <button class="playlist-del-btn" onclick="yukichatRemoveFromPlaylist('${item.video_id}')" title="削除">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
         </div>
-        <div class="playlist-item-actions">
-          <button class="playlist-del-btn" onclick="yukichatRemoveFromPlaylist('${item.video_id}')">
-            <i class="fa-solid fa-trash-can"></i>
-          </button>
-        </div>
-      </div>
-    `).join('') || '<p style="text-align:center; font-size: 0.8rem; opacity: 0.5;">プレイリストは空です</p>';
+      `;
+    }).join('') || '<p style="text-align:center; font-size: 0.8rem; opacity: 0.5;">プレイリストは空です</p>';
   }
 
   window.yukichatSelectPlaylistItem = async (videoId) => {
@@ -1044,31 +1075,42 @@
     } catch (e) { console.error("Remove failed", e); }
   };
 
-  const addCurrentBtn = document.getElementById('playlist-add-current');
-  if (addCurrentBtn) {
-    addCurrentBtn.onclick = async () => {
-      if (!isPlayerReady || !ytPlayer || !currentMusicVideoId) return;
+  const playlistAddBtn = document.getElementById('playlist-add-btn');
+  const playlistUrlInput = document.getElementById('playlist-url-input');
+  if (playlistAddBtn && playlistUrlInput) {
+    playlistAddBtn.onclick = async () => {
+      const urlText = playlistUrlInput.value.trim();
+      if (!urlText) return;
+      const videoId = extractVideoId(urlText);
+      if (!videoId) {
+        alert("無効なURLまたは動画IDです");
+        return;
+      }
       
-      let title = "動画 (" + currentMusicVideoId + ")";
-      try {
-        const videoData = ytPlayer.getVideoData();
-        if (videoData && videoData.title) title = videoData.title;
-      } catch (e) { console.warn("Failed to get video title", e); }
-
       try {
         await fetch('/api/yukichat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'playlist_add',
-            videoId: currentMusicVideoId,
-            title: title,
+            videoId: videoId,
+            title: urlText.length > 30 ? videoId : urlText, // Use ID as title if URL is too long
             id: yukichat.id,
             password: yukichat.password
           })
         });
+        playlistUrlInput.value = '';
         syncWithServer(true);
       } catch (e) { console.error("Add failed", e); }
+    };
+  }
+
+  const seqBtn = document.getElementById('playlist-sequential-btn');
+  if (seqBtn) {
+    seqBtn.onclick = () => {
+      yukichat.isSequential = !yukichat.isSequential;
+      seqBtn.classList.toggle('active', yukichat.isSequential);
+      seqBtn.innerHTML = yukichat.isSequential ? '<i class="fa-solid fa-repeat"></i> 順次: ON' : '<i class="fa-solid fa-repeat"></i> 順次: OFF';
     };
   }
   

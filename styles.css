@@ -860,7 +860,7 @@ a {
 }
 /* Static Hero Image Styles */
 .hero-image-wrap {
-  width: 95%;
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   position: relative;
@@ -4109,7 +4109,7 @@ body.content-ready {
   font-size: 0.75rem;
   padding: 3px 10px;
   border-radius: 12px;
-  margin-top: -10px;
+  margin-top: -2px;
   white-space: nowrap;
   font-weight: 900;
   box-shadow: 0 4px 10px rgba(255, 133, 162, 0.3);
@@ -4156,7 +4156,7 @@ body.content-ready {
   display: none; /* Hide the arrow for plain emoji emotes */
 }
 
-/* 隨ｶ・､繝ｻ繝ｻHeart: Floating zig-zag */
+/* 髫ｨ・ｶ繝ｻ・､郢晢ｽｻ郢晢ｽｻHeart: Floating zig-zag */
 .yukichat-bubble.is-emote-love { animation: emoteFloat 2s ease-out forwards; }
 @keyframes emoteFloat {
   0% { transform: translate(-50%, 0) rotate(0) scale(0.5); opacity: 0; }
@@ -4164,7 +4164,7 @@ body.content-ready {
   100% { transform: translate(-50%, -130px) rotate(-10deg) scale(1.2); opacity: 0; }
 }
 
-/* 隨ｨ・ｨ Sparkle: Rotate and flicker */
+/* 髫ｨ・ｨ繝ｻ・ｨ Sparkle: Rotate and flicker */
 .yukichat-bubble.is-emote-sparkle { animation: emoteSparkle 2s ease-out forwards; }
 @keyframes emoteSparkle {
   0% { transform: translate(-50%, 0) rotate(0) scale(0); opacity: 0; }
@@ -4172,7 +4172,7 @@ body.content-ready {
   100% { transform: translate(-50%, -80px) rotate(360deg) scale(1); opacity: 0; }
 }
 
-/* ・ｽ邱・Good: Pulse */
+/* 繝ｻ・ｽ驍ｱ繝ｻGood: Pulse */
 .yukichat-bubble.is-emote-good { animation: emotePulse 1.5s ease-out forwards; }
 @keyframes emotePulse {
   0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
@@ -4182,7 +4182,7 @@ body.content-ready {
   100% { transform: translate(-50%, -40px) scale(1); opacity: 0; }
 }
 
-/* ・ｽ繝ｻ Happy: Bounce */
+/* 繝ｻ・ｽ郢晢ｽｻ Happy: Bounce */
 .yukichat-bubble.is-emote-happy { animation: emoteBounce 2s ease-out forwards; }
 @keyframes emoteBounce {
   0%, 100% { transform: translate(-50%, 0) scale(1); opacity: 0; }
@@ -4192,7 +4192,7 @@ body.content-ready {
   100% { transform: translate(-50%, -40px); opacity: 0; }
 }
 
-/* ・ｽ莠・Sad: Shake */
+/* 繝ｻ・ｽ闔�繝ｻSad: Shake */
 .yukichat-bubble.is-emote-sad { animation: emoteShake 2s ease-out forwards; }
 @keyframes emoteShake {
   0% { transform: translate(-50%, 0); opacity: 0; }
@@ -4201,7 +4201,7 @@ body.content-ready {
   100% { transform: translate(-50%, -30px); opacity: 0; }
 }
 
-/* ・ｽ閼・Burst: Zoom burst */
+/* 繝ｻ・ｽ髢ｼ繝ｻBurst: Zoom burst */
 .yukichat-bubble.is-emote-burst { animation: emoteBurst 1.5s ease-out forwards; }
 @keyframes emoteBurst {
   0% { transform: translate(-50%, 0) scale(0); opacity: 0; }
@@ -4209,7 +4209,7 @@ body.content-ready {
   100% { transform: translate(-50%, -60px) scale(1.5); opacity: 0; }
 }
 
-/* ・ｽ讚ｨ Fire: Flicker */
+/* 繝ｻ・ｽ隶夲ｽｨ Fire: Flicker */
 .yukichat-bubble.is-emote-fire { animation: emoteFlicker 2s ease-out forwards; }
 @keyframes emoteFlicker {
   0% { transform: translate(-50%, 0) scale(0.8); opacity: 0; }
@@ -4218,7 +4218,7 @@ body.content-ready {
   100% { transform: translate(-50%, -80px) scale(0.5); opacity: 0; }
 }
 
-/* ・ｽ蜑・Pray: Hover/Pulse */
+/* 繝ｻ・ｽ陷代・Pray: Hover/Pulse */
 .yukichat-bubble.is-emote-pray { animation: emotePray 2s ease-out forwards; }
 @keyframes emotePray {
   0% { transform: translate(-50%, 0); opacity: 0; }
@@ -4359,10 +4359,18 @@ body.content-ready {
 }
 
 #yukichat-exit-btn {
-  width: 60px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--pink-main);
+  color: #fff;
+  border: none;
   padding: 0;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px var(--pink-glow);
+  cursor: pointer;
+  transition: all 0.3s;
 }
 
 #yukichat-exit-btn span {
@@ -4399,7 +4407,7 @@ body.content-ready {
 }
 
 .history-title {
-  padding: 6px 12px;
+  padding: 4px 12px;
   background: var(--yukichat-bg);
   font-family: var(--font-pop);
   font-size: 0.75rem;
@@ -4484,17 +4492,23 @@ body.content-ready {
 @media (max-width: 768px) {
   .yukichat-container {
     height: auto;
-    min-height: 500px;
+    min-height: 600px;
     max-height: none; /* Remove height constraint to allow normal flow */
     border-radius: 20px;
+    width: calc(100% - 10px) !important;
+    margin-left: 5px;
+    margin-right: 5px;
   }
   .yukichat-stage-wrapper {
-    height: 350px; /* Fixed height to stabilize coordinate calculation */
+    height: 420px; /* Fixed height to stabilize coordinate calculation */
     flex: none;
   }
   .setup-content {
     padding: 20px;
-    width: 95%;
+    width: 100%;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
   }
   .yukichat-history {
     position: relative;
@@ -5154,7 +5168,7 @@ body.content-ready {
 /* Modal sizing extension */
 .modal-content.large {
   max-width: 900px;
-  width: 95%;
+  width: 100%;
 }
 
 .yukipazu-guide.no-margin {
@@ -5769,13 +5783,78 @@ body.content-ready {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 15px;
   border-bottom: 1px solid rgba(255, 0, 150, 0.2);
-  padding-bottom: 8px;
-  font-size: 0.9rem;
+  padding-bottom: 10px;
   color: var(--pink-main);
+}
+.playlist-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
   font-weight: bold;
 }
+.music-edit-inline-btn {
+  background: none;
+  border: none;
+  color: var(--pink-main);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 6px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.music-edit-inline-btn:hover { opacity: 1; }
+
+.playlist-mode-btn {
+  background: rgba(255, 0, 150, 0.1);
+  border: 1px solid var(--pink-main);
+  color: var(--pink-main);
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+.playlist-mode-btn.active {
+  background: var(--pink-main);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(255, 0, 150, 0.3);
+}
+
+.playlist-add-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+.playlist-add-form input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 0, 150, 0.3);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 0.85rem;
+  outline: none;
+}
+.playlist-add-form input:focus { border-color: var(--pink-main); }
+.playlist-add-submit {
+  background: var(--pink-main);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 15px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.playlist-add-submit:hover { background: #ff3388; }
 
 .playlist-add-btn {
   background: var(--pink-main);
@@ -5844,14 +5923,24 @@ body.content-ready {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1rem;
   padding: 2px;
   opacity: 0.6;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
 }
-
-.playlist-del-btn:hover {
+.playlist-play-btn {
+  color: #4dff88;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 2px;
+  opacity: 0.6;
+  transition: all 0.2s;
+}
+.playlist-del-btn:hover, .playlist-play-btn:hover {
   opacity: 1;
+  transform: scale(1.1);
 }
 
 /* Restored Yukichat Core UI Styles */
@@ -5875,7 +5964,7 @@ body.content-ready {
 
 .history-title {
   background: rgba(255, 133, 162, 0.1);
-  padding: 8px 15px;
+  padding: 4px 15px;
   font-size: 0.85rem;
   font-weight: 900;
   color: var(--text-main);
@@ -5918,38 +6007,35 @@ body.content-ready {
 }
 
 .yukichat-controls {
-  margin-top: 15px;
+  margin-top: 2px;
   margin-bottom: 5px;
 }
 
 .chat-input-wrap {
   display: flex;
   gap: 10px;
-  background: #fff;
-  padding: 6px;
-  border-radius: 35px;
-  border: 2px solid var(--pink-main);
-  box-shadow: 0 4px 15px var(--pink-glow);
   align-items: center;
 }
 
 #yukichat-input {
   flex: 1;
-  border: none;
-  background: transparent;
+  border: 2px solid var(--pink-main);
+  background: #fff;
+  border-radius: 20px;
   padding: 8px 15px;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 1.15rem;
   color: var(--text-main);
   outline: none;
+  box-shadow: 0 2px 8px var(--pink-glow);
 }
 
 #yukichat-send-btn {
   background: var(--pink-main);
   color: #fff;
   border: none;
-  width: 38px;
-  height: 38px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s;
@@ -5982,4 +6068,22 @@ body.content-ready {
 .btn-mini-gray:hover {
   background: #e0e0e0;
   color: #333;
+}
+
+/* Mobile Fix: Move chat log above input area */
+@media (max-width: 768px) {
+  .yukichat .container {
+    padding: 0 5px !important;
+  }
+  .yukichat-history {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    width: calc(100% - 10px) !important;
+    max-width: none !important;
+    margin: 10px auto !important;
+    height: 180px !important;
+    max-height: 180px !important;
+    z-index: 50 !important;
+  }
 }
