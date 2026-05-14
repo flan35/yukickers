@@ -233,6 +233,9 @@ If the user is trying to maintain peace or express a negative opinion about bad 
     }
 
     if (method === 'GET') {
+      const url = new URL(request.url);
+      const isInitial = url.searchParams.get('is_initial') === '1';
+
       // Cleanup inactive users (older than 120s, but keep admins)
       await env.DB.prepare('DELETE FROM yukichat_users WHERE ts < ? AND is_admin = 0').bind(now - 120).run();
 
@@ -245,6 +248,15 @@ If the user is trying to maintain peace or express a negative opinion about bad 
         env.DB.prepare('SELECT value FROM yukichat_settings WHERE key = "music_on"').first(),
         env.DB.prepare('SELECT value FROM yukichat_settings WHERE key = "music_start_time"').first()
       ]);
+
+      let musicOn = musicSetting ? musicSetting.value === '1' : false;
+      // Reset music if room is empty, OR if this is the first person joining an "abandoned" ON state
+      if (activeCountData.count === 0 || (isInitial && activeCountData.count === 1)) {
+        if (musicOn) {
+          await env.DB.prepare('UPDATE yukichat_settings SET value = "0" WHERE key = "music_on"').run();
+          musicOn = false;
+        }
+      }
 
       const activeUsers = {};
       usersData.results.forEach(row => {
@@ -264,8 +276,9 @@ If the user is trying to maintain peace or express a negative opinion about bad 
         activeCount: activeCountData.count || 0,
         waitingCount: waitingCountData.count || 0,
         logs: logsData.results || [],
-        music_on: musicSetting ? musicSetting.value === '1' : false,
-        music_start_time: musicStartSetting ? parseInt(musicStartSetting.value) : 0
+        music_on: musicOn,
+        music_start_time: musicStartSetting ? parseInt(musicStartSetting.value) : 0,
+        server_time: Date.now()
       }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });

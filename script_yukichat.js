@@ -255,6 +255,7 @@
       setupOverlay.classList.remove('active');
       if (historyOverlay) historyOverlay.style.display = 'flex';
       yukichat.isActive = true;
+      yukichat.isInitialSync = true;
       yukichat.lastChatTs = Date.now(); // Reset idle timer
       
       renderAvatar(yukichat.id, {
@@ -566,7 +567,11 @@
       if (shouldSyncGet || isImmediate) {
         if (!yukichat.isActive) yukichat.lastGetSync = nowTs;
 
-        const getUrl = yukichat.password ? `/api/yukichat?id=${yukichat.id}&pw=${yukichat.password}` : `/api/yukichat?id=${yukichat.id}`;
+        let getUrl = yukichat.password ? `/api/yukichat?id=${yukichat.id}&pw=${yukichat.password}` : `/api/yukichat?id=${yukichat.id}`;
+        if (yukichat.isInitialSync) {
+          getUrl += '&is_initial=1';
+          yukichat.isInitialSync = false;
+        }
         const res = await fetch(getUrl);
         if (res.status === 401 || res.status === 403) {
           handleKickBanResponse(res);
@@ -577,7 +582,11 @@
           const data = await res.json();
           updateStatsUI(data.activeCount || 0, data.waitingCount || 0);
 
-          if (yukichat.isActive) {
+          if (data.server_time) {
+        yukichat.serverTimeOffset = data.server_time - Date.now();
+      }
+
+      if (yukichat.isActive) {
             updateRemoteUsers(data.users);
             renderHistory(data.logs);
           }
@@ -802,23 +811,18 @@
 
         // Calculate synchronized playback time
         if (startTime > 0) {
-          const nowTs = Date.now();
-          const elapsedSec = (nowTs - startTime) / 1000;
           const duration = ytPlayer.getDuration();
-          
-          // Basic loop support: if elapsed exceeds duration, use modulo
-          let targetTime = elapsedSec;
           if (duration > 0) {
-            targetTime = elapsedSec % duration;
-          }
+            const adjustedNow = Date.now() + (yukichat.serverTimeOffset || 0);
+            const elapsedSec = (adjustedNow - startTime) / 1000;
+            const targetTime = elapsedSec % duration;
+            const currentTime = ytPlayer.getCurrentTime();
+            const drift = Math.abs(currentTime - targetTime);
 
-          const currentTime = ytPlayer.getCurrentTime();
-          const drift = Math.abs(currentTime - targetTime);
-
-          // Only seek if we are far off (avoid stuttering from small network jitter)
-          if (drift > 3) {
-            console.log(`Syncing music drift: ${drift.toFixed(2)}s. Seeking to ${targetTime.toFixed(2)}s`);
-            ytPlayer.seekTo(targetTime, true);
+            // Sync if drift > 1s
+            if (drift > 1) {
+              ytPlayer.seekTo(targetTime, true);
+            }
           }
         }
 
