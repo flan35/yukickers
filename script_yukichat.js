@@ -744,7 +744,7 @@
   }
 
   window.onYouTubeIframeAPIReady = () => {
-    const savedVol = localStorage.getItem('yukichat_music_volume') || 30;
+    const savedVol = localStorage.getItem('yukichat_music_volume') || 50;
     ytPlayer = new YT.Player('yukichat-yt-player', {
       videoId: 'F0B7HDiY-10',
       playerVars: {
@@ -760,7 +760,7 @@
       events: {
         'onReady': () => {
           isPlayerReady = true;
-          ytPlayer.setVolume(savedVol);
+          ytPlayer.setVolume(savedVol * 0.6); // Scale: 50% slider = 30% actual
           const volSlider = document.getElementById('music-volume');
           if (volSlider) volSlider.value = savedVol;
           // Sync with current known state once ready
@@ -789,7 +789,9 @@
       offBtn.classList.remove('active');
       if (isPlayerReady && ytPlayer && ytPlayer.playVideo) {
         const state = ytPlayer.getPlayerState();
-        if (state !== YT.PlayerState.PLAYING) {
+        // Only trigger play if it's actually paused or not started.
+        // Don't trigger if it's already playing or buffering.
+        if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING) {
           ytPlayer.playVideo();
         }
       }
@@ -799,7 +801,7 @@
       offBtn.classList.add('active');
       if (isPlayerReady && ytPlayer && ytPlayer.pauseVideo) {
         const state = ytPlayer.getPlayerState();
-        if (state !== YT.PlayerState.PAUSED && state !== YT.PlayerState.ENDED) {
+        if (state === YT.PlayerState.PLAYING || state === YT.PlayerState.BUFFERING) {
           ytPlayer.pauseVideo();
         }
       }
@@ -847,10 +849,11 @@
 
   if (mVolSlider) {
     mVolSlider.oninput = (e) => {
-      const vol = e.target.value;
+      const sliderVal = e.target.value;
+      const actualVol = sliderVal * 0.6; // Scale down for better range
       if (isPlayerReady && ytPlayer && ytPlayer.setVolume) {
-        ytPlayer.setVolume(vol);
-        localStorage.setItem('yukichat_music_volume', vol);
+        ytPlayer.setVolume(actualVol);
+        localStorage.setItem('yukichat_music_volume', sliderVal);
       }
     };
     mVolSlider.onclick = (e) => e.stopPropagation();

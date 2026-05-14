@@ -5542,9 +5542,9 @@ body.content-ready {
 /* Yukichat Music Player (Sketch Style) */
 .music-player-container {
   position: absolute;
-  bottom: 15px;
-  left: 15px;
-  z-index: 100;
+  bottom: 10px;
+  left: 10px;
+  z-index: 40; /* Lower than history log (50) and floating stats (2000) */
   pointer-events: auto;
 }
 
