@@ -461,8 +461,6 @@
           </div>
         </div>
 
-
-
         <!-- Chat History -->
         <div id="yukichat-history" class="yukichat-history">
           <div class="history-title"><i class="fa-solid fa-clock-rotate-left"></i> チャットログ</div>
@@ -480,11 +478,21 @@
           </div>
         </div>
 
+        </div>
+      </div>
 
+      <!-- Admin Playlist Manager (Positioned OUTSIDE the frame to prevent compression) -->
+      <div id="yukichat-playlist-container" class="playlist-manager" style="display:none;">
+        <div class="playlist-header">
+          <span><i class="fa-solid fa-list-ul"></i> プレイリスト管理</span>
+          <button id="playlist-add-current" class="playlist-add-btn">今の曲を保存</button>
+        </div>
+        <div id="yukichat-playlist-items" class="playlist-list">
+          <!-- Playlist items will be here -->
+        </div>
+      </div>
 
-
-
-  <!-- Yukichat Admin Login Modal -->
+        <!-- Yukichat Admin Login Modal -->
         <div id="yukichat-admin-login" class="yukichat-overlay" style="display: none; z-index: 200;">
           <div class="setup-content">
             <h3 style="color: #ff0055; margin-bottom: 15px;"><i class="fa-solid fa-lock"></i> 管理者ログイン</h3>
@@ -499,17 +507,6 @@
       </div>
     </div>
   </section>
-
-      <!-- Admin Playlist Manager -->
-      <div id="yukichat-playlist-container" class="playlist-manager" style="display:none;">
-        <div class="playlist-header">
-          <span><i class="fa-solid fa-list-ul"></i> プレイリスト管理</span>
-          <button id="playlist-add-current" class="playlist-add-btn">今の曲を保存</button>
-        </div>
-        <div id="yukichat-playlist-items" class="playlist-list">
-          <!-- Playlist items will be here -->
-        </div>
-      </div>
 
   <!-- Rules Section -->
   <section id="rules" class="section rules page-section">
