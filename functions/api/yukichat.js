@@ -100,6 +100,9 @@ export async function onRequest(context) {
       if (action === 'music' && (id || isAdmin)) {
         const musicState = data.value === 'on' ? '1' : '0';
         await env.DB.prepare('INSERT OR REPLACE INTO yukichat_settings (key, value) VALUES ("music_on", ?)').bind(musicState).run();
+        if (musicState === '1') {
+          await env.DB.prepare('INSERT OR REPLACE INTO yukichat_settings (key, value) VALUES ("music_start_time", ?)').bind(Date.now().toString()).run();
+        }
         return new Response(JSON.stringify({ status: 'ok', music_on: musicState === '1' }), { headers: corsHeaders });
       }
 
@@ -234,12 +237,13 @@ If the user is trying to maintain peace or express a negative opinion about bad 
       await env.DB.prepare('DELETE FROM yukichat_users WHERE ts < ? AND is_admin = 0').bind(now - 120).run();
 
       // Fetch active users, counts, logs, and settings in parallel
-      const [usersData, activeCountData, waitingCountData, logsData, musicSetting] = await Promise.all([
+      const [usersData, activeCountData, waitingCountData, logsData, musicSetting, musicStartSetting] = await Promise.all([
         env.DB.prepare('SELECT * FROM yukichat_users WHERE is_waiting = 0').all(),
         env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ? AND is_waiting = 0').bind(now - 120).first(),
         env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ? AND is_waiting = 1').bind(now - 120).first(),
         env.DB.prepare('SELECT * FROM yukichat_logs ORDER BY id DESC LIMIT 20').all(),
-        env.DB.prepare('SELECT value FROM yukichat_settings WHERE key = "music_on"').first()
+        env.DB.prepare('SELECT value FROM yukichat_settings WHERE key = "music_on"').first(),
+        env.DB.prepare('SELECT value FROM yukichat_settings WHERE key = "music_start_time"').first()
       ]);
 
       const activeUsers = {};
@@ -260,7 +264,8 @@ If the user is trying to maintain peace or express a negative opinion about bad 
         activeCount: activeCountData.count || 0,
         waitingCount: waitingCountData.count || 0,
         logs: logsData.results || [],
-        music_on: musicSetting ? musicSetting.value === '1' : false
+        music_on: musicSetting ? musicSetting.value === '1' : false,
+        music_start_time: musicStartSetting ? parseInt(musicStartSetting.value) : 0
       }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });

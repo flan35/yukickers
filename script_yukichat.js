@@ -581,7 +581,7 @@
             updateRemoteUsers(data.users);
             renderHistory(data.logs);
           }
-          updateMusicUI(data.music_on);
+          updateMusicUI(data.music_on, data.music_start_time);
         }
       }
 
@@ -778,7 +778,7 @@
     });
   };
 
-  function updateMusicUI(isOn) {
+  function updateMusicUI(isOn, startTime = 0) {
     const playerContainer = document.getElementById('yukichat-music-player');
     const onBtn = document.getElementById('music-on');
     const offBtn = document.getElementById('music-off');
@@ -799,6 +799,28 @@
         
         const savedVol = localStorage.getItem('yukichat_music_volume') || 50;
         ytPlayer.setVolume(savedVol * 0.6);
+
+        // Calculate synchronized playback time
+        if (startTime > 0) {
+          const nowTs = Date.now();
+          const elapsedSec = (nowTs - startTime) / 1000;
+          const duration = ytPlayer.getDuration();
+          
+          // Basic loop support: if elapsed exceeds duration, use modulo
+          let targetTime = elapsedSec;
+          if (duration > 0) {
+            targetTime = elapsedSec % duration;
+          }
+
+          const currentTime = ytPlayer.getCurrentTime();
+          const drift = Math.abs(currentTime - targetTime);
+
+          // Only seek if we are far off (avoid stuttering from small network jitter)
+          if (drift > 3) {
+            console.log(`Syncing music drift: ${drift.toFixed(2)}s. Seeking to ${targetTime.toFixed(2)}s`);
+            ytPlayer.seekTo(targetTime, true);
+          }
+        }
 
         if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING) {
           ytPlayer.playVideo();
