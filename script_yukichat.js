@@ -264,6 +264,7 @@
       if (historyOverlay) historyOverlay.style.display = 'flex';
       yukichat.isActive = true;
       yukichat.isInitialSync = true;
+      yukichat.isFirstSync = true;
       yukichat.lastChatTs = Date.now(); // Reset idle timer
       
       renderAvatar(yukichat.id, {
@@ -598,11 +599,14 @@
             updateRemoteUsers(data.users);
             renderHistory(data.logs);
           }
-          if (yukichat.lastMusicOn !== data.music_on || yukichat.lastMusicStart !== data.music_start_time || yukichat.lastMusicVideoId !== data.music_video_id) {
+          // Always update UI on first sync or if state changed
+          const musicChanged = yukichat.lastMusicOn !== data.music_on || yukichat.lastMusicStart !== data.music_start_time || yukichat.lastMusicVideoId !== data.music_video_id;
+          if (yukichat.isFirstSync || musicChanged) {
             updateMusicUI(data.music_on, data.music_start_time, data.music_video_id);
             yukichat.lastMusicOn = data.music_on;
             yukichat.lastMusicStart = data.music_start_time;
             yukichat.lastMusicVideoId = data.music_video_id;
+            yukichat.isFirstSync = false;
           }
           if (yukichat.isAdmin && data.playlist) {
             renderPlaylist(data.playlist);
@@ -1086,6 +1090,18 @@
         alert("無効なURLまたは動画IDです");
         return;
       }
+
+      let title = videoId;
+      try {
+        // Try to fetch title via oEmbed
+        const fullUrl = urlText.startsWith('http') ? urlText : `https://www.youtube.com/watch?v=${videoId}`;
+        const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(fullUrl)}&format=json`;
+        const resOembed = await fetch(oembedUrl);
+        if (resOembed.ok) {
+          const odata = await resOembed.json();
+          if (odata.title) title = odata.title;
+        }
+      } catch (e) { console.warn("Title fetch failed", e); }
       
       try {
         await fetch('/api/yukichat', {
@@ -1094,7 +1110,7 @@
           body: JSON.stringify({
             action: 'playlist_add',
             videoId: videoId,
-            title: urlText.length > 30 ? videoId : urlText, // Use ID as title if URL is too long
+            title: title,
             id: yukichat.id,
             password: yukichat.password
           })

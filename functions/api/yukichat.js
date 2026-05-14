@@ -284,10 +284,14 @@ If the user is trying to maintain peace or express a negative opinion about bad 
       const isRequesterActive = requester && requester.is_waiting === 0;
 
       // Reset music ONLY if room is truly empty, OR if the first ACTIVE person joins an "abandoned" ON state
-      if (activeCountData.count === 0 || (isInitial && isRequesterActive && activeCountData.count === 1)) {
-        if (musicOn) {
-          await env.DB.prepare('UPDATE yukichat_settings SET value = "0" WHERE key = "music_on"').run();
-          musicOn = false;
+      // Reset music ONLY if the room was empty (no other active users) when the requester joined
+      if (isInitial && isRequesterActive) {
+        const otherActiveCount = await env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ? AND is_waiting = 0 AND id != ?').bind(now - 120, id || '').first();
+        if ((otherActiveCount.count || 0) === 0) {
+          if (musicOn) {
+            await env.DB.prepare('UPDATE yukichat_settings SET value = "0" WHERE key = "music_on"').run();
+            musicOn = false;
+          }
         }
       }
 
