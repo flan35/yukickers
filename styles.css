@@ -5607,7 +5607,7 @@ body.content-ready {
 
 .music-player-controls {
   display: flex;
-  justify-content: center;
+  align-items: center; /* Align items vertically */
   gap: 6px;
   background: rgba(255, 255, 255, 0.3);
   padding: 4px;
@@ -5619,14 +5619,31 @@ body.content-ready {
   border: none;
   background: #fff;
   color: var(--pink-main);
-  padding: 4px 14px;
+  padding: 4px 10px; /* Narrower buttons to fit slider */
   font-family: var(--font-pop);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 900;
   border-radius: 15px;
   cursor: pointer;
   transition: all 0.3s;
   border: 1px solid var(--pink-main);
+  white-space: nowrap;
+}
+
+.volume-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  color: var(--pink-main);
+  font-size: 0.7rem;
+}
+
+#music-volume {
+  width: 45px; /* Small slider */
+  accent-color: var(--pink-main);
+  cursor: pointer;
+  height: 4px;
 }
 
 .music-btn.on.active {

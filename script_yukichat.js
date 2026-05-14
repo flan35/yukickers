@@ -744,6 +744,7 @@
   }
 
   window.onYouTubeIframeAPIReady = () => {
+    const savedVol = localStorage.getItem('yukichat_music_volume') || 30;
     ytPlayer = new YT.Player('yukichat-yt-player', {
       videoId: 'F0B7HDiY-10',
       playerVars: {
@@ -759,6 +760,9 @@
       events: {
         'onReady': () => {
           isPlayerReady = true;
+          ytPlayer.setVolume(savedVol);
+          const volSlider = document.getElementById('music-volume');
+          if (volSlider) volSlider.value = savedVol;
           // Sync with current known state once ready
           updateMusicUI(currentMusicState);
         },
@@ -834,11 +838,23 @@
 
   const mOnBtn = document.getElementById('music-on');
   const mOffBtn = document.getElementById('music-off');
+  const mVolSlider = document.getElementById('music-volume');
   const mPlayerContainer = document.getElementById('yukichat-music-player');
 
   if (mOnBtn) mOnBtn.onclick = (e) => { e.stopPropagation(); setMusicState(true); };
   if (mOffBtn) mOffBtn.onclick = (e) => { e.stopPropagation(); setMusicState(false); };
   if (mPlayerContainer) mPlayerContainer.onclick = (e) => e.stopPropagation();
+
+  if (mVolSlider) {
+    mVolSlider.oninput = (e) => {
+      const vol = e.target.value;
+      if (isPlayerReady && ytPlayer && ytPlayer.setVolume) {
+        ytPlayer.setVolume(vol);
+        localStorage.setItem('yukichat_music_volume', vol);
+      }
+    };
+    mVolSlider.onclick = (e) => e.stopPropagation();
+  }
   
   loadYoutubeAPI();
 
