@@ -599,9 +599,10 @@
             updateRemoteUsers(data.users);
             renderHistory(data.logs);
           }
-          // Always update UI on first sync or if state changed
+          // Synchronize music state
           const musicChanged = yukichat.lastMusicOn !== data.music_on || yukichat.lastMusicStart !== data.music_start_time || yukichat.lastMusicVideoId !== data.music_video_id;
-          if (yukichat.isFirstSync || musicChanged) {
+          // If music is ON, we want to call updateMusicUI regularly until it's synced (in case metadata wasn't ready)
+          if (yukichat.isFirstSync || musicChanged || data.music_on) {
             updateMusicUI(data.music_on, data.music_start_time, data.music_video_id);
             yukichat.lastMusicOn = data.music_on;
             yukichat.lastMusicStart = data.music_start_time;
