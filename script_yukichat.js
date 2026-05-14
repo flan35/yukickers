@@ -590,7 +590,11 @@
             updateRemoteUsers(data.users);
             renderHistory(data.logs);
           }
-          updateMusicUI(data.music_on, data.music_start_time);
+          if (yukichat.lastMusicOn !== data.music_on || yukichat.lastMusicStart !== data.music_start_time) {
+            updateMusicUI(data.music_on, data.music_start_time);
+            yukichat.lastMusicOn = data.music_on;
+            yukichat.lastMusicStart = data.music_start_time;
+          }
         }
       }
 

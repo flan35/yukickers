@@ -250,8 +250,14 @@ If the user is trying to maintain peace or express a negative opinion about bad 
       ]);
 
       let musicOn = musicSetting ? musicSetting.value === '1' : false;
-      // Reset music if room is empty, OR if this is the first person joining an "abandoned" ON state
-      if (activeCountData.count === 0 || (isInitial && activeCountData.count === 1)) {
+      
+      // Check if the requester is active
+      const id = url.searchParams.get('id');
+      const requester = id ? await env.DB.prepare('SELECT is_waiting FROM yukichat_users WHERE id = ?').bind(id).first() : null;
+      const isRequesterActive = requester && requester.is_waiting === 0;
+
+      // Reset music ONLY if room is truly empty, OR if the first ACTIVE person joins an "abandoned" ON state
+      if (activeCountData.count === 0 || (isInitial && isRequesterActive && activeCountData.count === 1)) {
         if (musicOn) {
           await env.DB.prepare('UPDATE yukichat_settings SET value = "0" WHERE key = "music_on"').run();
           musicOn = false;
