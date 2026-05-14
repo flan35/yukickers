@@ -449,11 +449,19 @@
                 <div class="volume-ctrl">
                   <i class="fa-solid fa-volume-low"></i>
                   <input type="range" id="music-volume" min="0" max="100" value="50">
+                  <button id="music-edit" class="music-edit-btn" style="display:none;"><i class="fa-solid fa-pen-to-square"></i></button>
                 </div>
               </div>
             </div>
+            <div id="music-edit-container" class="music-edit-box" style="display:none;">
+              <input type="text" id="music-new-id" placeholder="YouTube URL or ID">
+              <button id="music-save-id">保存</button>
+              <button id="music-cancel-id">取消</button>
+            </div>
           </div>
         </div>
+
+
 
         <!-- Chat History -->
         <div id="yukichat-history" class="yukichat-history">
@@ -474,6 +482,8 @@
 
 
 
+
+
   <!-- Yukichat Admin Login Modal -->
         <div id="yukichat-admin-login" class="yukichat-overlay" style="display: none; z-index: 200;">
           <div class="setup-content">
@@ -489,6 +499,17 @@
       </div>
     </div>
   </section>
+
+      <!-- Admin Playlist Manager -->
+      <div id="yukichat-playlist-container" class="playlist-manager" style="display:none;">
+        <div class="playlist-header">
+          <span><i class="fa-solid fa-list-ul"></i> プレイリスト管理</span>
+          <button id="playlist-add-current" class="playlist-add-btn">今の曲を保存</button>
+        </div>
+        <div id="yukichat-playlist-items" class="playlist-list">
+          <!-- Playlist items will be here -->
+        </div>
+      </div>
 
   <!-- Rules Section -->
   <section id="rules" class="section rules page-section">

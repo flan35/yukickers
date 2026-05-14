@@ -5697,3 +5697,159 @@ body.content-ready {
     font-size: 0.65rem;
   }
 }
+
+/* Music Edit Feature */
+.music-edit-btn {
+  background: none;
+  border: none;
+  color: var(--pink-main);
+  cursor: pointer;
+  padding: 5px;
+  font-size: 1rem;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.music-edit-btn:hover {
+  opacity: 1;
+}
+
+.music-edit-box {
+  background: rgba(0,0,0,0.95);
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+  border: 1px solid var(--pink-main);
+  box-shadow: 0 0 10px rgba(255, 0, 150, 0.3);
+}
+
+.music-edit-box input {
+  flex: 1;
+  background: #222;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.music-edit-box button {
+  background: var(--pink-main);
+  border: none;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.music-edit-box button#music-cancel-id {
+  background: #555;
+}
+
+/* Playlist Manager Styles */
+.playlist-manager {
+  background: rgba(15, 10, 15, 0.95);
+  border: 1px solid var(--pink-main);
+  border-radius: 12px;
+  margin-top: 20px; /* Add space below the chat frame */
+  padding: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.4s ease-out;
+  width: 100%;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  flex-shrink: 0; /* Prevent it from being compressed */
+}
+
+.playlist-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 0, 150, 0.2);
+  padding-bottom: 8px;
+  font-size: 0.9rem;
+  color: var(--pink-main);
+  font-weight: bold;
+}
+
+.playlist-add-btn {
+  background: var(--pink-main);
+  border: none;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.playlist-add-btn:hover {
+  transform: scale(1.05);
+}
+
+.playlist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.playlist-list::-webkit-scrollbar {
+  width: 4px;
+}
+.playlist-list::-webkit-scrollbar-thumb {
+  background: var(--pink-main);
+  border-radius: 2px;
+}
+
+.playlist-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.playlist-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.playlist-item-info {
+  flex: 1;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #eee;
+}
+
+.playlist-item-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: 10px;
+}
+
+.playlist-del-btn {
+  color: #ff4d4d;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.playlist-del-btn:hover {
+  opacity: 1;
+}

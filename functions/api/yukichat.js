@@ -21,6 +21,10 @@ export async function onRequest(context) {
     });
   }
 
+  // Ensure tables exist
+  await env.DB.prepare('CREATE TABLE IF NOT EXISTS yukichat_settings (key TEXT PRIMARY KEY, value TEXT)').run();
+  await env.DB.prepare('CREATE TABLE IF NOT EXISTS yukichat_playlist (video_id TEXT PRIMARY KEY, title TEXT, added_at INTEGER)').run();
+
   const now = Math.floor(Date.now() / 1000);
   const ip = request.headers.get('cf-connecting-ip') || 'unknown';
 
@@ -106,7 +110,29 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ status: 'ok', music_on: musicState === '1' }), { headers: corsHeaders });
       }
 
-      if (!id) return new Response('Missing ID', { status: 400 });
+        if (action === 'set_video' && isAdmin) {
+          const videoId = data.videoId;
+          if (videoId) {
+            await env.DB.prepare('INSERT OR REPLACE INTO yukichat_settings (key, value) VALUES ("music_video_id", ?)').bind(videoId).run();
+            await env.DB.prepare('INSERT OR REPLACE INTO yukichat_settings (key, value) VALUES ("music_start_time", ?)').bind(Date.now().toString()).run();
+            return new Response(JSON.stringify({ status: 'ok', videoId }), { headers: corsHeaders });
+          }
+        }
+
+        if (action === 'playlist_add' && isAdmin) {
+          const { videoId, title } = data;
+          await env.DB.prepare('INSERT OR REPLACE INTO yukichat_playlist (video_id, title, added_at) VALUES (?, ?, ?)')
+            .bind(videoId, title || '無題の動画', Date.now()).run();
+          return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
+        }
+
+        if (action === 'playlist_remove' && isAdmin) {
+          const { videoId } = data;
+          await env.DB.prepare('DELETE FROM yukichat_playlist WHERE video_id = ?').bind(videoId).run();
+          return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
+        }
+
+        if (!id) return new Response('Missing ID', { status: 400 });
 
       // 1. Reusable Moderation Function (Regex & AI)
       const moderateText = async (text, isName = false) => {
@@ -246,7 +272,9 @@ If the user is trying to maintain peace or express a negative opinion about bad 
         env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ? AND is_waiting = 1').bind(now - 120).first(),
         env.DB.prepare('SELECT * FROM yukichat_logs ORDER BY id DESC LIMIT 20').all(),
         env.DB.prepare('SELECT value FROM yukichat_settings WHERE key = "music_on"').first(),
-        env.DB.prepare('SELECT value FROM yukichat_settings WHERE key = "music_start_time"').first()
+        env.DB.prepare('SELECT value FROM yukichat_settings WHERE key = "music_start_time"').first(),
+        env.DB.prepare('SELECT value FROM yukichat_settings WHERE key = "music_video_id"').first(),
+        env.DB.prepare('SELECT * FROM yukichat_playlist ORDER BY added_at DESC').all()
       ]);
 
       let musicOn = musicSetting ? musicSetting.value === '1' : false;
@@ -284,6 +312,8 @@ If the user is trying to maintain peace or express a negative opinion about bad 
         logs: logsData.results || [],
         music_on: musicOn,
         music_start_time: musicStartSetting ? parseInt(musicStartSetting.value) : 0,
+        music_video_id: musicVideoSetting ? musicVideoSetting.value : 'F0B7HDiY-10',
+        playlist: isAdmin ? (playlistData.results || []) : [],
         server_time: Date.now()
       }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

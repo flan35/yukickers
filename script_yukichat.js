@@ -182,6 +182,12 @@
           setupTitle.innerHTML = 'アバターを選んでね <span style="color:#ff0055; font-size: 0.8rem;">(管理者)</span>';
         }
         renderAvatarSelector(); // Refresh list to show Manager chibi
+        
+        // Show music edit button and playlist if admin
+        const musicEditBtn = document.getElementById('music-edit');
+        if (musicEditBtn) musicEditBtn.style.display = 'inline-block';
+        const playlistContainer = document.getElementById('yukichat-playlist-container');
+        if (playlistContainer) playlistContainer.style.display = 'block';
       } else {
         adminLoginError.style.display = 'block';
         adminPwInput.value = '';
@@ -590,10 +596,14 @@
             updateRemoteUsers(data.users);
             renderHistory(data.logs);
           }
-          if (yukichat.lastMusicOn !== data.music_on || yukichat.lastMusicStart !== data.music_start_time) {
-            updateMusicUI(data.music_on, data.music_start_time);
+          if (yukichat.lastMusicOn !== data.music_on || yukichat.lastMusicStart !== data.music_start_time || yukichat.lastMusicVideoId !== data.music_video_id) {
+            updateMusicUI(data.music_on, data.music_start_time, data.music_video_id);
             yukichat.lastMusicOn = data.music_on;
             yukichat.lastMusicStart = data.music_start_time;
+            yukichat.lastMusicVideoId = data.music_video_id;
+          }
+          if (yukichat.isAdmin && data.playlist) {
+            renderPlaylist(data.playlist);
           }
         }
       }
@@ -749,6 +759,7 @@
   // --- Music Sync Logic ---
   let ytPlayer = null;
   let currentMusicState = false;
+  let currentMusicVideoId = 'F0B7HDiY-10';
   let isPlayerReady = false;
 
   function loadYoutubeAPI() {
@@ -791,7 +802,7 @@
     });
   };
 
-  function updateMusicUI(isOn, startTime = 0) {
+  function updateMusicUI(isOn, startTime = 0, videoId = 'F0B7HDiY-10') {
     const playerContainer = document.getElementById('yukichat-music-player');
     const onBtn = document.getElementById('music-on');
     const offBtn = document.getElementById('music-off');
@@ -807,7 +818,18 @@
       playerContainer.classList.add('is-on');
       onBtn.classList.add('active');
       offBtn.classList.remove('active');
+      
       if (isPlayerReady && ytPlayer && ytPlayer.playVideo) {
+        // Change video if server says so
+        if (videoId && videoId !== currentMusicVideoId) {
+          console.log("Music video changed to:", videoId);
+          currentMusicVideoId = videoId;
+          ytPlayer.loadVideoById({
+            videoId: videoId,
+            startSeconds: 0
+          });
+        }
+
         const state = ytPlayer.getPlayerState();
         
         const savedVol = localStorage.getItem('yukichat_music_volume') || 50;
@@ -897,6 +919,157 @@
       }
     };
     mVolSlider.onclick = (e) => e.stopPropagation();
+  }
+  
+  // Playlist Editing for Admin
+  const mEditBtn = document.getElementById('music-edit');
+  const mEditBox = document.getElementById('music-edit-container');
+  const mNewIdInput = document.getElementById('music-new-id');
+  const mSaveBtn = document.getElementById('music-save-id');
+  const mCancelBtn = document.getElementById('music-cancel-id');
+
+  if (mEditBtn) {
+    mEditBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (mEditBox) mEditBox.style.display = mEditBox.style.display === 'none' ? 'flex' : 'none';
+    };
+  }
+
+  if (mCancelBtn) {
+    mCancelBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (mEditBox) mEditBox.style.display = 'none';
+    };
+  }
+
+  if (mSaveBtn) {
+    mSaveBtn.onclick = async (e) => {
+      e.stopPropagation();
+      let inputVal = mNewIdInput.value.trim();
+      if (!inputVal) return;
+
+      // Extract video ID from URL if necessary
+      let videoId = inputVal;
+      try {
+        if (inputVal.includes('youtube.com') || inputVal.includes('youtu.be')) {
+          const url = new URL(inputVal);
+          if (inputVal.includes('youtu.be')) {
+            videoId = url.pathname.slice(1);
+          } else {
+            videoId = url.searchParams.get('v');
+          }
+        }
+      } catch(err) { console.warn("URL parse failed", err); }
+
+      if (!videoId) {
+        alert("有効な動画IDまたはURLを入力してください。");
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/yukichat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'set_video',
+            videoId: videoId,
+            id: yukichat.id,
+            password: yukichat.password
+          })
+        });
+        if (res.ok) {
+          if (mEditBox) mEditBox.style.display = 'none';
+          mNewIdInput.value = '';
+          syncWithServer(true);
+        }
+      } catch (err) { console.error("Video set failed", err); }
+    };
+  }
+
+  // Playlist UI Management
+  function renderPlaylist(playlist) {
+    const listEl = document.getElementById('yukichat-playlist-items');
+    if (!listEl) return;
+
+    // Use fingerprint to avoid redundant re-renders
+    const fingerprint = JSON.stringify(playlist);
+    if (yukichat.lastPlaylistFingerprint === fingerprint) return;
+    yukichat.lastPlaylistFingerprint = fingerprint;
+
+    listEl.innerHTML = playlist.map(item => `
+      <div class="playlist-item">
+        <div class="playlist-item-info" onclick="yukichatSelectPlaylistItem('${item.video_id}')">
+          <i class="fa-solid fa-music"></i> ${escapeHTML(item.title)}
+        </div>
+        <div class="playlist-item-actions">
+          <button class="playlist-del-btn" onclick="yukichatRemoveFromPlaylist('${item.video_id}')">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+    `).join('') || '<p style="text-align:center; font-size: 0.8rem; opacity: 0.5;">プレイリストは空です</p>';
+  }
+
+  window.yukichatSelectPlaylistItem = async (videoId) => {
+    if (!yukichat.isAdmin) return;
+    try {
+      await fetch('/api/yukichat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'set_video',
+          videoId: videoId,
+          id: yukichat.id,
+          password: yukichat.password
+        })
+      });
+      syncWithServer(true);
+    } catch (e) { console.error("Select failed", e); }
+  };
+
+  window.yukichatRemoveFromPlaylist = async (videoId) => {
+    if (!yukichat.isAdmin || !confirm("プレイリストから削除しますか？")) return;
+    try {
+      await fetch('/api/yukichat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'playlist_remove',
+          videoId: videoId,
+          id: yukichat.id,
+          password: yukichat.password
+        })
+      });
+      syncWithServer(true);
+    } catch (e) { console.error("Remove failed", e); }
+  };
+
+  const addCurrentBtn = document.getElementById('playlist-add-current');
+  if (addCurrentBtn) {
+    addCurrentBtn.onclick = async () => {
+      if (!isPlayerReady || !ytPlayer || !currentMusicVideoId) return;
+      
+      let title = "動画 (" + currentMusicVideoId + ")";
+      try {
+        const videoData = ytPlayer.getVideoData();
+        if (videoData && videoData.title) title = videoData.title;
+      } catch (e) { console.warn("Failed to get video title", e); }
+
+      try {
+        await fetch('/api/yukichat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'playlist_add',
+            videoId: currentMusicVideoId,
+            title: title,
+            id: yukichat.id,
+            password: yukichat.password
+          })
+        });
+        syncWithServer(true);
+      } catch (e) { console.error("Add failed", e); }
+    };
   }
   
   loadYoutubeAPI();
