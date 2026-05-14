@@ -797,7 +797,6 @@
       if (isPlayerReady && ytPlayer && ytPlayer.playVideo) {
         const state = ytPlayer.getPlayerState();
         
-        // Ensure volume is always correct before playing
         const savedVol = localStorage.getItem('yukichat_music_volume') || 50;
         ytPlayer.setVolume(savedVol * 0.6);
 
@@ -806,6 +805,7 @@
         }
       }
     } else {
+      // Music is OFF, but we stay visible (no display: none) to allow turning it back ON
       playerContainer.classList.remove('is-on');
       onBtn.classList.remove('active');
       offBtn.classList.add('active');
