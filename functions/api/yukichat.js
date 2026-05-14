@@ -28,18 +28,17 @@ export async function onRequest(context) {
   const now = Math.floor(Date.now() / 1000);
   const ip = request.headers.get('cf-connecting-ip') || 'unknown';
 
+  // Admin Exemption Check (Moved outside to be accessible by GET/POST)
+  const userId = url.searchParams.get('id') || '';
+  const queryPw = url.searchParams.get('pw') || '';
+  let isActuallyAdmin = queryPw === '1234';
+  if (!isActuallyAdmin && userId) {
+    const adminCheck = await env.DB.prepare('SELECT is_admin FROM yukichat_users WHERE id = ?').bind(userId).first();
+    isActuallyAdmin = adminCheck && adminCheck.is_admin === 1;
+  }
+
   // Check for bans (Blacklist/Permanent) - skip check for OPTIONS
   if (method !== 'OPTIONS') {
-    const userId = url.searchParams.get('id') || '';
-    const queryPw = url.searchParams.get('pw') || '';
-    
-    // Admin Exemption: Check DB record OR password in query
-    let isActuallyAdmin = queryPw === '1234';
-    if (!isActuallyAdmin && userId) {
-      const adminCheck = await env.DB.prepare('SELECT is_admin FROM yukichat_users WHERE id = ?').bind(userId).first();
-      isActuallyAdmin = adminCheck && adminCheck.is_admin === 1;
-    }
-
     if (!isActuallyAdmin && (userId || (ip && ip !== 'unknown'))) {
       // Blacklist
       const isBanned = await env.DB.prepare('SELECT id FROM yukichat_blacklist WHERE (id != "" AND id = ?) OR (ip != "unknown" AND ip = ?)').bind(userId, ip).first();
@@ -68,10 +67,10 @@ export async function onRequest(context) {
     if (method === 'POST') {
       const data = await request.json();
       const { id, name, avatar, x, y, msg, password, action, targetId, is_waiting } = data;
-      const isAdmin = password === '1234' ? 1 : 0;
+      const isAdmin = password === '1234' ? 1 : (isActuallyAdmin ? 1 : 0);
       const isWaiting = is_waiting === 0 ? 0 : 1; // Default to 1 (waiting) unless explicitly 0
 
-      if (action === 'kick' && password === '1234' && targetId) {
+      if (action === 'kick' && isAdmin && targetId) {
         // Get target's IP from current users before deleting
         const target = await env.DB.prepare('SELECT ip FROM yukichat_users WHERE id = ?').bind(targetId).first();
         const targetIp = target ? target.ip : 'unknown';
@@ -81,7 +80,7 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
       }
 
-      if (action === 'ban' && password === '1234' && targetId) {
+      if (action === 'ban' && isAdmin && targetId) {
         // Get target's IP from current users before deleting
         const target = await env.DB.prepare('SELECT ip FROM yukichat_users WHERE id = ?').bind(targetId).first();
         const targetIp = target ? target.ip : 'unknown';
@@ -91,12 +90,12 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
       }
 
-      if (action === 'deleteLog' && password === '1234' && targetId) {
+      if (action === 'deleteLog' && isAdmin && targetId) {
         await env.DB.prepare('DELETE FROM yukichat_logs WHERE id = ?').bind(targetId).run();
         return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
       }
 
-      if (action === 'clearLogs' && password === '1234') {
+      if (action === 'clearLogs' && isAdmin) {
         await env.DB.prepare('DELETE FROM yukichat_logs').run();
         return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
       }
@@ -110,29 +109,29 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ status: 'ok', music_on: musicState === '1' }), { headers: corsHeaders });
       }
 
-        if (action === 'set_video' && isAdmin) {
-          const videoId = data.videoId;
-          if (videoId) {
-            await env.DB.prepare('INSERT OR REPLACE INTO yukichat_settings (key, value) VALUES ("music_video_id", ?)').bind(videoId).run();
-            await env.DB.prepare('INSERT OR REPLACE INTO yukichat_settings (key, value) VALUES ("music_start_time", ?)').bind(Date.now().toString()).run();
-            return new Response(JSON.stringify({ status: 'ok', videoId }), { headers: corsHeaders });
-          }
+      if (action === 'set_video' && isAdmin) {
+        const videoId = data.videoId;
+        if (videoId) {
+          await env.DB.prepare('INSERT OR REPLACE INTO yukichat_settings (key, value) VALUES ("music_video_id", ?)').bind(videoId).run();
+          await env.DB.prepare('INSERT OR REPLACE INTO yukichat_settings (key, value) VALUES ("music_start_time", ?)').bind(Date.now().toString()).run();
+          return new Response(JSON.stringify({ status: 'ok', videoId }), { headers: corsHeaders });
         }
+      }
 
-        if (action === 'playlist_add' && isAdmin) {
-          const { videoId, title } = data;
-          await env.DB.prepare('INSERT OR REPLACE INTO yukichat_playlist (video_id, title, added_at) VALUES (?, ?, ?)')
-            .bind(videoId, title || '無題の動画', Date.now()).run();
-          return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
-        }
+      if (action === 'playlist_add' && isAdmin) {
+        const { videoId, title } = data;
+        await env.DB.prepare('INSERT OR REPLACE INTO yukichat_playlist (video_id, title, added_at) VALUES (?, ?, ?)')
+          .bind(videoId, title || '無題の動画', Date.now()).run();
+        return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
+      }
 
-        if (action === 'playlist_remove' && isAdmin) {
-          const { videoId } = data;
-          await env.DB.prepare('DELETE FROM yukichat_playlist WHERE video_id = ?').bind(videoId).run();
-          return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
-        }
+      if (action === 'playlist_remove' && isAdmin) {
+        const { videoId } = data;
+        await env.DB.prepare('DELETE FROM yukichat_playlist WHERE video_id = ?').bind(videoId).run();
+        return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
+      }
 
-        if (!id) return new Response('Missing ID', { status: 400 });
+      if (!id) return new Response('Missing ID', { status: 400 });
 
       // 1. Reusable Moderation Function (Regex & AI)
       const moderateText = async (text, isName = false) => {
@@ -266,7 +265,7 @@ If the user is trying to maintain peace or express a negative opinion about bad 
       await env.DB.prepare('DELETE FROM yukichat_users WHERE ts < ? AND is_admin = 0').bind(now - 120).run();
 
       // Fetch active users, counts, logs, and settings in parallel
-      const [usersData, activeCountData, waitingCountData, logsData, musicSetting, musicStartSetting] = await Promise.all([
+      const [usersData, activeCountData, waitingCountData, logsData, musicSetting, musicStartSetting, musicVideoSetting, playlistData] = await Promise.all([
         env.DB.prepare('SELECT * FROM yukichat_users WHERE is_waiting = 0').all(),
         env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ? AND is_waiting = 0').bind(now - 120).first(),
         env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ? AND is_waiting = 1').bind(now - 120).first(),
@@ -313,12 +312,13 @@ If the user is trying to maintain peace or express a negative opinion about bad 
         music_on: musicOn,
         music_start_time: musicStartSetting ? parseInt(musicStartSetting.value) : 0,
         music_video_id: musicVideoSetting ? musicVideoSetting.value : 'F0B7HDiY-10',
-        playlist: isAdmin ? (playlistData.results || []) : [],
+        playlist: isActuallyAdmin ? (playlistData.results || []) : [],
         server_time: Date.now()
       }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
     }
+
 
     return new Response('Method not allowed', { status: 405 });
 
