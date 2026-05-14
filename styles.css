@@ -5539,3 +5539,124 @@ body.content-ready {
 
 
 
+/* Yukichat Music Player (Sketch Style) */
+.music-player-container {
+  position: absolute;
+  bottom: 15px;
+  left: 15px;
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.music-player-body {
+  width: 170px;
+  background: var(--bg-card);
+  border: 3px solid var(--pink-main);
+  border-radius: 20px;
+  padding: 8px;
+  box-shadow: 0 8px 20px var(--pink-glow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  backdrop-filter: blur(10px);
+}
+
+.music-player-screen {
+  width: 100%;
+  height: 1px;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.music-player-container.is-on .music-player-screen {
+  height: 86px; /* Optimized for 16:9-ish aspect ratio */
+  opacity: 1;
+  visibility: visible;
+  border: 1px solid var(--pink-main);
+  margin-bottom: 2px;
+}
+
+#yukichat-yt-player {
+  width: 100%;
+  height: 100%;
+}
+
+.screen-static {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0,0,0,0.05) 0px,
+    rgba(0,0,0,0.05) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  opacity: 0.2;
+}
+
+.music-player-controls {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  padding: 4px;
+  border-radius: 20px;
+  border: 1px solid var(--pink-main);
+}
+
+.music-btn {
+  border: none;
+  background: #fff;
+  color: var(--pink-main);
+  padding: 4px 14px;
+  font-family: var(--font-pop);
+  font-size: 0.75rem;
+  font-weight: 900;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 1px solid var(--pink-main);
+}
+
+.music-btn.on.active {
+  background: var(--pink-main);
+  color: #fff;
+  box-shadow: 0 0 15px var(--pink-glow);
+}
+
+.music-btn.off.active {
+  background: #8e6f7e;
+  border-color: #8e6f7e;
+  color: #fff;
+}
+
+.music-btn:not(.active):hover {
+  background: #ccc;
+}
+
+/* Hide player when off but keep the container */
+.music-player-container:not(.is-on) #yukichat-yt-player {
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .music-player-body {
+    width: 120px;
+    padding: 6px;
+  }
+  .music-btn {
+    padding: 3px 10px;
+    font-size: 0.65rem;
+  }
+}

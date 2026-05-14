@@ -403,11 +403,7 @@
   <!-- Yukichat Section -->
   <section id="yukichat" class="section yukichat page-section">
     <div class="container">
-      <div class="section-title reveal">
-        <h2>Yukickers <span class="text-neon">Yukichat</span></h2>
-        <p>ちびキャラを動かして皆とお話しよう！</p>
-      </div>
-
+      <div style="height: 60px;"></div>
       <div class="yukichat-container reveal">
         <!-- Character Selector Overlay -->
         <div id="yukichat-setup" class="yukichat-overlay active">
@@ -437,6 +433,20 @@
               <div class="decor-heart"><i class="fa-solid fa-heart"></i></div>
               <div class="decor-star"><i class="fa-solid fa-star"></i></div>
               <div class="decor-cloud"><i class="fa-solid fa-cloud"></i></div>
+            </div>
+
+            <!-- Music Controller (Sync for all users) -->
+            <div id="yukichat-music-player" class="music-player-container">
+              <div class="music-player-body">
+                <div class="music-player-screen">
+                  <div id="yukichat-yt-player"></div>
+                  <div class="screen-static"></div>
+                </div>
+                <div class="music-player-controls">
+                  <button id="music-on" class="music-btn on">ON</button>
+                  <button id="music-off" class="music-btn off active">OFF</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

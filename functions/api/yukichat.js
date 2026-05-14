@@ -57,6 +57,9 @@ export async function onRequest(context) {
     }
   }
 
+  // Ensure settings table exists
+  await env.DB.prepare('CREATE TABLE IF NOT EXISTS yukichat_settings (key TEXT PRIMARY KEY, value TEXT)').run();
+
   try {
     if (method === 'POST') {
       const data = await request.json();
@@ -92,6 +95,12 @@ export async function onRequest(context) {
       if (action === 'clearLogs' && password === '1234') {
         await env.DB.prepare('DELETE FROM yukichat_logs').run();
         return new Response(JSON.stringify({ status: 'ok' }), { headers: corsHeaders });
+      }
+
+      if (action === 'music' && (id || isAdmin)) {
+        const musicState = data.value === 'on' ? '1' : '0';
+        await env.DB.prepare('INSERT OR REPLACE INTO yukichat_settings (key, value) VALUES ("music_on", ?)').bind(musicState).run();
+        return new Response(JSON.stringify({ status: 'ok', music_on: musicState === '1' }), { headers: corsHeaders });
       }
 
       if (!id) return new Response('Missing ID', { status: 400 });
@@ -224,12 +233,13 @@ If the user is trying to maintain peace or express a negative opinion about bad 
       // Cleanup inactive users (older than 120s, but keep admins)
       await env.DB.prepare('DELETE FROM yukichat_users WHERE ts < ? AND is_admin = 0').bind(now - 120).run();
 
-      // Fetch active users, counts, and logs in parallel
-      const [usersData, activeCountData, waitingCountData, logsData] = await Promise.all([
+      // Fetch active users, counts, logs, and settings in parallel
+      const [usersData, activeCountData, waitingCountData, logsData, musicSetting] = await Promise.all([
         env.DB.prepare('SELECT * FROM yukichat_users WHERE is_waiting = 0').all(),
         env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ? AND is_waiting = 0').bind(now - 120).first(),
         env.DB.prepare('SELECT COUNT(*) as count FROM yukichat_users WHERE ts > ? AND is_waiting = 1').bind(now - 120).first(),
-        env.DB.prepare('SELECT * FROM yukichat_logs ORDER BY id DESC LIMIT 20').all()
+        env.DB.prepare('SELECT * FROM yukichat_logs ORDER BY id DESC LIMIT 20').all(),
+        env.DB.prepare('SELECT value FROM yukichat_settings WHERE key = "music_on"').first()
       ]);
 
       const activeUsers = {};
@@ -249,7 +259,8 @@ If the user is trying to maintain peace or express a negative opinion about bad 
         users: activeUsers,
         activeCount: activeCountData.count || 0,
         waitingCount: waitingCountData.count || 0,
-        logs: logsData.results || []
+        logs: logsData.results || [],
+        music_on: musicSetting ? musicSetting.value === '1' : false
       }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });

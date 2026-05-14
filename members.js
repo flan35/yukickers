@@ -85,20 +85,23 @@ window.YUKICKERS_MEMBERS = [
   },
   {
     "id": "uritafuufu",
-    "name": "瓜田純士＆麗子",
+    "name": "瓜田純士",
     "image": "urita.jpg",
     "chibi": "chibi_urita.png",
     "twitter": "Junshiurita",
     "kick": "uritafuufu",
     "showInList": true,
-    "bio": "瓜田純士＆麗子です。夫婦でユキッカーズを応援し、盛り上げていきます！"
+    "bio": "瓜田純士です。ユキッカーズを盛り上げていきます！"
   },
   {
     "id": "reiko",
-    "name": "瓜田麗子",
+    "name": "瓜田Reiko",
+    "image": "reiko.jpg",
     "chibi": "chibi_reiko.png",
-    "showInList": false,
-    "bio": "瓜田麗子です。よろしくお願いします。"
+    "twitter": "Reiko31869375",
+    "kick": "reikosama",
+    "showInList": true,
+    "bio": "瓜田Reikoです。よろしくお願いします！✨"
   },
   {
     "id": "nemuko_1111",

@@ -308,6 +308,7 @@
       const px = ((e.clientX - rect.left) / rect.width) * 100;
       const py = ((e.clientY - rect.top) / rect.height) * 100;
       
+      console.log('Moving to:', px, py);
       yukichat.targetX = px;
       yukichat.targetY = py;
       updateLocalAvatarPos();
@@ -574,6 +575,7 @@
             updateRemoteUsers(data.users);
             renderHistory(data.logs);
           }
+          updateMusicUI(data.music_on);
         }
       }
 
@@ -728,6 +730,117 @@
       syncWithServer();
     } catch (e) { console.error('Clear logs failed', e); }
   }
+
+  // --- Music Sync Logic ---
+  let ytPlayer = null;
+  let currentMusicState = false;
+  let isPlayerReady = false;
+
+  function loadYoutubeAPI() {
+    if (window.YT) return;
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+  }
+
+  window.onYouTubeIframeAPIReady = () => {
+    ytPlayer = new YT.Player('yukichat-yt-player', {
+      videoId: 'F0B7HDiY-10',
+      playerVars: {
+        'autoplay': 0,
+        'controls': 0,
+        'rel': 0,
+        'showinfo': 0,
+        'modestbranding': 1,
+        'loop': 1,
+        'playlist': 'F0B7HDiY-10',
+        'origin': (location.protocol === 'http:' || location.protocol === 'https:') ? location.origin : undefined
+      },
+      events: {
+        'onReady': () => {
+          isPlayerReady = true;
+          // Sync with current known state once ready
+          updateMusicUI(currentMusicState);
+        },
+        'onStateChange': (event) => {
+          // If it ends (and for some reason loop didn't work), restart
+          if (event.data === YT.PlayerState.ENDED && currentMusicState) {
+            ytPlayer.playVideo();
+          }
+        }
+      }
+    });
+  };
+
+  function updateMusicUI(isOn) {
+    const playerContainer = document.getElementById('yukichat-music-player');
+    const onBtn = document.getElementById('music-on');
+    const offBtn = document.getElementById('music-off');
+    
+    if (!playerContainer || !onBtn || !offBtn) return;
+
+    if (isOn) {
+      playerContainer.classList.add('is-on');
+      onBtn.classList.add('active');
+      offBtn.classList.remove('active');
+      if (isPlayerReady && ytPlayer && ytPlayer.playVideo) {
+        const state = ytPlayer.getPlayerState();
+        if (state !== YT.PlayerState.PLAYING) {
+          ytPlayer.playVideo();
+        }
+      }
+    } else {
+      playerContainer.classList.remove('is-on');
+      onBtn.classList.remove('active');
+      offBtn.classList.add('active');
+      if (isPlayerReady && ytPlayer && ytPlayer.pauseVideo) {
+        const state = ytPlayer.getPlayerState();
+        if (state !== YT.PlayerState.PAUSED && state !== YT.PlayerState.ENDED) {
+          ytPlayer.pauseVideo();
+        }
+      }
+    }
+    currentMusicState = isOn;
+  }
+
+  async function setMusicState(on) {
+    // Immediate UI feedback for better UX
+    updateMusicUI(on);
+
+    // Capture user gesture immediately if turning ON
+    if (on && isPlayerReady && ytPlayer && ytPlayer.playVideo) {
+      try {
+        ytPlayer.playVideo();
+      } catch(e) { console.warn("Initial play failed", e); }
+    }
+    
+    try {
+      await fetch('/api/yukichat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'music',
+          value: on ? 'on' : 'off',
+          id: yukichat.id,
+          password: yukichat.password
+        })
+      });
+      syncWithServer(true);
+    } catch (e) { 
+      console.warn('Music sync failed (Local Mode?)', e); 
+      // In local mode, we still want the UI to reflect our choice
+    }
+  }
+
+  const mOnBtn = document.getElementById('music-on');
+  const mOffBtn = document.getElementById('music-off');
+  const mPlayerContainer = document.getElementById('yukichat-music-player');
+
+  if (mOnBtn) mOnBtn.onclick = (e) => { e.stopPropagation(); setMusicState(true); };
+  if (mOffBtn) mOffBtn.onclick = (e) => { e.stopPropagation(); setMusicState(false); };
+  if (mPlayerContainer) mPlayerContainer.onclick = (e) => e.stopPropagation();
+  
+  loadYoutubeAPI();
 
   function startSync() {
     syncWithServer();
