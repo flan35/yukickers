@@ -209,6 +209,12 @@
     } catch (e) { console.error('Exit notify failed', e); }
 
     yukichat.isActive = false;
+    // Stop music on exit
+    if (isPlayerReady && ytPlayer && ytPlayer.pauseVideo) {
+      try { ytPlayer.pauseVideo(); } catch(e){}
+    }
+    updateMusicUI(false);
+    
     yukichat.initialLogsShown = false;
     yukichat.lastLogTs = null;
     yukichat.lastLogFingerprint = null; // Reset so logs are re-rendered on re-entry
@@ -695,10 +701,6 @@
       if (data.reason !== 'kicked' && data.reason !== 'banned') return;
       
       yukichat.isKicked = true;
-      if (yukichat.syncInterval) {
-        clearInterval(yukichat.syncInterval);
-        yukichat.syncInterval = null;
-      }
       exitRoom(false);
       alert(data.error || 'アクセスが拒否されました。');
     } catch (e) {
@@ -783,14 +785,22 @@
     
     if (!playerContainer || !onBtn || !offBtn) return;
 
+    // Force music OFF if user is not in the room
+    if (!yukichat.isActive) {
+      isOn = false;
+    }
+
     if (isOn) {
       playerContainer.classList.add('is-on');
       onBtn.classList.add('active');
       offBtn.classList.remove('active');
       if (isPlayerReady && ytPlayer && ytPlayer.playVideo) {
         const state = ytPlayer.getPlayerState();
-        // Only trigger play if it's actually paused or not started.
-        // Don't trigger if it's already playing or buffering.
+        
+        // Ensure volume is always correct before playing
+        const savedVol = localStorage.getItem('yukichat_music_volume') || 50;
+        ytPlayer.setVolume(savedVol * 0.6);
+
         if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING) {
           ytPlayer.playVideo();
         }
