@@ -866,8 +866,9 @@
             // Only sync once at start, or if drift is massive.
             const nowSeekTs = Date.now();
             const isInitialSyncForVideo = !yukichat.lastSyncedVideoId || yukichat.lastSyncedVideoId !== videoId;
-            
-            if ((isInitialSyncForVideo || drift > 10) && state !== YT.PlayerState.BUFFERING && (nowSeekTs - yukichat.lastSeekTime > 10000)) {
+
+            // Only sync if it's the first time for this video AND drift > 5s, OR if drift > 15s
+            if (((isInitialSyncForVideo && drift > 5) || drift > 15) && state !== YT.PlayerState.BUFFERING && (nowSeekTs - yukichat.lastSeekTime > 10000)) {
               console.log(`[MusicSync] Drift detected: ${drift.toFixed(2)}s. Syncing to ${targetTime.toFixed(2)}s`);
               ytPlayer.seekTo(targetTime, true);
               yukichat.lastSeekTime = nowSeekTs;
@@ -1045,13 +1046,16 @@
       console.log(`[Shuffle] Current: ${currentId}, Pool size: ${pool.length}, Next: ${nextVideo ? nextVideo.video_id : 'null'}`);
     } else {
       // Sequential logic
-      const currentIndex = yukichat.playlist.findIndex(item => item.video_id === currentMusicVideoId);
+      const currentId = (currentMusicVideoId || '').trim();
+      const currentIndex = yukichat.playlist.findIndex(item => (item.video_id || '').trim() === currentId);
       const nextIndex = (currentIndex + 1) % yukichat.playlist.length;
       nextVideo = yukichat.playlist[nextIndex];
+      console.log(`[Sequential] Current index: ${currentIndex}, Next: ${nextVideo ? nextVideo.video_id : 'null'}`);
     }
     
     if (nextVideo) {
       console.log(`Auto Play: ${yukichat.isShuffle ? 'Shuffle' : 'Sequential'} -> ${nextVideo.video_id}`);
+      currentMusicVideoId = nextVideo.video_id; // Update locally immediately
       setGlobalVideo(nextVideo.video_id);
     }
   }
