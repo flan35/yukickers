@@ -21,6 +21,7 @@
     isShuffle: localStorage.getItem('yukichat_shuffle') === 'true',
     isMusicTransitioning: false,
     lastSeekTime: 0,
+    lastSyncedVideoId: null,
     playlist: []
   };
   const escapeHTML = (str) => String(str).replace(/[&<>"']/g, (m) => ({
@@ -861,18 +862,22 @@
             const currentTime = ytPlayer.getCurrentTime();
             const drift = Math.abs(currentTime - targetTime);
 
-            // Sync if drift > 3s (relaxed to prevent frequent buffering)
-            // Also ensure we are not already buffering and cooled down (10s)
+            // Sync if drift > 10s (relaxed to prevent frequent buffering)
+            // Only sync once at start, or if drift is massive.
             const nowSeekTs = Date.now();
-            if (drift > 3 && state !== YT.PlayerState.BUFFERING && (nowSeekTs - yukichat.lastSeekTime > 10000)) {
-              console.log(`Syncing time: drift=${drift.toFixed(2)}s, seeking to ${targetTime.toFixed(2)}s`);
+            const isInitialSyncForVideo = !yukichat.lastSyncedVideoId || yukichat.lastSyncedVideoId !== videoId;
+            
+            if ((isInitialSyncForVideo || drift > 10) && state !== YT.PlayerState.BUFFERING && (nowSeekTs - yukichat.lastSeekTime > 10000)) {
+              console.log(`[MusicSync] Drift detected: ${drift.toFixed(2)}s. Syncing to ${targetTime.toFixed(2)}s`);
               ytPlayer.seekTo(targetTime, true);
               yukichat.lastSeekTime = nowSeekTs;
+              yukichat.lastSyncedVideoId = videoId;
             }
           }
         }
 
-        if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING) {
+        // Only force play if it's completely stopped/cued, not if it's paused or buffering
+        if (state === YT.PlayerState.UNSTARTED || state === YT.PlayerState.CUED) {
           ytPlayer.playVideo();
         }
       }
@@ -1013,6 +1018,7 @@
       if (res.ok) {
         if (mEditBox) mEditBox.style.display = 'none';
         mNewIdInput.value = '';
+        currentMusicVideoId = videoId; // Update locally immediately
         await syncWithServer(true);
       }
     } catch (err) { console.error("Video set failed", err); }
@@ -1031,10 +1037,12 @@
     if (yukichat.isShuffle) {
       // Pick a random song that isn't the current one if possible
       let pool = yukichat.playlist;
+      const currentId = (currentMusicVideoId || '').trim();
       if (pool.length > 1) {
-        pool = pool.filter(item => item.video_id !== currentMusicVideoId);
+        pool = pool.filter(item => (item.video_id || '').trim() !== currentId);
       }
       nextVideo = pool[Math.floor(Math.random() * pool.length)];
+      console.log(`[Shuffle] Current: ${currentId}, Pool size: ${pool.length}, Next: ${nextVideo ? nextVideo.video_id : 'null'}`);
     } else {
       // Sequential logic
       const currentIndex = yukichat.playlist.findIndex(item => item.video_id === currentMusicVideoId);
