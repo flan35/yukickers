@@ -17,7 +17,8 @@
     isKicked: false,
     isIntersecting: false,
     isLocalMode: false, 
-    isSequential: false,
+    isSequential: localStorage.getItem('yukichat_sequential') === 'true',
+    isMusicTransitioning: false,
     playlist: []
   };
   const escapeHTML = (str) => String(str).replace(/[&<>"']/g, (m) => ({
@@ -987,6 +988,9 @@
   }
 
   async function setGlobalVideo(videoId) {
+    if (yukichat.isMusicTransitioning) return;
+    yukichat.isMusicTransitioning = true;
+    
     try {
       const res = await fetch('/api/yukichat', {
         method: 'POST',
@@ -1001,16 +1005,24 @@
       if (res.ok) {
         if (mEditBox) mEditBox.style.display = 'none';
         mNewIdInput.value = '';
-        syncWithServer(true);
+        await syncWithServer(true);
       }
     } catch (err) { console.error("Video set failed", err); }
+    
+    // Cooldown to prevent double-skipping (YouTube API sometimes fires multiple ENDED events)
+    setTimeout(() => {
+      yukichat.isMusicTransitioning = false;
+    }, 3000);
   }
 
   async function playNextInPlaylist() {
-    if (!yukichat.playlist || yukichat.playlist.length === 0) return;
+    if (!yukichat.playlist || yukichat.playlist.length === 0 || yukichat.isMusicTransitioning) return;
+    
     const currentIndex = yukichat.playlist.findIndex(item => item.video_id === currentMusicVideoId);
     const nextIndex = (currentIndex + 1) % yukichat.playlist.length;
     const nextVideo = yukichat.playlist[nextIndex];
+    
+    console.log(`Sequential Play: Current Index ${currentIndex}, Next Index ${nextIndex}`);
     if (nextVideo) {
       setGlobalVideo(nextVideo.video_id);
     }
@@ -1124,10 +1136,17 @@
 
   const seqBtn = document.getElementById('playlist-sequential-btn');
   if (seqBtn) {
-    seqBtn.onclick = () => {
-      yukichat.isSequential = !yukichat.isSequential;
+    const updateSeqBtnUI = () => {
       seqBtn.classList.toggle('active', yukichat.isSequential);
       seqBtn.innerHTML = yukichat.isSequential ? '<i class="fa-solid fa-repeat"></i> 順次: ON' : '<i class="fa-solid fa-repeat"></i> 順次: OFF';
+    };
+    
+    updateSeqBtnUI(); // Initial state
+    
+    seqBtn.onclick = () => {
+      yukichat.isSequential = !yukichat.isSequential;
+      localStorage.setItem('yukichat_sequential', yukichat.isSequential);
+      updateSeqBtnUI();
     };
   }
   
