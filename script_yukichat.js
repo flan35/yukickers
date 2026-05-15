@@ -1032,7 +1032,7 @@
       // Pick a random song that isn't the current one if possible
       let pool = yukichat.playlist;
       if (pool.length > 1) {
-        pool = pool.filter(item => item.video_id === currentMusicVideoId);
+        pool = pool.filter(item => item.video_id !== currentMusicVideoId);
       }
       nextVideo = pool[Math.floor(Math.random() * pool.length)];
     } else {
