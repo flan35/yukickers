@@ -841,11 +841,19 @@
         if (videoId && videoId !== currentMusicVideoId) {
           console.log("Music video changed to:", videoId);
           currentMusicVideoId = videoId;
+          
+          let startAt = 0;
+          if (startTime > 0) {
+            const adjustedNow = Date.now() + (yukichat.serverTimeOffset || 0);
+            startAt = (adjustedNow - startTime) / 1000;
+          }
+
           ytPlayer.loadVideoById({
             videoId: videoId,
-            startSeconds: 0,
+            startSeconds: Math.max(0, startAt),
             suggestedQuality: 'small'
           });
+          yukichat.lastSyncedVideoId = videoId; // Mark as synced immediately
         }
 
         const state = ytPlayer.getPlayerState();
@@ -1025,7 +1033,8 @@
       if (res.ok) {
         if (mEditBox) mEditBox.style.display = 'none';
         mNewIdInput.value = '';
-        currentMusicVideoId = videoId; // Update locally immediately
+        // Force update local player immediately
+        updateMusicUI(true, Date.now(), videoId);
         await syncWithServer(true);
       }
     } catch (err) { console.error("Video set failed", err); }
