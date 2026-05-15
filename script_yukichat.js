@@ -17,8 +17,10 @@
     isKicked: false,
     isIntersecting: false,
     isLocalMode: false, 
-    isSequential: localStorage.getItem('yukichat_sequential') === 'true',
+    isSequential: true, // Now default
+    isShuffle: localStorage.getItem('yukichat_shuffle') === 'true',
     isMusicTransitioning: false,
+    lastSeekTime: 0,
     playlist: []
   };
   const escapeHTML = (str) => String(str).replace(/[&<>"']/g, (m) => ({
@@ -794,6 +796,7 @@
       events: {
         'onReady': () => {
           isPlayerReady = true;
+          try { ytPlayer.setPlaybackQuality('small'); } catch(e){}
           ytPlayer.setVolume(savedVol * 0.6); // Scale: 50% slider = 30% actual
           const volSlider = document.getElementById('music-volume');
           if (volSlider) volSlider.value = savedVol;
@@ -801,12 +804,12 @@
           updateMusicUI(currentMusicState);
         },
         'onStateChange': (event) => {
-          // If a song ends, and sequential mode is ON, play the next one
+          // If a song ends, play the next one (Sequential is default, or Shuffle if ON)
           if (event.data === YT.PlayerState.ENDED && currentMusicState) {
-            if (yukichat.isAdmin && yukichat.isSequential && yukichat.playlist.length > 0) {
+            if (yukichat.isAdmin && yukichat.playlist.length > 0) {
               playNextInPlaylist();
             } else {
-              ytPlayer.playVideo(); // Single song loop (default)
+              ytPlayer.playVideo(); // Single song loop (default if no playlist)
             }
           }
         }
@@ -838,7 +841,8 @@
           currentMusicVideoId = videoId;
           ytPlayer.loadVideoById({
             videoId: videoId,
-            startSeconds: 0
+            startSeconds: 0,
+            suggestedQuality: 'small'
           });
         }
 
@@ -857,9 +861,13 @@
             const currentTime = ytPlayer.getCurrentTime();
             const drift = Math.abs(currentTime - targetTime);
 
-            // Sync if drift > 1s
-            if (drift > 1) {
+            // Sync if drift > 3s (relaxed to prevent frequent buffering)
+            // Also ensure we are not already buffering and cooled down (10s)
+            const nowSeekTs = Date.now();
+            if (drift > 3 && state !== YT.PlayerState.BUFFERING && (nowSeekTs - yukichat.lastSeekTime > 10000)) {
+              console.log(`Syncing time: drift=${drift.toFixed(2)}s, seeking to ${targetTime.toFixed(2)}s`);
               ytPlayer.seekTo(targetTime, true);
+              yukichat.lastSeekTime = nowSeekTs;
             }
           }
         }
@@ -1018,12 +1026,24 @@
   async function playNextInPlaylist() {
     if (!yukichat.playlist || yukichat.playlist.length === 0 || yukichat.isMusicTransitioning) return;
     
-    const currentIndex = yukichat.playlist.findIndex(item => item.video_id === currentMusicVideoId);
-    const nextIndex = (currentIndex + 1) % yukichat.playlist.length;
-    const nextVideo = yukichat.playlist[nextIndex];
+    let nextVideo = null;
     
-    console.log(`Sequential Play: Current Index ${currentIndex}, Next Index ${nextIndex}`);
+    if (yukichat.isShuffle) {
+      // Pick a random song that isn't the current one if possible
+      let pool = yukichat.playlist;
+      if (pool.length > 1) {
+        pool = pool.filter(item => item.video_id === currentMusicVideoId);
+      }
+      nextVideo = pool[Math.floor(Math.random() * pool.length)];
+    } else {
+      // Sequential logic
+      const currentIndex = yukichat.playlist.findIndex(item => item.video_id === currentMusicVideoId);
+      const nextIndex = (currentIndex + 1) % yukichat.playlist.length;
+      nextVideo = yukichat.playlist[nextIndex];
+    }
+    
     if (nextVideo) {
+      console.log(`Auto Play: ${yukichat.isShuffle ? 'Shuffle' : 'Sequential'} -> ${nextVideo.video_id}`);
       setGlobalVideo(nextVideo.video_id);
     }
   }
@@ -1134,19 +1154,20 @@
     };
   }
 
-  const seqBtn = document.getElementById('playlist-sequential-btn');
-  if (seqBtn) {
-    const updateSeqBtnUI = () => {
-      seqBtn.classList.toggle('active', yukichat.isSequential);
-      seqBtn.innerHTML = yukichat.isSequential ? '<i class="fa-solid fa-repeat"></i> 順次: ON' : '<i class="fa-solid fa-repeat"></i> 順次: OFF';
+  const shuffleBtn = document.getElementById('playlist-shuffle-btn');
+  if (shuffleBtn) {
+    const updateShuffleBtnUI = () => {
+      shuffleBtn.classList.toggle('active', yukichat.isShuffle);
+      shuffleBtn.innerHTML = yukichat.isShuffle ? '<i class="fa-solid fa-shuffle"></i> ランダム: ON' : '<i class="fa-solid fa-shuffle"></i> ランダム: OFF';
     };
     
-    updateSeqBtnUI(); // Initial state
+    updateShuffleBtnUI();
     
-    seqBtn.onclick = () => {
-      yukichat.isSequential = !yukichat.isSequential;
-      localStorage.setItem('yukichat_sequential', yukichat.isSequential);
-      updateSeqBtnUI();
+    shuffleBtn.onclick = () => {
+      yukichat.isShuffle = !yukichat.isShuffle;
+      // When Shuffle is OFF, it automatically reverts to Sequential (default)
+      localStorage.setItem('yukichat_shuffle', yukichat.isShuffle);
+      updateShuffleBtnUI();
     };
   }
   
