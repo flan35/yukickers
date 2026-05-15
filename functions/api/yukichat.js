@@ -102,8 +102,13 @@ export async function onRequest(context) {
 
       if (action === 'music' && (id || isAdmin)) {
         const musicState = data.value === 'on' ? '1' : '0';
+        const currentOn = await env.DB.prepare('SELECT value FROM yukichat_settings WHERE key = "music_on"').first();
+        const isCurrentlyOff = !currentOn || currentOn.value === '0';
+
         await env.DB.prepare('INSERT OR REPLACE INTO yukichat_settings (key, value) VALUES ("music_on", ?)').bind(musicState).run();
-        if (musicState === '1') {
+        
+        // Only reset start time if we are turning it ON from an OFF state
+        if (musicState === '1' && isCurrentlyOff) {
           await env.DB.prepare('INSERT OR REPLACE INTO yukichat_settings (key, value) VALUES ("music_start_time", ?)').bind(Date.now().toString()).run();
         }
         return new Response(JSON.stringify({ status: 'ok', music_on: musicState === '1' }), { headers: corsHeaders });

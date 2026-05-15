@@ -220,6 +220,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show target section
         targetSec.classList.add('active');
         
+        // Performance Optimization: Stop background players
+        manageSectionPlayers(currentActive ? currentActive.id : null, targetId);
+        
         // Update URL hash
         if (targetId === 'home') {
           history.pushState(null, null, window.location.pathname);
@@ -1450,7 +1453,11 @@ document.addEventListener('DOMContentLoaded', () => {
             ticker.classList.remove('animate');
           }
           
-          updateCardPlayer(card, twitchUsername, 'twitch', wasLive);
+          // Only update player if section is active
+          const membersSec = document.getElementById('members');
+          if (membersSec && membersSec.classList.contains('active')) {
+            updateCardPlayer(card, twitchUsername, 'twitch', wasLive);
+          }
         } else {
           const response = await fetch(`https://kick.com/api/v2/channels/${username}`);
           if (response.ok) {
@@ -1496,7 +1503,11 @@ document.addEventListener('DOMContentLoaded', () => {
               ticker.classList.remove('animate');
             }
 
-            updateCardPlayer(card, username, 'kick', wasLive);
+            // Only update player if section is active
+            const membersSec = document.getElementById('members');
+            if (membersSec && membersSec.classList.contains('active')) {
+              updateCardPlayer(card, username, 'kick', wasLive);
+            }
           } else {
             if (wasLive) anyStatusChanged = true;
             card.classList.remove('is-live');
@@ -1579,6 +1590,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateLiveTheater(member) {
+    const homeSec = document.getElementById('home');
+    if (!homeSec || !homeSec.classList.contains('active')) {
+      // Don't auto-create player if not on home page
+      return;
+    }
     const theater = document.getElementById('live-theater');
     const hero = document.getElementById('hero-sub');
     const playerContainer = document.getElementById('theater-player-container');
@@ -1629,6 +1645,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateCardPlayer(card, username, platform, wasLive) {
+    const membersSec = document.getElementById('members');
+    if (!membersSec || !membersSec.classList.contains('active')) {
+      // Don't auto-create card player if not on members page
+      return;
+    }
     const staticImg = card.querySelector('.card-image');
     const imageWrap = card.querySelector('.card-image-wrap');
     const existingIframe = imageWrap?.querySelector('.card-live-player');
@@ -1658,6 +1679,36 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial check and set interval (every 2 minutes)
   checkLiveStatus();
   setInterval(checkLiveStatus, 120000);
+  
+  function manageSectionPlayers(leavingId, enteringId) {
+    // 1. Leaving Home? Stop Theater
+    if (leavingId === 'home') {
+      const playerContainer = document.getElementById('theater-player-container');
+      if (playerContainer) playerContainer.innerHTML = '';
+      currentTheaterMember = null;
+    }
+    
+    // 2. Leaving Members? Stop Card Players
+    if (leavingId === 'members') {
+      document.querySelectorAll('.card-live-player').forEach(p => p.remove());
+      document.querySelectorAll('.card-image').forEach(img => img.style.visibility = 'visible');
+    }
+    
+    // 3. Leaving Yukichat? Pause music
+    if (leavingId === 'yukichat' && typeof window.yukichatSetSectionActive === 'function') {
+      window.yukichatSetSectionActive(false);
+    }
+    
+    // 4. Entering Home or Members? Re-trigger sync to restore players
+    if (enteringId === 'home' || enteringId === 'members') {
+      checkLiveStatus();
+    }
+    
+    // 5. Entering Yukichat? Resume music
+    if (enteringId === 'yukichat' && typeof window.yukichatSetSectionActive === 'function') {
+      window.yukichatSetSectionActive(true);
+    }
+  }
 
   let allHistory = [];
   let currentFilter = 'all';

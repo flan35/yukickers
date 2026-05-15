@@ -22,6 +22,7 @@
     isMusicTransitioning: false,
     lastSeekTime: 0,
     lastSyncedVideoId: null,
+    isSectionActive: true,
     playlist: []
   };
   const escapeHTML = (str) => String(str).replace(/[&<>"']/g, (m) => ({
@@ -867,8 +868,8 @@
             const nowSeekTs = Date.now();
             const isInitialSyncForVideo = !yukichat.lastSyncedVideoId || yukichat.lastSyncedVideoId !== videoId;
 
-            // Only sync if it's the first time for this video AND drift > 5s, OR if drift > 15s
-            if (((isInitialSyncForVideo && drift > 5) || drift > 15) && state !== YT.PlayerState.BUFFERING && (nowSeekTs - yukichat.lastSeekTime > 10000)) {
+            // Very relaxed sync: 30s drift threshold. Initial sync 10s.
+            if (((isInitialSyncForVideo && drift > 10) || drift > 30) && state !== YT.PlayerState.BUFFERING && (nowSeekTs - yukichat.lastSeekTime > 20000)) {
               console.log(`[MusicSync] Drift detected: ${drift.toFixed(2)}s. Syncing to ${targetTime.toFixed(2)}s`);
               ytPlayer.seekTo(targetTime, true);
               yukichat.lastSeekTime = nowSeekTs;
@@ -879,7 +880,12 @@
 
         // Only force play if it's completely stopped/cued, not if it's paused or buffering
         if (state === YT.PlayerState.UNSTARTED || state === YT.PlayerState.CUED) {
-          ytPlayer.playVideo();
+          if (yukichat.isSectionActive) ytPlayer.playVideo();
+        }
+        
+        // PAUSE if section is not active
+        if (!yukichat.isSectionActive && state === YT.PlayerState.PLAYING) {
+          ytPlayer.pauseVideo();
         }
       }
     } else {
@@ -1055,7 +1061,6 @@
     
     if (nextVideo) {
       console.log(`Auto Play: ${yukichat.isShuffle ? 'Shuffle' : 'Sequential'} -> ${nextVideo.video_id}`);
-      currentMusicVideoId = nextVideo.video_id; // Update locally immediately
       setGlobalVideo(nextVideo.video_id);
     }
   }
@@ -1193,4 +1198,17 @@
   startSync();
   loadChatMembers();
 
+  window.yukichatSetSectionActive = (active) => {
+    yukichat.isSectionActive = active;
+    if (isPlayerReady && ytPlayer) {
+      if (active) {
+        // Only auto-resume if it was supposed to be playing
+        if (currentMusicState) {
+          try { ytPlayer.playVideo(); } catch(e){}
+        }
+      } else {
+        try { ytPlayer.pauseVideo(); } catch(e){}
+      }
+    }
+  };
 })();
